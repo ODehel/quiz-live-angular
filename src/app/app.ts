@@ -12,10 +12,4 @@ import { ToastService } from './core/toast/toast.service';
 export class App {
   protected readonly title = signal('quiz-live-angular');
   private readonly toastService = inject(ToastService);
-  constructor() {
-    this.toastService.add({ message: 'Hello!', type: 'info' });
-    this.toastService.add({ message: 'Erreur', type: 'error' });
-    this.toastService.add({ message: 'Attention !', type: 'warning'})
-    this.toastService.add({ message: 'Bravo !', type: 'success' });
-  }
 }

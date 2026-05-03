@@ -40,6 +40,29 @@ describe('Toast', () => {
             expect(host.classList.contains('toast-info')).toBe(true);
         });
     });
+
+    describe('close button', () => {
+        beforeEach(async () => {
+            await renderToast("Juste une notification", 'info');
+        });
+        it('renders the close button in the DOM', () => {
+            const host = fixture.nativeElement as HTMLElement;
+            expect(host.querySelector('[data-testid="close"]')).not.toBeNull();
+        });
+        it('emits close when clicked', async () => {
+            let emitCount = 0;
+            fixture.componentInstance.close.subscribe(() => emitCount++);
+
+            // ACT : on simule un click sur le bouton
+            const button = fixture.nativeElement.querySelector('[data-testid="close"]') as HTMLButtonElement;
+            button.click();
+            await fixture.whenStable();
+
+            // ASSERT
+            expect(emitCount).toBe(1);
+        });
+    });
+
     async function renderToast(message: string, type: ToastNotification['type']): Promise<void> {
         const notification: ToastNotification = { message, type };
         fixture.componentRef.setInput('notification', notification);

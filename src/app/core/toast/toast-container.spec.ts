@@ -35,6 +35,14 @@ describe('ToastContainer', () => {
     await expectRenderedToastsCount(1);
   });
 
+  it('close the notification when clicking on close button', async () => {
+    toastService.add({ type: 'success', message: 'Great win from Olivier !!!' });
+    await fixture.whenStable();
+    const button = fixture.nativeElement.querySelector('[data-testid="close"]') as HTMLButtonElement;
+    button.click();
+    await expectRenderedToastsCount(0);
+  });
+
   async function expectRenderedToastsCount(expected: number): Promise<void> {
     await fixture.whenStable();
     const host = fixture.nativeElement as HTMLElement;

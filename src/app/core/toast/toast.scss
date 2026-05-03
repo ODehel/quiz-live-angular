@@ -1,0 +1,29 @@
+:host {
+  display: block;
+  padding: 14px;
+  border-radius: 12px;
+}
+
+:host.toast-success {
+  background-color: var(--semantic-success-soft);
+  color: var(--semantic-success);
+  border: 1px solid var(--semantic-success-soft)
+}
+
+:host.toast-error {
+  background-color: var(--semantic-danger-soft);
+  color: var(--semantic-danger);
+  border: 1px solid var(--semantic-danger-soft)
+}
+
+:host.toast-info {
+  background-color: var(--accent-secondary-soft);
+  color: var(--accent-secondary);
+  border: 1px solid var(--accent-secondary-soft)
+}
+
+:host.toast-warning {
+  background-color: var(--semantic-warning-soft);
+  color: var(--semantic-warning);
+  border: 1px solid var(--semantic-warning-soft)
+}

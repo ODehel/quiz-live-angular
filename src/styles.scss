@@ -1,1 +1,21 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --semantic-success: #4ade80;        /* Vert — bonne réponse, validation */
+  --semantic-success-soft: rgba(74, 222, 128, 0.12);
+  --semantic-success-glow: rgba(74, 222, 128, 0.4);
+
+  --semantic-warning: #fbbf24;        /* Ambre — brouillon, alertes douces */
+  --semantic-warning-soft: rgba(251, 191, 36, 0.12);
+  --semantic-warning-glow: rgba(251, 191, 36, 0.35);
+
+  --semantic-danger: #ef4444;         /* Rouge — invalidation, suppression */
+  --semantic-danger-soft: rgba(239, 68, 68, 0.12);
+  --semantic-danger-glow: rgba(239, 68, 68, 0.35);
+
+  --semantic-critical: #dc2626;       /* Rouge sombre — critiques (partie corrompue) */
+  --semantic-critical-soft: rgba(220, 38, 38, 0.15);
+  --semantic-critical-glow: rgba(220, 38, 38, 0.4);
+
+  --accent-secondary: #4dd4e8;        /* Cyan — info, liens */
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+  --accent-secondary-glow: rgba(77, 212, 232, 0.35);
+}

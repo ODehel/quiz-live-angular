@@ -1,4 +1,5 @@
-import { Injectable, signal } from "@angular/core";
+import { inject, Injectable, signal } from "@angular/core";
+import { TIMER } from "../timer/timer";
 
 export type ToastNotification = {
     message: string;
@@ -8,13 +9,14 @@ export type ToastNotification = {
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {
+    private readonly timer = inject(TIMER);
     readonly notifications = signal<ToastNotification[]>([]);
 
     add(notification: ToastNotification): boolean {
         if (this.notifications().length < 5) {
             this.notifications.update(current => [...current, notification]);
             if (notification.duration !== undefined) {
-                setTimeout(() => { this.remove(notification) }, notification.duration);
+                this.timer.schedule(() => { this.remove(notification) }, notification.duration);
             }
             return true;
         } else {

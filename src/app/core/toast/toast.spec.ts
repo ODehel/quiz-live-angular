@@ -63,8 +63,26 @@ describe('Toast', () => {
         });
     });
 
-    async function renderToast(message: string, type: ToastNotification['type']): Promise<void> {
-        const notification: ToastNotification = { message, type };
+    describe("Progress bar management", () => {
+        it("doesn't show a progress bar if the toast has no duration", async () => {
+            await renderToast("Toast with no progress bar", "info");
+            expect(getProgressBar()).toBeNull();
+        });
+        it("shows a progress bar when the toast has a duration", async () => {
+            await renderToast("Toast with progress bar", "info", 80);
+            expect(getProgressBar()).not.toBeNull();
+        });
+        it("applies the duration as CSS animation-duration", async () => {
+            await renderToast("Toast with progress bar", "info", 80);
+            expect(getProgressBar()?.style.animationDuration).toBe("80ms");
+        });
+        function getProgressBar(): HTMLDivElement | null {
+            const host = fixture.nativeElement as HTMLElement;
+            return host.querySelector('[data-testid="progressBar"]');
+        }
+    });
+    async function renderToast(message: string, type: ToastNotification['type'], duration?: number): Promise<void> {
+        const notification: ToastNotification = { message, type, duration };
         fixture.componentRef.setInput('notification', notification);
         await fixture.whenStable();
     }

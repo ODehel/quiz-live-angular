@@ -3,7 +3,7 @@ import { ToastNotification } from './toast.service';
 
 @Component({
   selector: 'app-toast',
-  template: `<div><button data-testid="close" (click)="close.emit()">X</button>{{ notification().message }}</div>`,
+  templateUrl: './toast.html',
   host: { '[class]': '"toast-" + notification().type' },
   styleUrl: './toast.scss'
 })

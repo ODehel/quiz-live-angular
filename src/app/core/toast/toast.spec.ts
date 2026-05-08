@@ -1,11 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Toast } from './toast';
 import { ToastNotification } from './toast.service';
+import { By } from '@angular/platform-browser';
+import { Icon } from '../../shared/ui/icon/icon';
+import { IconStub } from '../../shared/ui/icon/icon.stub'
 
 describe('Toast', () => {
     let fixture: ComponentFixture<Toast>;
     beforeEach(async () => {
-        await TestBed.configureTestingModule({ imports: [Toast] }).compileComponents();
+        await TestBed.configureTestingModule({
+            imports: [Toast]
+        })
+            .overrideComponent(Toast, {
+                remove: { imports: [Icon] },
+                add: { imports: [IconStub] }
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(Toast);
     });
 
@@ -45,9 +55,10 @@ describe('Toast', () => {
         beforeEach(async () => {
             await renderToast("Juste une notification", 'info');
         });
-        it('renders the close button in the DOM', () => {
-            const host = fixture.nativeElement as HTMLElement;
-            expect(host.querySelector('[data-testid="close"]')).not.toBeNull();
+        it('renders an icon in the close button', () => {
+            const iconDebugEl = fixture.debugElement.query(By.directive(IconStub));
+            const iconInstance: IconStub = iconDebugEl.componentInstance;
+            expect(iconInstance.name()).toBe('x');
         });
         it('emits close when clicked', async () => {
             let emitCount = 0;

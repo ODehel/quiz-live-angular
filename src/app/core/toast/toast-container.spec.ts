@@ -1,13 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ToastContainer } from './toast-container';
 import { ToastService } from './toast.service';
+import { Icon } from '../../shared/ui/icon/icon';
+import { IconStub } from '../../shared/ui/icon/icon.stub';
+import { Toast } from './toast';
 
 describe('ToastContainer', () => {
   let fixture: ComponentFixture<ToastContainer>;
   let toastService: ToastService;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [ToastContainer] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [ToastContainer] }).overrideComponent(Toast, {
+      remove: { imports: [Icon] },
+      add: { imports: [IconStub] }
+    }).compileComponents();
     fixture = TestBed.createComponent(ToastContainer);
     toastService = TestBed.inject(ToastService);
   });

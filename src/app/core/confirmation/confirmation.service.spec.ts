@@ -3,6 +3,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { of } from 'rxjs';
 import { ConfirmationService } from './confirmation.service';
 import { Mock } from 'vitest';
+import { ConfirmDialogComponent } from './confirm-dialog';
 
 describe('ConfirmationService', () => {
     let fakeDialog: { open: Mock };
@@ -29,4 +30,11 @@ describe('ConfirmationService', () => {
         const result = await confirmationService.ask();
         expect(result).toBe(false);
     });
+    it("passes the title to the dialog", async () => {
+        const title = "Confirmez-vous la suppression de cette question ?";
+        fakeDialog.open.mockReturnValue({ closed: of(true) });
+        await confirmationService.ask(title);
+        expect(fakeDialog.open).toHaveBeenCalledWith(ConfirmDialogComponent, { data: { title } });
+    });
+    
 });

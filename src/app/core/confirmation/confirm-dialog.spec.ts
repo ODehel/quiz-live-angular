@@ -18,20 +18,20 @@ describe("Confirm Dialog", () => {
         const text = (fixture.nativeElement as HTMLElement).textContent;
         expect(text).toContain(title);
     });
-    it("renders the 'Confirmer' button", async () => {
-        const { fixture } = await createConfirmComponent("Confirmez-vous ?");
-
-        const confirmButton = getButton(fixture, "Confirmer");
-        expect(confirmButton).not.toBeUndefined();
-    });
     it("renders the 'Annuler' button", async () => {
         const { fixture } = await createConfirmComponent("Confirmez-vous ?");
 
         const cancelButton = getButton(fixture, "Annuler");
         expect(cancelButton).not.toBeUndefined();
     });
+    it("renders the 'Valider' button", async () => {
+        const { fixture } = await createConfirmComponent("Validation", "Valider");
+
+        const validateButton = getButton(fixture, "Valider");
+        expect(validateButton).not.toBeUndefined();
+    });
     it("calls DialogRef.close(true) when clicking on 'Confirmer' button", async () => {
-        const { fixture, fakeDialogRef } = await createConfirmComponent("Confirmez-vous ?");
+        const { fixture, fakeDialogRef } = await createConfirmComponent("Confirmez-vous ?", "Confirmer");
 
         const confirmButton = getButton(fixture, "Confirmer");
         confirmButton?.click();
@@ -45,12 +45,12 @@ describe("Confirm Dialog", () => {
         cancelButton?.click();
         expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
     });
-    async function createConfirmComponent(title: string) {
+    async function createConfirmComponent(title: string, confirmLabel: string = "test-label") {
         let fakeDialogRef: { close: Mock };
         fakeDialogRef = { close: vi.fn() }
         await TestBed.configureTestingModule({
             providers: [
-                { provide: DIALOG_DATA, useValue: { title } },
+                { provide: DIALOG_DATA, useValue: { title: title, confirmLabel: confirmLabel } },
                 { provide: DialogRef, useValue: fakeDialogRef }
             ]
         }).compileComponents();

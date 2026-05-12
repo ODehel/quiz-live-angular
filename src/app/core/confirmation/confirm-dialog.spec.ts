@@ -6,50 +6,51 @@ import { Mock } from "vitest";
 describe("Confirm Dialog", () => {
     it("renders the title 'Titre'", async () => {
         const title = "Titre";
-        const { fixture } = await createConfirmComponent(title);
+        const { fixture } = await createConfirmComponent({ title });
 
         const text = (fixture.nativeElement as HTMLElement).textContent;
         expect(text).toContain(title);
     });
     it("renders the title 'Question'", async () => {
         const title = "Question";
-        const { fixture } = await createConfirmComponent(title);
+        const { fixture } = await createConfirmComponent({ title });
 
         const text = (fixture.nativeElement as HTMLElement).textContent;
         expect(text).toContain(title);
     });
     it("renders the 'Valider' button", async () => {
-        const { fixture } = await createConfirmComponent("Validation", "Valider");
+        const { fixture } = await createConfirmComponent({ title: "Validation", confirmLabel: "Valider" });
 
         const validateButton = getButtonByContent(fixture, "Valider");
         expect(validateButton).not.toBeUndefined();
     });
     it("renders the 'Annuler tout' button", async () => {
-        const {fixture} = await createConfirmComponent("Validation", "any-confirm-label", "Annuler tout");
+        const { fixture } = await createConfirmComponent({ title: "Validation", cancelLabel: "Annuler tout" });
 
         const cancelButton = getButtonByContent(fixture, "Annuler tout");
         expect(cancelButton).not.toBeUndefined();
     });
-    it("calls DialogRef.close(true) when clicking on 'Confirmer' button", async () => {
-        const { fixture, fakeDialogRef } = await createConfirmComponent("Confirmez-vous ?", "Confirmer");
+    it("calls DialogRef.close(true) when clicking on confirm button", async () => {
+        const { fixture, fakeDialogRef } = await createConfirmComponent({});
 
         const confirmButton = getButtonByTestId(fixture, "confirm");
         confirmButton?.click();
         expect(fakeDialogRef.close).toHaveBeenCalledWith(true);
     });
-    it("calls DialogRef.close(false) when clicking on 'Annuler' button", async () => {
-        const { fixture, fakeDialogRef } = await createConfirmComponent("Confirmez-vous ?");
+    it("calls DialogRef.close(false) when clicking on cancel button", async () => {
+        const { fixture, fakeDialogRef } = await createConfirmComponent({});
 
         const cancelButton = getButtonByTestId(fixture, "cancel");
         cancelButton?.click();
         expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
     });
-    async function createConfirmComponent(title: string, confirmLabel: string = "test-confirm-label", cancelLabel: string = "test-cancel-label") {
-        let fakeDialogRef: { close: Mock };
-        fakeDialogRef = { close: vi.fn() }
+    async function createConfirmComponent(data: Partial<ConfirmDialogData>) {
+        const defaults = { title: "any-title", confirmLabel: "any-confirm-label", cancelLabel: "any-cancel-label" };
+        const mergedData = { ...defaults, ...data };
+        const fakeDialogRef: { close: Mock } = { close: vi.fn() };
         await TestBed.configureTestingModule({
             providers: [
-                { provide: DIALOG_DATA, useValue: { title, confirmLabel, cancelLabel } satisfies ConfirmDialogData },
+                { provide: DIALOG_DATA, useValue: mergedData },
                 { provide: DialogRef, useValue: fakeDialogRef }
             ]
         }).compileComponents();

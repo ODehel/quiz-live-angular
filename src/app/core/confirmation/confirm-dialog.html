@@ -1,3 +1,6 @@
 {{title}}
 <button data-testid="cancel" (click)="dialogRef.close(false)">{{cancelLabel}}</button>
 <button data-testid="confirm" (click)="dialogRef.close(true)">{{confirmLabel}}</button>
+@if (message) {
+<p data-testid="message">{{message}}</p>
+}

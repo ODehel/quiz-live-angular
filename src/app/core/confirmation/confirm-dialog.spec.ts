@@ -26,9 +26,23 @@ describe("Confirm Dialog", () => {
     });
     it("renders the 'Annuler tout' button", async () => {
         const { fixture } = await createConfirmComponent({ title: "Validation", cancelLabel: "Annuler tout" });
-
         const cancelButton = getButtonByContent(fixture, "Annuler tout");
         expect(cancelButton).not.toBeUndefined();
+    });
+    it("renders the optional message", async () => {
+        const { fixture } = await createConfirmComponent({ title: "Un beau titre", message: "Un message optionnel à afficher" });
+        const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
+        expect(messageField).not.toBeNull();
+    });
+    it("doesn't render the non-existing message", async () => {
+        const { fixture } = await createConfirmComponent({ title: "Un beau titre à afficher" });
+        const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
+        expect(messageField).toBeNull();
+    });
+    it ("doesn't render the message when message is empty string", async () => {
+        const { fixture } = await createConfirmComponent({ title: "Un beau titre à afficher", message: "" });
+        const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
+        expect(messageField).toBeNull();
     });
     it("calls DialogRef.close(true) when clicking on confirm button", async () => {
         const { fixture, fakeDialogRef } = await createConfirmComponent({});

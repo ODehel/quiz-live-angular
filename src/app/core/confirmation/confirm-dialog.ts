@@ -5,6 +5,7 @@ export interface ConfirmDialogData {
     title: string;
     confirmLabel: string;
     cancelLabel: string;
+    message?: string;
 }
 
 @Component({ templateUrl: './confirm-dialog.html' })
@@ -13,5 +14,6 @@ export class ConfirmDialogComponent {
     readonly title = this.dialogData.title;
     readonly confirmLabel = this.dialogData.confirmLabel;
     readonly cancelLabel = this.dialogData.cancelLabel;
+    readonly message = this.dialogData.message;
     readonly dialogRef: DialogRef<boolean> = inject(DialogRef);
 }

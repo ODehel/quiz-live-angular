@@ -1,6 +1,6 @@
 import { DIALOG_DATA, DialogRef } from "@angular/cdk/dialog";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { ConfirmDialogComponent } from "./confirm-dialog";
+import { ConfirmDialogComponent, ConfirmDialogData } from "./confirm-dialog";
 import { Mock } from "vitest";
 
 describe("Confirm Dialog", () => {
@@ -49,7 +49,7 @@ describe("Confirm Dialog", () => {
         fakeDialogRef = { close: vi.fn() }
         await TestBed.configureTestingModule({
             providers: [
-                { provide: DIALOG_DATA, useValue: { title: title, confirmLabel: confirmLabel, cancelLabel: cancelLabel } },
+                { provide: DIALOG_DATA, useValue: { title, confirmLabel, cancelLabel } satisfies ConfirmDialogData },
                 { provide: DialogRef, useValue: fakeDialogRef }
             ]
         }).compileComponents();

@@ -45,7 +45,7 @@ describe('ConfirmationService', () => {
         expect(fakeDialog.open).toHaveBeenCalledWith(ConfirmDialogComponent, { data: { title, confirmLabel, cancelLabel } });
     });
     it("passes the confirm button label to the dialog", async () => {
-        const title = "Confirmez-vous la suppression de cette question ?";
+        const title = "any-title";
         const confirmLabel = "Confirmer";
         const cancelLabel = "any-cancel-label";
         fakeDialog.open.mockReturnValue({ closed: of(true) });
@@ -53,11 +53,20 @@ describe('ConfirmationService', () => {
         expect(fakeDialog.open).toHaveBeenCalledWith(ConfirmDialogComponent, { data: { title, confirmLabel, cancelLabel } });
     });
     it("passes the cancel button label to the dialog", async () => {
-        const title = "Confirmez-vous la décision ?";
+        const title = "any-title";
         const confirmLabel = "any-confirm-label";
         const cancelLabel = "Annuler tout";
         fakeDialog.open.mockReturnValue({ closed: of(true) });
         await confirmationService.ask({ title, confirmLabel, cancelLabel });
         expect(fakeDialog.open).toHaveBeenCalledWith(ConfirmDialogComponent, { data: { title, confirmLabel, cancelLabel } });
+    });
+    it("passes the message to the dialog", async () => {
+        const title = "any-title";
+        const confirmLabel = "any-confirm-label";
+        const cancelLabel = "any-cancel-label";
+        const message = "Juste un message en passant";
+        fakeDialog.open.mockReturnValue({ closed: of(true) });
+        await confirmationService.ask({ title, confirmLabel, cancelLabel, message });
+        expect(fakeDialog.open).toHaveBeenCalledWith(ConfirmDialogComponent, { data: { title, confirmLabel, cancelLabel, message } });
     });
 });

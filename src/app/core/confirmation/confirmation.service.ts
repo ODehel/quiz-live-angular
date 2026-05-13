@@ -7,6 +7,7 @@ export interface ConfirmOptions {
     title: string;
     confirmLabel: string;
     cancelLabel: string;
+    message?: string;
 }
 
 @Injectable({ providedIn: 'root' })

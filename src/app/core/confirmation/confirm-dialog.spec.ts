@@ -11,6 +11,7 @@ describe("Confirm Dialog", () => {
         const text = (fixture.nativeElement as HTMLElement).textContent;
         expect(text).toContain(title);
     });
+    
     it("renders the title 'Question'", async () => {
         const title = "Question";
         const { fixture } = await createConfirmComponent({ title });
@@ -18,32 +19,38 @@ describe("Confirm Dialog", () => {
         const text = (fixture.nativeElement as HTMLElement).textContent;
         expect(text).toContain(title);
     });
+    
     it("renders the 'Valider' button", async () => {
         const { fixture } = await createConfirmComponent({ title: "Validation", confirmLabel: "Valider" });
 
         const validateButton = getButtonByContent(fixture, "Valider");
         expect(validateButton).not.toBeUndefined();
     });
+    
     it("renders the 'Annuler tout' button", async () => {
         const { fixture } = await createConfirmComponent({ title: "Validation", cancelLabel: "Annuler tout" });
         const cancelButton = getButtonByContent(fixture, "Annuler tout");
         expect(cancelButton).not.toBeUndefined();
     });
+    
     it("renders the optional message", async () => {
         const { fixture } = await createConfirmComponent({ title: "Un beau titre", message: "Un message optionnel à afficher" });
         const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
         expect(messageField).not.toBeNull();
     });
+    
     it("doesn't render the non-existing message", async () => {
         const { fixture } = await createConfirmComponent({ title: "Un beau titre à afficher" });
         const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
         expect(messageField).toBeNull();
     });
+    
     it ("doesn't render the message when message is empty string", async () => {
         const { fixture } = await createConfirmComponent({ title: "Un beau titre à afficher", message: "" });
         const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
         expect(messageField).toBeNull();
     });
+    
     it("calls DialogRef.close(true) when clicking on confirm button", async () => {
         const { fixture, fakeDialogRef } = await createConfirmComponent({});
 
@@ -51,13 +58,21 @@ describe("Confirm Dialog", () => {
         confirmButton?.click();
         expect(fakeDialogRef.close).toHaveBeenCalledWith(true);
     });
+    
     it("calls DialogRef.close(false) when clicking on cancel button", async () => {
         const { fixture, fakeDialogRef } = await createConfirmComponent({});
-
         const cancelButton = getButtonByTestId(fixture, "cancel");
         cancelButton?.click();
         expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
     });
+
+    it("calls DialogRef.close(false) when clicking on close button", async () => {
+        const { fixture, fakeDialogRef } = await createConfirmComponent({});
+        const closeButton = getButtonByTestId(fixture, "close");
+        closeButton?.click();
+        expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
+    });
+
     async function createConfirmComponent(data: Partial<ConfirmDialogData>) {
         const defaults = { title: "any-title", confirmLabel: "any-confirm-label", cancelLabel: "any-cancel-label" };
         const mergedData = { ...defaults, ...data };

@@ -1,8 +1,9 @@
 import { DIALOG_DATA, DialogRef } from "@angular/cdk/dialog";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { ConfirmDialogComponent, ConfirmDialogData } from "./confirm-dialog";
+import { ConfirmDialogComponent } from "./confirm-dialog";
 import { Mock } from "vitest";
 import { stubIconIn } from "../../shared/ui/icon/icon.test-helpers";
+import { ConfirmOptions } from "./confirm-dialog";
 
 describe("Confirm Dialog", () => {
     it("renders the title 'Titre'", async () => {
@@ -74,7 +75,7 @@ describe("Confirm Dialog", () => {
         expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
     });
 
-    async function createConfirmComponent(data: Partial<ConfirmDialogData>) {
+    async function createConfirmComponent(data: Partial<ConfirmOptions>) {
         const defaults = { title: "any-title", confirmLabel: "any-confirm-label", cancelLabel: "any-cancel-label" };
         const mergedData = { ...defaults, ...data };
         const fakeDialogRef: { close: Mock } = { close: vi.fn() };

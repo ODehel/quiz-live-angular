@@ -2,11 +2,12 @@ import { DIALOG_DATA, DialogRef } from "@angular/cdk/dialog";
 import { Component, inject } from "@angular/core";
 import { Icon } from "../../shared/ui/icon/icon";
 
-export interface ConfirmDialogData {
+export interface ConfirmOptions {
     title: string;
     confirmLabel: string;
     cancelLabel: string;
     message?: string;
+    variant: 'destructive' | 'warning' | 'info';
 }
 
 @Component({
@@ -14,7 +15,7 @@ export interface ConfirmDialogData {
     imports: [Icon]
 })
 export class ConfirmDialogComponent {
-    private readonly dialogData = inject<ConfirmDialogData>(DIALOG_DATA);
+    private readonly dialogData = inject<ConfirmOptions>(DIALOG_DATA);
     readonly title = this.dialogData.title;
     readonly confirmLabel = this.dialogData.confirmLabel;
     readonly cancelLabel = this.dialogData.cancelLabel;

@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { Dialog } from '@angular/cdk/dialog';
 import { of } from 'rxjs';
-import { ConfirmationService, ConfirmOptions } from './confirmation.service';
+import { ConfirmationService } from './confirmation.service';
 import { Mock } from 'vitest';
-import { ConfirmDialogComponent } from './confirm-dialog';
+import { ConfirmDialogComponent, ConfirmOptions } from './confirm-dialog';
 
 describe('ConfirmationService', () => {
     let fakeDialog: { open: Mock };
@@ -23,7 +23,8 @@ describe('ConfirmationService', () => {
         confirmOptions = {
             title: "any-title",
             confirmLabel: "any-confirm-label",
-            cancelLabel: "any-cancel-label"
+            cancelLabel: "any-cancel-label",
+            variant: 'info'
         }
     });
     it('resolves to true when the user confirms', async () => {
@@ -43,37 +44,15 @@ describe('ConfirmationService', () => {
         expect(result).toBe(false);
     });
 
-    it("passes the title to the dialog", async () => {
-        const title = "Quelle est la réponse à la question ?";
-        const confirmLabel = "any-confirm-label";
-        const cancelLabel = "any-cancel-label";
+    it.each<{ label: string; override: Partial<ConfirmOptions> }>([
+        { label: "passes the title to the dialog", override: { title: 'Quelle est la réponse à la question ?' } },
+        { label: "passes the confirm button label to the dialog", override: { confirmLabel: "Confirmer" }},
+        { label: "passes the cancel button label to the dialog", override: { cancelLabel: "Annuler tout" }},
+        { label: "passes the message to the dialog", override: { message: "Juste un message en passant" }},
+        { label: "passes the variant to the dialog", override: { variant: 'destructive' } }
+    ])('$label', async ({ override }) => {
         fakeDialog.open.mockReturnValue({ closed: of(true) });
-        await confirmationService.ask({ title, confirmLabel, cancelLabel });
-        expect(fakeDialog.open).toHaveBeenCalledWith(ConfirmDialogComponent, { data: { title, confirmLabel, cancelLabel } });
-    });
-    it("passes the confirm button label to the dialog", async () => {
-        const title = "any-title";
-        const confirmLabel = "Confirmer";
-        const cancelLabel = "any-cancel-label";
-        fakeDialog.open.mockReturnValue({ closed: of(true) });
-        await confirmationService.ask({ title, confirmLabel, cancelLabel });
-        expect(fakeDialog.open).toHaveBeenCalledWith(ConfirmDialogComponent, { data: { title, confirmLabel, cancelLabel } });
-    });
-    it("passes the cancel button label to the dialog", async () => {
-        const title = "any-title";
-        const confirmLabel = "any-confirm-label";
-        const cancelLabel = "Annuler tout";
-        fakeDialog.open.mockReturnValue({ closed: of(true) });
-        await confirmationService.ask({ title, confirmLabel, cancelLabel });
-        expect(fakeDialog.open).toHaveBeenCalledWith(ConfirmDialogComponent, { data: { title, confirmLabel, cancelLabel } });
-    });
-    it("passes the message to the dialog", async () => {
-        const title = "any-title";
-        const confirmLabel = "any-confirm-label";
-        const cancelLabel = "any-cancel-label";
-        const message = "Juste un message en passant";
-        fakeDialog.open.mockReturnValue({ closed: of(true) });
-        await confirmationService.ask({ title, confirmLabel, cancelLabel, message });
-        expect(fakeDialog.open).toHaveBeenCalledWith(ConfirmDialogComponent, { data: { title, confirmLabel, cancelLabel, message } });
+        await confirmationService.ask({ ...confirmOptions, ...override });
+        expect(fakeDialog.open).toHaveBeenCalledWith(ConfirmDialogComponent, { data: { ...confirmOptions, ...override } });
     });
 });

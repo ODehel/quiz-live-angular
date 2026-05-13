@@ -1,14 +1,8 @@
 import { Dialog } from "@angular/cdk/dialog";
 import { inject, Injectable } from "@angular/core";
-import { ConfirmDialogComponent } from "./confirm-dialog";
+import { ConfirmDialogComponent, ConfirmOptions } from "./confirm-dialog";
 import { firstValueFrom } from "rxjs";
 
-export interface ConfirmOptions {
-    title: string;
-    confirmLabel: string;
-    cancelLabel: string;
-    message?: string;
-}
 
 @Injectable({ providedIn: 'root' })
 export class ConfirmationService {

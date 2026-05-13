@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Toast } from './toast';
 import { ToastNotification } from './toast.service';
 import { By } from '@angular/platform-browser';
-import { Icon } from '../../shared/ui/icon/icon';
 import { IconStub } from '../../shared/ui/icon/icon.stub'
+import { stubIconIn } from '../../shared/ui/icon/icon.test-helpers';
 
 describe('Toast', () => {
     let fixture: ComponentFixture<Toast>;
@@ -11,11 +11,8 @@ describe('Toast', () => {
         await TestBed.configureTestingModule({
             imports: [Toast]
         })
-            .overrideComponent(Toast, {
-                remove: { imports: [Icon] },
-                add: { imports: [IconStub] }
-            })
             .compileComponents();
+        stubIconIn(Toast);
         fixture = TestBed.createComponent(Toast);
     });
 

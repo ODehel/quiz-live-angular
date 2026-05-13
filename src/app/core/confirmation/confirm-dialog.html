@@ -1,5 +1,5 @@
 {{title}}
-<button data-testid="close" (click)="dialogRef.close(false)">✕</button>
+<button data-testid="close" (click)="dialogRef.close(false)"><app-icon name="x" /></button>
 <button data-testid="cancel" (click)="dialogRef.close(false)">{{cancelLabel}}</button>
 <button data-testid="confirm" (click)="dialogRef.close(true)">{{confirmLabel}}</button>
 @if (message) {

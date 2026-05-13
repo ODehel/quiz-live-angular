@@ -36,6 +36,13 @@ describe('ConfirmationService', () => {
         const result = await confirmationService.ask(confirmOptions);
         expect(result).toBe(false);
     });
+
+    it ("resolves to false when the dialog closes with undefined", async () => {
+        fakeDialog.open.mockReturnValue({ closed: of(undefined) });
+        const result = await confirmationService.ask(confirmOptions);
+        expect(result).toBe(false);
+    });
+
     it("passes the title to the dialog", async () => {
         const title = "Quelle est la réponse à la question ?";
         const confirmLabel = "any-confirm-label";

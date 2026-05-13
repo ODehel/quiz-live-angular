@@ -4,6 +4,8 @@ import { ConfirmDialogComponent } from "./confirm-dialog";
 import { Mock } from "vitest";
 import { stubIconIn } from "../../shared/ui/icon/icon.test-helpers";
 import { ConfirmOptions } from "./confirm-dialog";
+import { By } from "@angular/platform-browser";
+import { IconStub } from "../../shared/ui/icon/icon.stub";
 
 describe("Confirm Dialog", () => {
     it("renders the title 'Titre'", async () => {
@@ -41,6 +43,13 @@ describe("Confirm Dialog", () => {
         expect(messageField).not.toBeNull();
     });
 
+    it("renders the info icon when variant is info", async () => {
+        const { fixture } = await createConfirmComponent({ title: "Une information", variant: "info" });
+        const variantIcon = fixture.debugElement.query(By.css('[data-testid="variant-icon"]'));
+        const iconInstance: IconStub = variantIcon.componentInstance;
+        expect(iconInstance.name()).toBe('circle-play');
+    });
+
     it("doesn't render the non-existing message", async () => {
         const { fixture } = await createConfirmComponent({ title: "Un beau titre à afficher" });
         const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
@@ -76,7 +85,7 @@ describe("Confirm Dialog", () => {
     });
 
     async function createConfirmComponent(data: Partial<ConfirmOptions>) {
-        const defaults = { title: "any-title", confirmLabel: "any-confirm-label", cancelLabel: "any-cancel-label" };
+        const defaults = { title: "any-title", confirmLabel: "any-confirm-label", cancelLabel: "any-cancel-label", variant: "info" };
         const mergedData = { ...defaults, ...data };
         const fakeDialogRef: { close: Mock } = { close: vi.fn() };
         await TestBed.configureTestingModule({

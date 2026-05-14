@@ -2,7 +2,7 @@
 <button data-testid="close" (click)="dialogRef.close(false)"><app-icon name="x" /></button>
 <button data-testid="cancel" (click)="dialogRef.close(false)">{{cancelLabel}}</button>
 <button data-testid="confirm" (click)="dialogRef.close(true)">{{confirmLabel}}</button>
-<app-icon data-testid="variant-icon" name="circle-play" />
+<app-icon data-testid="variant-icon" [name]="variantIcon" />
 @if (message) {
 <p data-testid="message">{{message}}</p>
 }

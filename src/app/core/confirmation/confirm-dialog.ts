@@ -10,6 +10,12 @@ export interface ConfirmOptions {
     variant: 'destructive' | 'warning' | 'info';
 }
 
+const VARIANT_ICONS: Record<ConfirmOptions['variant'], string> = {
+    info: 'circle-play',
+    destructive: 'triangle-alert',
+    warning: 'circle-alert'
+};
+
 @Component({
     templateUrl: './confirm-dialog.html',
     imports: [Icon]
@@ -20,5 +26,7 @@ export class ConfirmDialogComponent {
     readonly confirmLabel = this.dialogData.confirmLabel;
     readonly cancelLabel = this.dialogData.cancelLabel;
     readonly message = this.dialogData.message;
+    readonly variant = this.dialogData.variant;
     readonly dialogRef: DialogRef<boolean> = inject(DialogRef);
+    readonly variantIcon = VARIANT_ICONS[this.variant];
 }

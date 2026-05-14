@@ -43,12 +43,17 @@ describe("Confirm Dialog", () => {
         expect(messageField).not.toBeNull();
     });
 
-    it("renders the info icon when variant is info", async () => {
-        const { fixture } = await createConfirmComponent({ title: "Une information", variant: "info" });
-        const variantIcon = fixture.debugElement.query(By.css('[data-testid="variant-icon"]'));
-        const iconInstance: IconStub = variantIcon.componentInstance;
-        expect(iconInstance.name()).toBe('circle-play');
-    });
+    it.each<{ variant: 'destructive' | 'warning' | 'info', iconName: string }>
+        ([
+            { variant: "info", iconName: "circle-play" },
+            { variant: "destructive", iconName: "triangle-alert" },
+            { variant: "warning", iconName: "circle-alert" }])
+        ('renders the $variant icon when variant is $variant', async ({ variant, iconName }) => {
+            const { fixture } = await createConfirmComponent({ title: "Titre", variant });
+            const variantIcon = fixture.debugElement.query(By.css('[data-testid="variant-icon"]'));
+            const iconInstance: IconStub = variantIcon.componentInstance;
+            expect(iconInstance.name()).toBe(iconName);
+        });
 
     it("doesn't render the non-existing message", async () => {
         const { fixture } = await createConfirmComponent({ title: "Un beau titre à afficher" });

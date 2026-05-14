@@ -16,6 +16,12 @@ const VARIANT_ICONS: Record<ConfirmOptions['variant'], string> = {
     warning: 'circle-alert'
 };
 
+const CONFIRM_ICONS: Record<ConfirmOptions['variant'], string> = {
+    info: 'play',
+    destructive: 'trash-2',
+    warning: 'log-out'
+};
+
 @Component({
     templateUrl: './confirm-dialog.html',
     imports: [Icon]
@@ -29,4 +35,5 @@ export class ConfirmDialogComponent {
     readonly variant = this.dialogData.variant;
     readonly dialogRef: DialogRef<boolean> = inject(DialogRef);
     readonly variantIcon = VARIANT_ICONS[this.variant];
+    readonly confirmIcon = CONFIRM_ICONS[this.variant];
 }

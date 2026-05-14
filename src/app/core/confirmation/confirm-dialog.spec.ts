@@ -55,6 +55,27 @@ describe("Confirm Dialog", () => {
             expect(iconInstance.name()).toBe(iconName);
         });
 
+    it("renders the play icon in the confirm button when variant is info", async () => {
+        const { fixture } = await createConfirmComponent({ title: "Titre", variant: "info" });
+        const iconConfirmButton = fixture.debugElement.query(By.css('[data-testid="confirm-icon"]'));
+        const iconInstance: IconStub = iconConfirmButton.componentInstance;
+        expect(iconInstance.name()).toBe("play");
+    });
+
+    it("renders the trash icon in the confirm button when variant is destructive", async () => {
+        const { fixture } = await createConfirmComponent({ title: "Titre", variant: "destructive" });
+        const iconConfirmButton = fixture.debugElement.query(By.css('[data-testid="confirm-icon"]'));
+        const iconInstance: IconStub = iconConfirmButton.componentInstance;
+        expect(iconInstance.name()).toBe("trash-2");
+    });
+
+    it("renders the log-out icon in the confirm button when variant is warning", async () => {
+        const { fixture } = await createConfirmComponent({ title: "Titre", variant: "warning" });
+        const iconConfirmButton = fixture.debugElement.query(By.css('[data-testid="confirm-icon"]'));
+        const iconInstance: IconStub = iconConfirmButton.componentInstance;
+        expect(iconInstance.name()).toBe("log-out");
+    });
+
     it("doesn't render the non-existing message", async () => {
         const { fixture } = await createConfirmComponent({ title: "Un beau titre à afficher" });
         const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');

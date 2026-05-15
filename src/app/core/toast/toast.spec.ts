@@ -8,10 +8,7 @@ import { stubIconIn } from '../../shared/ui/icon/icon.test-helpers';
 describe('Toast', () => {
     let fixture: ComponentFixture<Toast>;
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [Toast]
-        })
-            .compileComponents();
+        await TestBed.configureTestingModule({}).compileComponents();
         stubIconIn(Toast);
         fixture = TestBed.createComponent(Toast);
     });

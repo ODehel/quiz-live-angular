@@ -1,7 +1,7 @@
 {{title}}
-<button data-testid="close" (click)="dialogRef.close(false)"><app-icon name="x" /></button>
-<button data-testid="cancel" (click)="dialogRef.close(false)">{{cancelLabel}}</button>
-<button data-testid="confirm" (click)="dialogRef.close(true)"><app-icon data-testid="confirm-icon" [name]="confirmIcon" />{{confirmLabel}}</button>
+<button data-testid="close" (click)="cancel()"><app-icon name="x" /></button>
+<button data-testid="cancel" (click)="cancel()">{{cancelLabel}}</button>
+<button data-testid="confirm" (click)="confirm()"><app-icon data-testid="confirm-icon" [name]="confirmIcon" />{{confirmLabel}}</button>
 <app-icon data-testid="variant-icon" [name]="variantIcon" />
 @if (message) {
 <p data-testid="message">{{message}}</p>

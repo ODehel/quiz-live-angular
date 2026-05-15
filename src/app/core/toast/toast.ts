@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { ToastNotification } from './toast.service';
 import { Icon } from "../../shared/ui/icon/icon";
 
@@ -7,7 +7,8 @@ import { Icon } from "../../shared/ui/icon/icon";
   templateUrl: './toast.html',
   host: { '[class]': '"toast-" + notification().type' },
   styleUrl: './toast.scss',
-  imports: [Icon]
+  imports: [Icon],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Toast {
   readonly notification = input.required<ToastNotification>();

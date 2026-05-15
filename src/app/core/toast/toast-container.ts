@@ -1,4 +1,4 @@
-import { Component, inject } from "@angular/core";
+import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { ToastService } from "./toast.service";
 import { Toast } from "./toast";
 
@@ -19,7 +19,8 @@ import { Toast } from "./toast";
         max-width: 380px;
     }
     `,
-    imports: [Toast]
+    imports: [Toast],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ToastContainer {
     readonly toastService = inject(ToastService);

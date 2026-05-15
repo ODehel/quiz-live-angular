@@ -93,28 +93,24 @@ describe("Confirm Dialog", () => {
 
     it("calls DialogRef.close(true) when clicking on confirm button", async () => {
         const { fixture, fakeDialogRef } = await createConfirmComponent({});
-
-        const confirmButton = getButtonByTestId(fixture, "confirm");
-        confirmButton?.click();
+        getButtonByTestId(fixture, "confirm").click();
         expect(fakeDialogRef.close).toHaveBeenCalledWith(true);
     });
 
     it("calls DialogRef.close(false) when clicking on cancel button", async () => {
         const { fixture, fakeDialogRef } = await createConfirmComponent({});
-        const cancelButton = getButtonByTestId(fixture, "cancel");
-        cancelButton?.click();
+        getButtonByTestId(fixture, "cancel").click();
         expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
     });
 
     it("calls DialogRef.close(false) when clicking on close button", async () => {
         const { fixture, fakeDialogRef } = await createConfirmComponent({});
-        const closeButton = getButtonByTestId(fixture, "close");
-        closeButton?.click();
+        getButtonByTestId(fixture, "close").click();
         expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
     });
 
     async function createConfirmComponent(data: Partial<ConfirmOptions>) {
-        const defaults = { title: "any-title", confirmLabel: "any-confirm-label", cancelLabel: "any-cancel-label", variant: "info" };
+        const defaults: ConfirmOptions = { title: "any-title", confirmLabel: "any-confirm-label", cancelLabel: "any-cancel-label", variant: "info" };
         const mergedData = { ...defaults, ...data };
         const fakeDialogRef: { close: Mock } = { close: vi.fn() };
         await TestBed.configureTestingModule({
@@ -137,6 +133,11 @@ describe("Confirm Dialog", () => {
     }
 
     function getButtonByTestId(fixture: ComponentFixture<ConfirmDialogComponent>, buttonTestId: string) {
-        return fixture.nativeElement.querySelector('[data-testid="' + buttonTestId + '"]');
+        const root = fixture.nativeElement as HTMLElement;
+        const button = root.querySelector<HTMLButtonElement>(`[data-testid="${buttonTestId}"]`);
+        if (button === null) {
+            throw new Error(`Button not found: ${buttonTestId}`);
+        }
+        return button;
     }
 });

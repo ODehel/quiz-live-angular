@@ -9,10 +9,7 @@ describe('ToastContainer', () => {
   let toastService: ToastService;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ 
-      imports: [ToastContainer] 
-    })
-    .compileComponents();
+    await TestBed.configureTestingModule({}).compileComponents();
     stubIconIn(Toast); 
     fixture = TestBed.createComponent(ToastContainer);
     toastService = TestBed.inject(ToastService);

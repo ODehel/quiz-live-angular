@@ -24,7 +24,8 @@ const CONFIRM_ICONS: Record<ConfirmOptions['variant'], string> = {
 
 @Component({
     templateUrl: './confirm-dialog.html',
-    imports: [Icon]
+    imports: [Icon],
+    host: { '[attr.data-variant]': 'variant' }
 })
 export class ConfirmDialogComponent {
     private readonly dialogData = inject<ConfirmOptions>(DIALOG_DATA);

@@ -67,6 +67,18 @@ describe("Confirm Dialog", () => {
             expect(iconInstance.name()).toBe(iconName);
         });
 
+    it.each<{ variant: ConfirmOptions['variant'] }>([
+        { variant: "info" },
+        { variant: "destructive" },
+        { variant: "warning" }
+    ])
+        ("sets the $variant variant to the root element", async ({ variant }) => {
+            const { fixture } = await createConfirmComponent({ title: "Titre", variant });
+            const rootElement = fixture.nativeElement as HTMLElement;
+            const variantAttribute = rootElement.getAttribute('data-variant');
+            expect(variantAttribute).toBe(variant);
+        });
+
     it("doesn't render the non-existing message", async () => {
         const { fixture } = await createConfirmComponent({ title: "Un beau titre à afficher" });
         const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');

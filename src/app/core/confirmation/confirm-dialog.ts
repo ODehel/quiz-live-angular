@@ -2,12 +2,19 @@ import { DIALOG_DATA, DialogRef } from "@angular/cdk/dialog";
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { Icon } from "../../shared/ui/icon/icon";
 
+export interface ContextRow {
+    key: string;
+    value: string;
+    tone?: 'normal' | 'warning' | 'danger';
+}
+
 export interface ConfirmOptions {
     title: string;
     confirmLabel: string;
     cancelLabel: string;
     message?: string;
     variant: 'destructive' | 'warning' | 'info';
+    contextRows?: ContextRow[]
 }
 
 const VARIANT_ICONS: Record<ConfirmOptions['variant'], string> = {
@@ -37,6 +44,7 @@ export class ConfirmDialogComponent {
     readonly cancelLabel = this.dialogData.cancelLabel;
     readonly message = this.dialogData.message;
     readonly variant = this.dialogData.variant;
+    readonly contextRows = this.dialogData.contextRows;
     readonly variantIcon = VARIANT_ICONS[this.variant];
     readonly confirmIcon = CONFIRM_ICONS[this.variant];
     

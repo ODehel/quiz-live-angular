@@ -1,8 +1,16 @@
 {{title}}
 <button data-testid="close" (click)="cancel()"><app-icon name="x" /></button>
 <button data-testid="cancel" (click)="cancel()">{{cancelLabel}}</button>
-<button data-testid="confirm" (click)="confirm()"><app-icon data-testid="confirm-icon" [name]="confirmIcon" />{{confirmLabel}}</button>
+<button data-testid="confirm" (click)="confirm()"><app-icon data-testid="confirm-icon"
+        [name]="confirmIcon" />{{confirmLabel}}</button>
 <app-icon data-testid="variant-icon" [name]="variantIcon" />
 @if (message) {
 <p data-testid="message">{{message}}</p>
+}
+@if (contextRows?.length) {
+<div data-testid="context-rows">
+    @for (row of contextRows; track row.key) {
+    <div data-testid="context-row"></div>
+    }
+</div>
 }

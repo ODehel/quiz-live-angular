@@ -43,6 +43,57 @@ describe("Confirm Dialog", () => {
         expect(messageField).not.toBeNull();
     });
 
+    it("renders the optional context rows", async () => {
+        const { fixture } = await createConfirmComponent({
+            title: "Titre",
+            contextRows: [
+                { key: "KeyA", value: "Value A" }
+            ]
+        });
+        const contextRowsField = fixture.nativeElement.querySelector('[data-testid="context-rows"]');
+        expect(contextRowsField).not.toBeNull();
+    });
+
+    it("doesn't render the context rows when data is missing", async () => {
+        const { fixture } = await createConfirmComponent({
+            title: "Titre"
+        });
+        const contextRowsField = fixture.nativeElement.querySelector('[data-testid="context-rows"]');
+        expect(contextRowsField).toBeNull();
+    });
+
+    it("doesn't render the context rows when context rows is empty", async () => {
+        const { fixture } = await createConfirmComponent({
+            title: "any-title",
+            contextRows: []
+        });
+        const contextRowsField = fixture.nativeElement.querySelector('[data-testid="context-rows"]');
+        expect(contextRowsField).toBeNull();
+    });
+
+    it("renders a context row when one row is provided", async () => {
+        const { fixture } = await createConfirmComponent({
+            title: "any-title",
+            contextRows: [
+                { key: "any-key", value: "any-value" }
+            ]
+        });
+        const contextRowField = fixture.nativeElement.querySelector('[data-testid="context-row"]');
+        expect(contextRowField).not.toBeNull();
+    });
+
+    it("renders two rows when two rows are provided", async () => {
+        const { fixture } = await createConfirmComponent({
+            title: "any-title",
+            contextRows: [
+                { key: "any-key-one", value: "any-value-one" },
+                { key: "any-key-two", value: "any-value-two" }
+            ]
+        });
+        const contextRowFields = fixture.nativeElement.querySelectorAll('[data-testid="context-row"]');
+        expect(contextRowFields.length).toBe(2);
+    });
+
     it.each<{ variant: ConfirmOptions['variant'], iconName: string }>
         ([
             { variant: "info", iconName: "circle-play" },

@@ -54,22 +54,15 @@ describe("Confirm Dialog", () => {
         expect(contextRowsField).not.toBeNull();
     });
 
-    it("doesn't render the context rows when data is missing", async () => {
-        const { fixture } = await createConfirmComponent({
-            title: "Titre"
+    it.each<{ label: string; contextRows: ConfirmOptions['contextRows'] }>([
+        { label: "missing", contextRows: undefined },
+        { label: "empty", contextRows: [] }
+    ])
+        ("doesn't render the context rows when data is $label", async ({ contextRows }) => {
+            const { fixture } = await createConfirmComponent({ title: "Titre", contextRows });
+            const contextRowField = fixture.nativeElement.querySelector('[data-testid="context-rows"]');
+            expect(contextRowField).toBeNull();
         });
-        const contextRowsField = fixture.nativeElement.querySelector('[data-testid="context-rows"]');
-        expect(contextRowsField).toBeNull();
-    });
-
-    it("doesn't render the context rows when context rows is empty", async () => {
-        const { fixture } = await createConfirmComponent({
-            title: "any-title",
-            contextRows: []
-        });
-        const contextRowsField = fixture.nativeElement.querySelector('[data-testid="context-rows"]');
-        expect(contextRowsField).toBeNull();
-    });
 
     it("renders a context row when one row is provided", async () => {
         const { fixture } = await createConfirmComponent({

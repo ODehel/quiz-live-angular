@@ -10,7 +10,9 @@
 @if (contextRows?.length) {
 <div data-testid="context-rows">
     @for (row of contextRows; track row.key) {
-    <div data-testid="context-row"></div>
+    <div data-testid="context-row">
+        <span data-testid="context-key">{{row.key}}</span>
+    </div>
     }
 </div>
 }

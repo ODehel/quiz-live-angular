@@ -25,27 +25,26 @@ describe("Confirm Dialog", () => {
     });
 
     it("renders the 'Valider' button", async () => {
-        const { fixture } = await createConfirmComponent({ title: "Validation", confirmLabel: "Valider" });
+        const { fixture } = await createConfirmComponent({ confirmLabel: "Valider" });
 
         const validateButton = getButtonByContent(fixture, "Valider");
         expect(validateButton).not.toBeUndefined();
     });
 
     it("renders the 'Annuler tout' button", async () => {
-        const { fixture } = await createConfirmComponent({ title: "Validation", cancelLabel: "Annuler tout" });
+        const { fixture } = await createConfirmComponent({ cancelLabel: "Annuler tout" });
         const cancelButton = getButtonByContent(fixture, "Annuler tout");
         expect(cancelButton).not.toBeUndefined();
     });
 
     it("renders the optional message", async () => {
-        const { fixture } = await createConfirmComponent({ title: "Un beau titre", message: "Un message optionnel à afficher" });
+        const { fixture } = await createConfirmComponent({ message: "Un message optionnel à afficher" });
         const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
         expect(messageField).not.toBeNull();
     });
 
     it("renders the optional context rows", async () => {
         const { fixture } = await createConfirmComponent({
-            title: "Titre",
             contextRows: [
                 { key: "KeyA", value: "Value A" }
             ]
@@ -59,14 +58,13 @@ describe("Confirm Dialog", () => {
         { label: "empty", contextRows: [] }
     ])
         ("doesn't render the context rows when data is $label", async ({ contextRows }) => {
-            const { fixture } = await createConfirmComponent({ title: "Titre", contextRows });
+            const { fixture } = await createConfirmComponent({ contextRows });
             const contextRowField = fixture.nativeElement.querySelector('[data-testid="context-rows"]');
             expect(contextRowField).toBeNull();
         });
 
     it("renders a context row when one row is provided", async () => {
         const { fixture } = await createConfirmComponent({
-            title: "any-title",
             contextRows: [
                 { key: "any-key", value: "any-value" }
             ]
@@ -77,7 +75,6 @@ describe("Confirm Dialog", () => {
 
     it("renders two rows when two rows are provided", async () => {
         const { fixture } = await createConfirmComponent({
-            title: "any-title",
             contextRows: [
                 { key: "any-key-one", value: "any-value-one" },
                 { key: "any-key-two", value: "any-value-two" }
@@ -87,13 +84,36 @@ describe("Confirm Dialog", () => {
         expect(contextRowFields.length).toBe(2);
     });
 
+    it("renders the context key in the DOM", async () => {
+        const specialKey = "specialKey";
+        const { fixture } = await createConfirmComponent({
+            contextRows: [
+                { key: specialKey, value: "any-value" }
+            ]
+        });
+        const keyField = fixture.nativeElement.querySelector('[data-testid="context-key"]');
+        expect(keyField.textContent).toBe(specialKey);
+    });
+
+    it("renders two context keys in the DOM when there are two context rows", async () => {
+        const { fixture } = await createConfirmComponent({
+            contextRows: [
+                { key: "key-one", value: "any-value" },
+                { key: "key-two", value: "any-value" }
+            ]
+        });
+        const keyFields = fixture.nativeElement.querySelectorAll('[data-testid="context-key"]');
+        expect(keyFields[0].textContent).toBe("key-one");
+        expect(keyFields[1].textContent).toBe("key-two");
+    });
+
     it.each<{ variant: ConfirmOptions['variant'], iconName: string }>
         ([
             { variant: "info", iconName: "circle-play" },
             { variant: "destructive", iconName: "triangle-alert" },
             { variant: "warning", iconName: "circle-alert" }])
         ('renders the $variant icon when variant is $variant', async ({ variant, iconName }) => {
-            const { fixture } = await createConfirmComponent({ title: "Titre", variant });
+            const { fixture } = await createConfirmComponent({ variant });
             const variantIcon = fixture.debugElement.query(By.css('[data-testid="variant-icon"]'));
             const iconInstance: IconStub = variantIcon.componentInstance;
             expect(iconInstance.name()).toBe(iconName);
@@ -105,7 +125,7 @@ describe("Confirm Dialog", () => {
         { variant: "warning", iconName: "log-out" }
     ])
         ("renders the $iconName icon in the confirm button when variant is $variant", async ({ iconName, variant }) => {
-            const { fixture } = await createConfirmComponent({ title: "Titre", variant });
+            const { fixture } = await createConfirmComponent({ variant });
             const iconConfirmButton = fixture.debugElement.query(By.css('[data-testid="confirm-icon"]'));
             const iconInstance: IconStub = iconConfirmButton.componentInstance;
             expect(iconInstance.name()).toBe(iconName);
@@ -117,20 +137,20 @@ describe("Confirm Dialog", () => {
         { variant: "warning" }
     ])
         ("sets the $variant variant to the root element", async ({ variant }) => {
-            const { fixture } = await createConfirmComponent({ title: "Titre", variant });
+            const { fixture } = await createConfirmComponent({ variant });
             const rootElement = fixture.nativeElement as HTMLElement;
             const variantAttribute = rootElement.getAttribute('data-variant');
             expect(variantAttribute).toBe(variant);
         });
 
     it("doesn't render the non-existing message", async () => {
-        const { fixture } = await createConfirmComponent({ title: "Un beau titre à afficher" });
+        const { fixture } = await createConfirmComponent({});
         const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
         expect(messageField).toBeNull();
     });
 
     it("doesn't render the message when message is empty string", async () => {
-        const { fixture } = await createConfirmComponent({ title: "Un beau titre à afficher", message: "" });
+        const { fixture } = await createConfirmComponent({ message: "" });
         const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
         expect(messageField).toBeNull();
     });

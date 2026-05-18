@@ -1,6 +1,8 @@
 import { DIALOG_DATA, DialogRef } from "@angular/cdk/dialog";
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { Icon } from "../../shared/ui/icon/icon";
+import { filter, fromEvent } from "rxjs";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 export interface ContextRow {
     key: string;
@@ -47,7 +49,16 @@ export class ConfirmDialogComponent {
     readonly contextRows = this.dialogData.contextRows;
     readonly variantIcon = VARIANT_ICONS[this.variant];
     readonly confirmIcon = CONFIRM_ICONS[this.variant];
-    
+
+    constructor() {
+        fromEvent<KeyboardEvent>(document, 'keydown')
+            .pipe(
+                filter(e => e.key === 'Escape'),
+                takeUntilDestroyed()
+            )
+            .subscribe(() => this.cancel());
+    }
+
     cancel(): void { this.dialogRef.close(false); }
     confirm(): void { this.dialogRef.close(true); }
 }

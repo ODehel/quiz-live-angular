@@ -93,6 +93,20 @@ describe("Confirm Dialog", () => {
                     expect(element.textContent).toBe(testValues[index]);
                 });
             });
+
+        it.each<{ tone: ContextRow['tone'] }>([
+            { tone: "normal" },
+            { tone: "warning" },
+            { tone: "danger" }
+        ])("renders the $tone for a row", async ({ tone }) => {
+            const { fixture } = await createConfirmComponent({
+                contextRows: [
+                    { key: "any-key", value: "any-value", tone }
+                ]
+            });
+            const contextRowField = fixture.nativeElement.querySelector('[data-testid="context-row"]') as HTMLElement;
+            expect(contextRowField.getAttribute("data-tone")).toBe(tone);
+        });
     });
 
     describe("Variant", () => {
@@ -149,6 +163,12 @@ describe("Confirm Dialog", () => {
         it("calls DialogRef.close(false) when clicking on close button", async () => {
             const { fixture, fakeDialogRef } = await createConfirmComponent({});
             getButtonByTestId(fixture, "close").click();
+            expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
+        });
+
+        it("calls DialogRef.close(false) when typing on Esc key", async () => {
+            const { fakeDialogRef } = await createConfirmComponent({});
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
             expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
         });
     });

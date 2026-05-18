@@ -1,6 +1,6 @@
 import { DIALOG_DATA, DialogRef } from "@angular/cdk/dialog";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { ConfirmDialogComponent } from "./confirm-dialog";
+import { ConfirmDialogComponent, ContextRow } from "./confirm-dialog";
 import { Mock } from "vitest";
 import { stubIconIn } from "../../shared/ui/icon/icon.test-helpers";
 import { ConfirmOptions } from "./confirm-dialog";
@@ -8,169 +8,149 @@ import { By } from "@angular/platform-browser";
 import { IconStub } from "../../shared/ui/icon/icon.stub";
 
 describe("Confirm Dialog", () => {
-    it("renders the title 'Titre'", async () => {
-        const title = "Titre";
-        const { fixture } = await createConfirmComponent({ title });
-
-        const text = (fixture.nativeElement as HTMLElement).textContent;
-        expect(text).toContain(title);
-    });
-
-    it("renders the title 'Question'", async () => {
-        const title = "Question";
-        const { fixture } = await createConfirmComponent({ title });
-
-        const text = (fixture.nativeElement as HTMLElement).textContent;
-        expect(text).toContain(title);
-    });
-
-    it("renders the 'Valider' button", async () => {
-        const { fixture } = await createConfirmComponent({ confirmLabel: "Valider" });
-
-        const validateButton = getButtonByContent(fixture, "Valider");
-        expect(validateButton).not.toBeUndefined();
-    });
-
-    it("renders the 'Annuler tout' button", async () => {
-        const { fixture } = await createConfirmComponent({ cancelLabel: "Annuler tout" });
-        const cancelButton = getButtonByContent(fixture, "Annuler tout");
-        expect(cancelButton).not.toBeUndefined();
-    });
-
-    it("renders the optional message", async () => {
-        const { fixture } = await createConfirmComponent({ message: "Un message optionnel à afficher" });
-        const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
-        expect(messageField).not.toBeNull();
-    });
-
-    it("renders the optional context rows", async () => {
-        const { fixture } = await createConfirmComponent({
-            contextRows: [
-                { key: "KeyA", value: "Value A" }
-            ]
+    describe("Title", () => {
+        it("renders the title 'Question'", async () => {
+            const title = "Question";
+            const { fixture } = await createConfirmComponent({ title });
+            const text = (fixture.nativeElement as HTMLElement).textContent;
+            expect(text).toContain(title);
         });
-        const contextRowsField = fixture.nativeElement.querySelector('[data-testid="context-rows"]');
-        expect(contextRowsField).not.toBeNull();
     });
 
-    it.each<{ label: string; contextRows: ConfirmOptions['contextRows'] }>([
-        { label: "missing", contextRows: undefined },
-        { label: "empty", contextRows: [] }
-    ])
-        ("doesn't render the context rows when data is $label", async ({ contextRows }) => {
-            const { fixture } = await createConfirmComponent({ contextRows });
-            const contextRowField = fixture.nativeElement.querySelector('[data-testid="context-rows"]');
-            expect(contextRowField).toBeNull();
+    describe("Button labels", () => {
+        it("renders the 'Valider' button", async () => {
+            const { fixture } = await createConfirmComponent({ confirmLabel: "Valider" });
+
+            const validateButton = getButtonByContent(fixture, "Valider");
+            expect(validateButton).not.toBeUndefined();
         });
 
-    it("renders a context row when one row is provided", async () => {
-        const { fixture } = await createConfirmComponent({
-            contextRows: [
-                { key: "any-key", value: "any-value" }
-            ]
+        it("renders the 'Annuler tout' button", async () => {
+            const { fixture } = await createConfirmComponent({ cancelLabel: "Annuler tout" });
+            const cancelButton = getButtonByContent(fixture, "Annuler tout");
+            expect(cancelButton).not.toBeUndefined();
         });
-        const contextRowField = fixture.nativeElement.querySelector('[data-testid="context-row"]');
-        expect(contextRowField).not.toBeNull();
     });
 
-    it("renders two rows when two rows are provided", async () => {
-        const { fixture } = await createConfirmComponent({
-            contextRows: [
-                { key: "any-key-one", value: "any-value-one" },
-                { key: "any-key-two", value: "any-value-two" }
-            ]
-        });
-        const contextRowFields = fixture.nativeElement.querySelectorAll('[data-testid="context-row"]');
-        expect(contextRowFields.length).toBe(2);
-    });
-
-    it("renders the context key in the DOM", async () => {
-        const specialKey = "specialKey";
-        const { fixture } = await createConfirmComponent({
-            contextRows: [
-                { key: specialKey, value: "any-value" }
-            ]
-        });
-        const keyField = fixture.nativeElement.querySelector('[data-testid="context-key"]');
-        expect(keyField.textContent).toBe(specialKey);
-    });
-
-    it("renders two context keys in the DOM when there are two context rows", async () => {
-        const { fixture } = await createConfirmComponent({
-            contextRows: [
-                { key: "key-one", value: "any-value" },
-                { key: "key-two", value: "any-value" }
-            ]
-        });
-        const keyFields = fixture.nativeElement.querySelectorAll('[data-testid="context-key"]');
-        expect(keyFields[0].textContent).toBe("key-one");
-        expect(keyFields[1].textContent).toBe("key-two");
-    });
-
-    it.each<{ variant: ConfirmOptions['variant'], iconName: string }>
-        ([
-            { variant: "info", iconName: "circle-play" },
-            { variant: "destructive", iconName: "triangle-alert" },
-            { variant: "warning", iconName: "circle-alert" }])
-        ('renders the $variant icon when variant is $variant', async ({ variant, iconName }) => {
-            const { fixture } = await createConfirmComponent({ variant });
-            const variantIcon = fixture.debugElement.query(By.css('[data-testid="variant-icon"]'));
-            const iconInstance: IconStub = variantIcon.componentInstance;
-            expect(iconInstance.name()).toBe(iconName);
+    describe("Optional message", () => {
+        it("renders the optional message", async () => {
+            const { fixture } = await createConfirmComponent({ message: "Un message optionnel à afficher" });
+            const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
+            expect(messageField).not.toBeNull();
         });
 
-    it.each<{ variant: ConfirmOptions['variant'], iconName: string }>([
-        { variant: "info", iconName: "play" },
-        { variant: "destructive", iconName: "trash-2" },
-        { variant: "warning", iconName: "log-out" }
-    ])
-        ("renders the $iconName icon in the confirm button when variant is $variant", async ({ iconName, variant }) => {
-            const { fixture } = await createConfirmComponent({ variant });
-            const iconConfirmButton = fixture.debugElement.query(By.css('[data-testid="confirm-icon"]'));
-            const iconInstance: IconStub = iconConfirmButton.componentInstance;
-            expect(iconInstance.name()).toBe(iconName);
+        it.each<{ label: string; message: string | undefined }>([
+            { label: "empty", message: "" },
+            { label: "missing", message: undefined }
+        ])("doesn't render the $label message", async ({ message }) => {
+            const { fixture } = await createConfirmComponent({ message });
+            const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
+            expect(messageField).toBeNull();
+        });
+    });
+
+    describe("Context rows", () => {
+        it("renders the optional context rows", async () => {
+            const { fixture } = await createConfirmComponent({
+                contextRows: [
+                    { key: "KeyA", value: "Value A" }
+                ]
+            });
+            const contextRowsField = fixture.nativeElement.querySelector('[data-testid="context-rows"]');
+            expect(contextRowsField).not.toBeNull();
         });
 
-    it.each<{ variant: ConfirmOptions['variant'] }>([
-        { variant: "info" },
-        { variant: "destructive" },
-        { variant: "warning" }
-    ])
-        ("sets the $variant variant to the root element", async ({ variant }) => {
-            const { fixture } = await createConfirmComponent({ variant });
-            const rootElement = fixture.nativeElement as HTMLElement;
-            const variantAttribute = rootElement.getAttribute('data-variant');
-            expect(variantAttribute).toBe(variant);
+        it.each<{ label: string; contextRows: ConfirmOptions['contextRows'] }>([
+            { label: "missing", contextRows: undefined },
+            { label: "empty", contextRows: [] }
+        ])
+            ("doesn't render the context rows when data is $label", async ({ contextRows }) => {
+                const { fixture } = await createConfirmComponent({ contextRows });
+                const contextRowField = fixture.nativeElement.querySelector('[data-testid="context-rows"]');
+                expect(contextRowField).toBeNull();
+            });
+
+        it("renders two rows when two rows are provided", async () => {
+            const { fixture } = await createConfirmComponent({
+                contextRows: [
+                    { key: "any-key-one", value: "any-value-one" },
+                    { key: "any-key-two", value: "any-value-two" }
+                ]
+            });
+            const contextRowFields = fixture.nativeElement.querySelectorAll('[data-testid="context-row"]');
+            expect(contextRowFields.length).toBe(2);
         });
 
-    it("doesn't render the non-existing message", async () => {
-        const { fixture } = await createConfirmComponent({});
-        const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
-        expect(messageField).toBeNull();
+        it.each<{ field: string, testValues: string[] }>([
+            { field: "key", testValues: ["k1", "k2"] },
+            { field: "value", testValues: ["v1", "v2"] }
+        ])
+            ("renders the context $field in the DOM", async ({ field, testValues }) => {
+                const rows: ContextRow[] = testValues.map<ContextRow>(r => ({ key: "any-key", value: "any-value", [field]: r }));
+                const { fixture } = await createConfirmComponent({ contextRows: rows });
+                const fields: HTMLElement[] = fixture.nativeElement.querySelectorAll(`[data-testid="context-${field}"]`);
+                fields.forEach((element, index) => {
+                    expect(element.textContent).toBe(testValues[index]);
+                });
+            });
     });
 
-    it("doesn't render the message when message is empty string", async () => {
-        const { fixture } = await createConfirmComponent({ message: "" });
-        const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
-        expect(messageField).toBeNull();
+    describe("Variant", () => {
+        it.each<{ variant: ConfirmOptions['variant'], iconName: string }>
+            ([
+                { variant: "info", iconName: "circle-play" },
+                { variant: "destructive", iconName: "triangle-alert" },
+                { variant: "warning", iconName: "circle-alert" }])
+            ('renders the $variant icon when variant is $variant', async ({ variant, iconName }) => {
+                const { fixture } = await createConfirmComponent({ variant });
+                const variantIcon = fixture.debugElement.query(By.css('[data-testid="variant-icon"]'));
+                const iconInstance: IconStub = variantIcon.componentInstance;
+                expect(iconInstance.name()).toBe(iconName);
+            });
+
+        it.each<{ variant: ConfirmOptions['variant'], iconName: string }>([
+            { variant: "info", iconName: "play" },
+            { variant: "destructive", iconName: "trash-2" },
+            { variant: "warning", iconName: "log-out" }
+        ])
+            ("renders the $iconName icon in the confirm button when variant is $variant", async ({ iconName, variant }) => {
+                const { fixture } = await createConfirmComponent({ variant });
+                const iconConfirmButton = fixture.debugElement.query(By.css('[data-testid="confirm-icon"]'));
+                const iconInstance: IconStub = iconConfirmButton.componentInstance;
+                expect(iconInstance.name()).toBe(iconName);
+            });
+
+        it.each<{ variant: ConfirmOptions['variant'] }>([
+            { variant: "info" },
+            { variant: "destructive" },
+            { variant: "warning" }
+        ])
+            ("sets the $variant variant to the root element", async ({ variant }) => {
+                const { fixture } = await createConfirmComponent({ variant });
+                const rootElement = fixture.nativeElement as HTMLElement;
+                const variantAttribute = rootElement.getAttribute('data-variant');
+                expect(variantAttribute).toBe(variant);
+            });
     });
 
-    it("calls DialogRef.close(true) when clicking on confirm button", async () => {
-        const { fixture, fakeDialogRef } = await createConfirmComponent({});
-        getButtonByTestId(fixture, "confirm").click();
-        expect(fakeDialogRef.close).toHaveBeenCalledWith(true);
-    });
+    describe("Closing the dialog", () => {
+        it("calls DialogRef.close(true) when clicking on confirm button", async () => {
+            const { fixture, fakeDialogRef } = await createConfirmComponent({});
+            getButtonByTestId(fixture, "confirm").click();
+            expect(fakeDialogRef.close).toHaveBeenCalledWith(true);
+        });
 
-    it("calls DialogRef.close(false) when clicking on cancel button", async () => {
-        const { fixture, fakeDialogRef } = await createConfirmComponent({});
-        getButtonByTestId(fixture, "cancel").click();
-        expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
-    });
+        it("calls DialogRef.close(false) when clicking on cancel button", async () => {
+            const { fixture, fakeDialogRef } = await createConfirmComponent({});
+            getButtonByTestId(fixture, "cancel").click();
+            expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
+        });
 
-    it("calls DialogRef.close(false) when clicking on close button", async () => {
-        const { fixture, fakeDialogRef } = await createConfirmComponent({});
-        getButtonByTestId(fixture, "close").click();
-        expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
+        it("calls DialogRef.close(false) when clicking on close button", async () => {
+            const { fixture, fakeDialogRef } = await createConfirmComponent({});
+            getButtonByTestId(fixture, "close").click();
+            expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
+        });
     });
 
     async function createConfirmComponent(data: Partial<ConfirmOptions>) {

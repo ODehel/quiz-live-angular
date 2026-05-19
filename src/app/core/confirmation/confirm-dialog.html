@@ -1,19 +1,22 @@
-{{title}}
+{{dialogData.title}}
 <button data-testid="close" (click)="cancel()"><app-icon name="x" /></button>
-<button data-testid="cancel" (click)="cancel()">{{cancelLabel}}</button>
+<button data-testid="cancel" (click)="cancel()">{{dialogData.cancelLabel}}</button>
 <button data-testid="confirm" (click)="confirm()"><app-icon data-testid="confirm-icon"
-        [name]="confirmIcon" />{{confirmLabel}}</button>
+        [name]="confirmIcon" />{{dialogData.confirmLabel}}</button>
 <app-icon data-testid="variant-icon" [name]="variantIcon" />
-@if (message) {
-<p data-testid="message">{{message}}</p>
+@if (dialogData.message) {
+<p data-testid="message">{{dialogData.message}}</p>
 }
-@if (contextRows?.length) {
+@if (dialogData.contextRows?.length) {
 <div data-testid="context-rows">
-    @for (row of contextRows; track row.key) {
+    @for (row of dialogData.contextRows; track row.key) {
     <div data-testid="context-row" [attr.data-tone]="row.tone">
         <span data-testid="context-key">{{row.key}}</span>
         <span data-testid="context-value">{{row.value}}</span>
     </div>
     }
 </div>
+}
+@if (dialogData.requireTyping) {
+<input data-testid="confirm-action-input" />
 }

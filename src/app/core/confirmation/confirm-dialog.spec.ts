@@ -179,6 +179,20 @@ describe("Confirm Dialog", () => {
         });
     });
 
+    describe("Confirm action input", () => {
+        it("renders the input field when requireTyping is defined", async () => {
+            const { fixture } = await createConfirmComponent({ requireTyping: "ANNULER" });
+            const confirmActionInput = fixture.nativeElement.querySelector('[data-testid="confirm-action-input"]');
+            expect(confirmActionInput).not.toBeNull();
+        });
+        
+        it("never renders the input field when requireTyping is not defined", async () => {
+            const { fixture } = await createConfirmComponent({});
+            const confirmActionInput = fixture.nativeElement.querySelector('[data-testid="confirm-action-input"]');
+            expect(confirmActionInput).toBeNull();
+        });
+    });
+
     async function createConfirmComponent(data: Partial<ConfirmOptions>) {
         const defaults: ConfirmOptions = { title: "any-title", confirmLabel: "any-confirm-label", cancelLabel: "any-cancel-label", variant: "info" };
         const mergedData = { ...defaults, ...data };

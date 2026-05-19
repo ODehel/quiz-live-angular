@@ -16,7 +16,8 @@ export interface ConfirmOptions {
     cancelLabel: string;
     message?: string;
     variant: 'destructive' | 'warning' | 'info';
-    contextRows?: ContextRow[]
+    contextRows?: ContextRow[];
+    requireTyping?: string;
 }
 
 const VARIANT_ICONS: Record<ConfirmOptions['variant'], string> = {
@@ -34,21 +35,15 @@ const CONFIRM_ICONS: Record<ConfirmOptions['variant'], string> = {
 @Component({
     templateUrl: './confirm-dialog.html',
     imports: [Icon],
-    host: { '[attr.data-variant]': 'variant' },
+    host: { '[attr.data-variant]': 'dialogData.variant' },
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConfirmDialogComponent {
-    private readonly dialogData = inject<ConfirmOptions>(DIALOG_DATA);
+    readonly dialogData = inject<ConfirmOptions>(DIALOG_DATA);
     private readonly dialogRef: DialogRef<boolean> = inject(DialogRef);
 
-    readonly title = this.dialogData.title;
-    readonly confirmLabel = this.dialogData.confirmLabel;
-    readonly cancelLabel = this.dialogData.cancelLabel;
-    readonly message = this.dialogData.message;
-    readonly variant = this.dialogData.variant;
-    readonly contextRows = this.dialogData.contextRows;
-    readonly variantIcon = VARIANT_ICONS[this.variant];
-    readonly confirmIcon = CONFIRM_ICONS[this.variant];
+    readonly variantIcon = VARIANT_ICONS[this.dialogData.variant];
+    readonly confirmIcon = CONFIRM_ICONS[this.dialogData.variant];
 
     constructor() {
         fromEvent<KeyboardEvent>(document, 'keydown')

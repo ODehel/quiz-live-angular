@@ -1,7 +1,7 @@
 {{dialogData.title}}
 <button data-testid="close" (click)="cancel()"><app-icon name="x" /></button>
 <button data-testid="cancel" (click)="cancel()">{{dialogData.cancelLabel}}</button>
-<button data-testid="confirm" (click)="confirm()"><app-icon data-testid="confirm-icon"
+<button data-testid="confirm" (click)="confirm()" [disabled]="dialogData.requireTyping"><app-icon data-testid="confirm-icon"
         [name]="confirmIcon" />{{dialogData.confirmLabel}}</button>
 <app-icon data-testid="variant-icon" [name]="variantIcon" />
 @if (dialogData.message) {

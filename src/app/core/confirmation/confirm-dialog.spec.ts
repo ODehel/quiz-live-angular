@@ -179,7 +179,7 @@ describe("Confirm Dialog", () => {
         });
     });
 
-    describe("Confirm action input", () => {
+    describe("Confirm action workflow", () => {
         it("renders the input field when requireTyping is defined", async () => {
             const { fixture } = await createConfirmComponent({ requireTyping: "ANNULER" });
             const confirmActionInput = fixture.nativeElement.querySelector('[data-testid="confirm-action-input"]');
@@ -190,6 +190,12 @@ describe("Confirm Dialog", () => {
             const { fixture } = await createConfirmComponent({});
             const confirmActionInput = fixture.nativeElement.querySelector('[data-testid="confirm-action-input"]');
             expect(confirmActionInput).toBeNull();
+        });
+
+        it("disables the confirm button at loading when requireTyping is defined", async () => {
+            const { fixture } = await createConfirmComponent({ requireTyping: "ANNULER" });
+            const confirmButton = getButtonByTestId(fixture, "confirm");
+            expect(confirmButton.disabled).toBe(true);
         });
     });
 

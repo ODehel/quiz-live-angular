@@ -171,6 +171,12 @@ describe("Confirm Dialog", () => {
             document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
             expect(fakeDialogRef.close).toHaveBeenCalledWith(false);
         });
+
+        it("never calls DialogRef.close when typing on a different key than Esc", async () => {
+            const { fakeDialogRef } = await createConfirmComponent({});
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+            expect(fakeDialogRef.close).not.toHaveBeenCalled();
+        });
     });
 
     async function createConfirmComponent(data: Partial<ConfirmOptions>) {

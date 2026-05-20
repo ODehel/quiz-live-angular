@@ -1,12 +1,12 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { LucideAngularModule, X } from 'lucide-angular';
+import { CircleAlert, CirclePlay, LogOut, LucideAngularModule, Play, Trash2, TriangleAlert, X } from 'lucide-angular';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    importProvidersFrom(LucideAngularModule.pick({ X }))
+    importProvidersFrom(LucideAngularModule.pick({ X, TriangleAlert, CircleAlert, CirclePlay, Play, Trash2, LogOut }))
   ]
 };

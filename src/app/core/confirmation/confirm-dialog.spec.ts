@@ -185,7 +185,7 @@ describe("Confirm Dialog", () => {
             const confirmActionInput = fixture.nativeElement.querySelector('[data-testid="confirm-action-input"]');
             expect(confirmActionInput).not.toBeNull();
         });
-        
+
         it("never renders the input field when requireTyping is not defined", async () => {
             const { fixture } = await createConfirmComponent({});
             const confirmActionInput = fixture.nativeElement.querySelector('[data-testid="confirm-action-input"]');
@@ -196,6 +196,26 @@ describe("Confirm Dialog", () => {
             const { fixture } = await createConfirmComponent({ requireTyping: "ANNULER" });
             const confirmButton = getButtonByTestId(fixture, "confirm");
             expect(confirmButton.disabled).toBe(true);
+        });
+
+        it("still disables the confirm button while requireTyping is not completed", async () => {
+            const { fixture } = await createConfirmComponent({ requireTyping: "ANNULER" });
+            const input = fixture.nativeElement.querySelector('[data-testid="confirm-action-input"]') as HTMLInputElement;
+            input.value = "ANNULE";
+            input.dispatchEvent(new Event("input"));
+            await fixture.whenStable();
+            const confirmButton = getButtonByTestId(fixture, "confirm");
+            expect(confirmButton.disabled).toBe(true);
+        });
+
+        it("enables the confirm button when requireTyping is completed", async () => {
+            const { fixture } = await createConfirmComponent({ requireTyping: "ANNULER" });
+            const input = fixture.nativeElement.querySelector('[data-testid="confirm-action-input"]') as HTMLInputElement;
+            input.value = "ANNULER";
+            input.dispatchEvent(new Event("input"));
+            await fixture.whenStable();
+            const confirmButton = getButtonByTestId(fixture, "confirm");
+            expect(confirmButton.disabled).toBe(false);
         });
     });
 

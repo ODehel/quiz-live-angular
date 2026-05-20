@@ -1,8 +1,9 @@
 {{dialogData.title}}
 <button data-testid="close" (click)="cancel()"><app-icon name="x" /></button>
 <button data-testid="cancel" (click)="cancel()">{{dialogData.cancelLabel}}</button>
-<button data-testid="confirm" (click)="confirm()" [disabled]="dialogData.requireTyping"><app-icon data-testid="confirm-icon"
-        [name]="confirmIcon" />{{dialogData.confirmLabel}}</button>
+<button data-testid="confirm" (click)="confirm()"
+    [disabled]="confirmDisabled()"><app-icon
+        data-testid="confirm-icon" [name]="confirmIcon" />{{dialogData.confirmLabel}}</button>
 <app-icon data-testid="variant-icon" [name]="variantIcon" />
 @if (dialogData.message) {
 <p data-testid="message">{{dialogData.message}}</p>
@@ -18,5 +19,6 @@
 </div>
 }
 @if (dialogData.requireTyping) {
-<input data-testid="confirm-action-input" />
+<input data-testid="confirm-action-input" [value]="typedConfirmation()"
+    (input)="typedConfirmation.set($any($event.target).value)" />
 }

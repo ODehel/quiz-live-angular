@@ -1,5 +1,5 @@
 import { DIALOG_DATA, DialogRef } from "@angular/cdk/dialog";
-import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from "@angular/core";
 import { Icon } from "../../shared/ui/icon/icon";
 import { filter, fromEvent } from "rxjs";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
@@ -44,6 +44,11 @@ export class ConfirmDialogComponent {
 
     readonly variantIcon = VARIANT_ICONS[this.dialogData.variant];
     readonly confirmIcon = CONFIRM_ICONS[this.dialogData.variant];
+    readonly typedConfirmation = signal<string>("");
+    readonly confirmDisabled = computed(() =>
+        !!this.dialogData.requireTyping
+        && this.typedConfirmation() !== this.dialogData.requireTyping
+    );
 
     constructor() {
         fromEvent<KeyboardEvent>(document, 'keydown')

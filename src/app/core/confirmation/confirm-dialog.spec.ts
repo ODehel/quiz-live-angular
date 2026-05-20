@@ -225,7 +225,7 @@ describe("Confirm Dialog", () => {
         });
 
         it("doesn't render a hint when requireTyping is not defined", async () => {
-            const { fixture } = await createConfirmComponent({ });
+            const { fixture } = await createConfirmComponent({});
             const hintField = fixture.nativeElement.querySelector('[data-testid="confirm-action-hint"]') as HTMLElement;
             expect(hintField).toBeNull();
         });
@@ -244,6 +244,18 @@ describe("Confirm Dialog", () => {
             await fixture.whenStable();
             const hintField = fixture.nativeElement.querySelector('[data-testid="confirm-action-hint"]') as HTMLElement;
             expect(hintField.textContent).contain("Confirmation valide");
+        });
+    });
+
+    describe("escape tip", () => {
+        it.each<{ variant: ConfirmOptions['variant'], action: string }>([
+            { variant: "info", action: "attendre" },
+            { variant: "warning", action: "rester" },
+            { variant: "destructive", action: "annuler" }
+        ])("renders an escape tip for the $variant variant", async ({ variant, action }) => {
+            const { fixture } = await createConfirmComponent({ variant });
+            const escapeTipElement = fixture.nativeElement.querySelector('[data-testid="escape-tip"]');
+            expect(escapeTipElement.textContent).toBe(`Esc pour ${action}`);
         });
     });
 

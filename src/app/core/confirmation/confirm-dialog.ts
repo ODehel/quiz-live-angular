@@ -32,6 +32,12 @@ const CONFIRM_ICONS: Record<ConfirmOptions['variant'], string> = {
     warning: 'log-out'
 };
 
+const ESCAPE_TIPS: Record<ConfirmOptions['variant'], string> = {
+    info: 'attendre',
+    warning: 'rester',
+    destructive: 'annuler'
+};
+
 @Component({
     templateUrl: './confirm-dialog.html',
     imports: [Icon],
@@ -44,6 +50,7 @@ export class ConfirmDialogComponent {
 
     readonly variantIcon = VARIANT_ICONS[this.dialogData.variant];
     readonly confirmIcon = CONFIRM_ICONS[this.dialogData.variant];
+    readonly escapeTip = ESCAPE_TIPS[this.dialogData.variant];
     readonly typedConfirmation = signal<string>("");
     readonly confirmDisabled = computed(() =>
         !!this.dialogData.requireTyping && !this.typingMatches()

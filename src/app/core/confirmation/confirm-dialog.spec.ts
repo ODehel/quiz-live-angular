@@ -217,6 +217,34 @@ describe("Confirm Dialog", () => {
             const confirmButton = getButtonByTestId(fixture, "confirm");
             expect(confirmButton.disabled).toBe(false);
         });
+
+        it("renders a hint when requireTyping is defined", async () => {
+            const { fixture } = await createConfirmComponent({ requireTyping: "ANNULER" });
+            const hintField = fixture.nativeElement.querySelector('[data-testid="confirm-action-hint"]') as HTMLElement;
+            expect(hintField).not.toBeNull();
+        });
+
+        it("doesn't render a hint when requireTyping is not defined", async () => {
+            const { fixture } = await createConfirmComponent({ });
+            const hintField = fixture.nativeElement.querySelector('[data-testid="confirm-action-hint"]') as HTMLElement;
+            expect(hintField).toBeNull();
+        });
+
+        it("renders a hint with typing clue when requireTyping is defined but there's no match", async () => {
+            const { fixture } = await createConfirmComponent({ requireTyping: "ANNULER" });
+            const hintField = fixture.nativeElement.querySelector('[data-testid="confirm-action-hint"]') as HTMLElement;
+            expect(hintField.textContent).contain("Tapez ANNULER pour confirmer");
+        });
+
+        it("renders a hint with confirmation when requireTyping is defined and there's a match", async () => {
+            const { fixture } = await createConfirmComponent({ requireTyping: "ANNULER" });
+            const input = fixture.nativeElement.querySelector('[data-testid="confirm-action-input"]') as HTMLInputElement;
+            input.value = "ANNULER";
+            input.dispatchEvent(new Event("input"));
+            await fixture.whenStable();
+            const hintField = fixture.nativeElement.querySelector('[data-testid="confirm-action-hint"]') as HTMLElement;
+            expect(hintField.textContent).contain("Confirmation valide");
+        });
     });
 
     async function createConfirmComponent(data: Partial<ConfirmOptions>) {

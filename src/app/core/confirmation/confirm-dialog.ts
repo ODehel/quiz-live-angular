@@ -46,9 +46,11 @@ export class ConfirmDialogComponent {
     readonly confirmIcon = CONFIRM_ICONS[this.dialogData.variant];
     readonly typedConfirmation = signal<string>("");
     readonly confirmDisabled = computed(() =>
-        !!this.dialogData.requireTyping
-        && this.typedConfirmation() !== this.dialogData.requireTyping
+        !!this.dialogData.requireTyping && !this.typingMatches()
     );
+    readonly typingMatches = computed(() => 
+        !!this.dialogData.requireTyping 
+    && this.typedConfirmation() === this.dialogData.requireTyping);
 
     constructor() {
         fromEvent<KeyboardEvent>(document, 'keydown')

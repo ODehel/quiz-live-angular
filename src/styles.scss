@@ -1,25 +1,72 @@
 @import '@angular/cdk/overlay-prebuilt.css';
 
 :root {
-  --semantic-success: #4ade80; /* Vert — bonne réponse, validation */
+  /* Backgrounds */
+  --bg-base: #0b0a10;
+  --bg-surface: #141221;
+  --bg-surface-2: #1c192e;
+  --bg-surface-3: #252238;
+
+  /* Texts */
+  --text-primary: #f4f3f8;
+  --text-secondary: #a8a3bd;
+  --text-muted: #6b6680;
+
+  /* Borders */
+  --border-subtle: #2a2740;
+  --border-default: #3a3654;
+  --border-strong: #4f4a70;
+
+  /* Accents */
+  --accent-primary: #9d6bff;
+  --accent-primary-soft: rgba(157, 107, 255, 0.12);
+  --accent-primary-glow: rgba(157, 107, 255, 0.35);
+
+  --accent-secondary: #4dd4e8;
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+  --accent-secondary-glow: rgba(77, 212, 232, 0.35);
+
+  --accent-vivid: #ff4d8f;
+  --accent-vivid-soft: rgba(255, 77, 143, 0.15);
+  --accent-vivid-glow: rgba(255, 77, 143, 0.35);
+
+  /* Semantics */
+  --semantic-success: #4ade80;
   --semantic-success-soft: rgba(74, 222, 128, 0.12);
   --semantic-success-glow: rgba(74, 222, 128, 0.4);
 
-  --semantic-warning: #fbbf24; /* Ambre — brouillon, alertes douces */
+  --semantic-warning: #fbbf24;
   --semantic-warning-soft: rgba(251, 191, 36, 0.12);
   --semantic-warning-glow: rgba(251, 191, 36, 0.35);
 
-  --semantic-danger: #ef4444; /* Rouge — invalidation, suppression */
+  --semantic-danger: #ef4444;
   --semantic-danger-soft: rgba(239, 68, 68, 0.12);
   --semantic-danger-glow: rgba(239, 68, 68, 0.35);
 
-  --semantic-critical: #dc2626; /* Rouge sombre — critiques (partie corrompue) */
+  --semantic-critical: #dc2626;
   --semantic-critical-soft: rgba(220, 38, 38, 0.15);
   --semantic-critical-glow: rgba(220, 38, 38, 0.4);
 
-  --accent-secondary: #4dd4e8; /* Cyan — info, liens */
-  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
-  --accent-secondary-glow: rgba(77, 212, 232, 0.35);
+  /* Buzzers */
+  --buzzer-1: #4dd4e8;
+  --buzzer-2: #5b8def;
+  --buzzer-3: #9d6bff;
+  --buzzer-4: #ff4d8f;
+  --buzzer-5: #ff7a59;
+  --buzzer-6: #fbbf24;
+  --buzzer-7: #a3e635;
+  --buzzer-8: #4ade80;
+  --buzzer-9: #34d399;
+  --buzzer-10: #7c5cf5;
+
+  /* Fonts */
+  --font-ui: 'Geist', system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Geist', sans-serif;
+  --font-mono: 'Geist Mono', 'Menlo', monospace;
+
+  /* Layout */
+  --sidebar-width: 252px;
+  --topbar-height: 52px;
 }
 
 @keyframes progress-shrink {
@@ -41,3 +88,24 @@
     transform: translateX(0) scale(1);
   }
 }
+
+@keyframes dialog-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* Fond sombre overlay (toasts, modales, erreurs) */

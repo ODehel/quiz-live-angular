@@ -6,4 +6,5 @@ import { Component, input } from '@angular/core';
 })  
 export class IconStub {
     readonly name = input.required<string>();
+     readonly size = input<number | undefined>(undefined);
 }

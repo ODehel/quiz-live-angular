@@ -1,6 +1,6 @@
 <div class="dialog-header">
     <div class="dialog-icon">
-        <app-icon data-testid="variant-icon" [name]="variantIcon" />
+        <app-icon data-testid="variant-icon" [name]="variantIcon" [size]="20" />
     </div>
     <div class="dialog-header-text">
         <div class="dialog-title">{{dialogData.title}}</div>
@@ -8,7 +8,7 @@
         <p class="dialog-message" data-testid="message">{{dialogData.message}}</p>
         }
     </div>
-    <button class="dialog-close" data-testid="close" (click)="cancel()"><app-icon name="x" /></button>
+    <button class="dialog-close" data-testid="close" (click)="cancel()"><app-icon name="x" [size]="14" /></button>
 </div>
 <div class="dialog-body">
     @if (dialogData.contextRows?.length) {
@@ -41,6 +41,6 @@
     <div class="dialog-buttons">
         <button class="dialog-btn" data-testid="cancel" (click)="cancel()">{{dialogData.cancelLabel}}</button>
         <button class="dialog-btn confirm" data-testid="confirm" (click)="confirm()" [disabled]="confirmDisabled()"><app-icon
-                data-testid="confirm-icon" [name]="confirmIcon" />{{dialogData.confirmLabel}}</button>
+                data-testid="confirm-icon" [name]="confirmIcon" [size]="14" />{{dialogData.confirmLabel}}</button>
     </div>
 </div>

@@ -40,6 +40,7 @@ const ESCAPE_TIPS: Record<ConfirmOptions['variant'], string> = {
 
 @Component({
     templateUrl: './confirm-dialog.html',
+    styleUrl: './confirm-dialog.scss',
     imports: [Icon],
     host: { '[attr.data-variant]': 'dialogData.variant' },
     changeDetection: ChangeDetectionStrategy.OnPush

@@ -6,9 +6,13 @@ import { By } from '@angular/platform-browser';
 @Component({
     selector: 'host-test',
     imports: [Button],
-    template: `<app-button>Valider la réponse</app-button>`
+    template: `<app-button (click)="addOccurrence()">Valider la réponse</app-button>`
 })
-class HostTest { }
+class HostTest {
+    emitCount = 0;
+
+    addOccurrence(): void { this.emitCount++; }
+}
 
 describe("Button", () => {
     describe('Composition of the app-button', () => {
@@ -23,19 +27,12 @@ describe("Button", () => {
             expect(button?.textContent).contains("Valider la réponse");
         });
         it("throws an event on clicking the button", async () => {
-            let emitCount = 0;
-
-            // s'abonner à l'output → besoin de l'instance du Button enfant
-            const buttonDebugEl = fixture.debugElement.query(By.directive(Button));
-            const buttonInstance: Button = buttonDebugEl.componentInstance;
-            buttonInstance.click.subscribe(() => emitCount++);
-
             // simuler un vrai clic DOM → besoin de l'élément HTML
             const buttonElement = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
             buttonElement.click();
 
             await fixture.whenStable();
-            expect(emitCount).toBe(1);
+            expect(fixture.componentInstance.emitCount).toBe(1);
         });
     });
 });

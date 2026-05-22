@@ -22,5 +22,18 @@ describe('Icon', () => {
             const svg = icon!.querySelector('svg');
             expect(svg?.classList.contains('lucide-x')).toBe(true);
         });
+        it("renders the right size of the icon", async () => {
+            fixture.componentRef.setInput('name', "x");
+            fixture.componentRef.setInput('size', 19);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const icon = fixture.nativeElement.querySelector('lucide-icon');
+            expect(icon).not.toBeNull();
+
+            const svg = icon!.querySelector('svg');
+            expect(svg?.getAttribute('width')).toBe('19');
+            expect(svg?.getAttribute('height')).toBe('19');
+        });
     });
 }); 

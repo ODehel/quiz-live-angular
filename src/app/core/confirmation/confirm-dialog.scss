@@ -1,0 +1,64 @@
+:host {
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 32px 80px -8px rgba(0, 0, 0, 0.6),
+    0 0 60px var(--variant-glow, transparent);
+  animation: dialog-pop-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+:host::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--variant-color);
+}
+
+:host[data-variant="destructive"] {
+  --variant-color: var(--semantic-danger);
+  --variant-soft: var(--semantic-danger-soft);
+  --variant-glow: rgba(239, 68, 68, 0.15);
+}
+
+:host[data-variant="warning"] {
+  --variant-color: var(--semantic-warning);
+  --variant-soft: var(--semantic-warning-soft);
+  --variant-glow: rgba(251, 191, 36, 0.15);
+}
+
+:host[data-variant="info"] {
+  --variant-color: var(--accent-secondary);
+  --variant-soft: var(--accent-secondary-soft);
+  --variant-glow: rgba(77, 212, 232, 0.15);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 22px 14px;
+}
+
+.dialog-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--variant-soft);
+  border: 1px solid color-mix(in srgb, var(--variant-color) 25%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--variant-color);
+}

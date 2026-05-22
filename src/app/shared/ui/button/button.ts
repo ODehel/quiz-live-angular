@@ -1,10 +1,9 @@
-import { ChangeDetectionStrategy, Component, output } from "@angular/core";
+import { ChangeDetectionStrategy, Component } from "@angular/core";
 
 @Component({
     selector: 'app-button',
-    template: '<button (click)="click.emit()"><ng-content /></button>',
+    template: '<button><ng-content /></button>',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Button {
-    readonly click = output<void>();
 }

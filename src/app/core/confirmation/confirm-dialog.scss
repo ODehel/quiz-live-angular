@@ -62,3 +62,91 @@
   flex-shrink: 0;
   color: var(--variant-color);
 }
+
+.dialog-header-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 1px;
+}
+
+.dialog-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.dialog-message {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.dialog-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.dialog-close:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+.dialog-body {
+  padding: 0 22px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dialog-context {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dialog-context-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.dialog-context-row .key {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.dialog-context-row .value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.dialog-context-row[data-tone="warning"] .value {
+  color: var(--semantic-warning);
+}
+
+.dialog-context-row[data-tone="danger"] .value {
+  color: var(--semantic-danger);
+}

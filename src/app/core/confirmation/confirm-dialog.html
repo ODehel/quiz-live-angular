@@ -5,7 +5,7 @@
     <div class="dialog-header-text">
         <div class="dialog-title">{{dialogData.title}}</div>
         @if (dialogData.message) {
-        <p class="dialog-message" data-testid="message">{{dialogData.message}}</p>
+        <div class="dialog-message" data-testid="message">{{dialogData.message}}</div>
         }
     </div>
     <button class="dialog-close" data-testid="close" (click)="cancel()"><app-icon name="x" [size]="14" /></button>
@@ -15,8 +15,8 @@
     <div class="dialog-context" data-testid="context-rows">
         @for (row of dialogData.contextRows; track row.key) {
         <div class="dialog-context-row" data-testid="context-row" [attr.data-tone]="row.tone">
-            <span data-testid="context-key">{{row.key}}</span>
-            <span data-testid="context-value">{{row.value}}</span>
+            <span class="key" data-testid="context-key">{{row.key}}</span>
+            <span class="value" data-testid="context-value">{{row.value}}</span>
         </div>
         }
     </div>
@@ -40,7 +40,8 @@
     <span class="dialog-keyboard-hint" data-testid="escape-tip">Esc pour {{ escapeTip }}</span>
     <div class="dialog-buttons">
         <button class="dialog-btn" data-testid="cancel" (click)="cancel()">{{dialogData.cancelLabel}}</button>
-        <button class="dialog-btn confirm" data-testid="confirm" (click)="confirm()" [disabled]="confirmDisabled()"><app-icon
-                data-testid="confirm-icon" [name]="confirmIcon" [size]="14" />{{dialogData.confirmLabel}}</button>
+        <button class="dialog-btn confirm" data-testid="confirm" (click)="confirm()"
+            [disabled]="confirmDisabled()"><app-icon data-testid="confirm-icon" [name]="confirmIcon"
+                [size]="14" />{{dialogData.confirmLabel}}</button>
     </div>
 </div>

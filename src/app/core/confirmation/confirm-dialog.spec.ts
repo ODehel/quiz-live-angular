@@ -230,12 +230,6 @@ describe("Confirm Dialog", () => {
             expect(hintField).toBeNull();
         });
 
-        it("renders a hint with typing clue when requireTyping is defined but there's no match", async () => {
-            const { fixture } = await createConfirmComponent({ requireTyping: "ANNULER" });
-            const hintField = fixture.nativeElement.querySelector('[data-testid="confirm-action-hint"]') as HTMLElement;
-            expect(hintField.textContent).contain("Tapez ANNULER pour confirmer");
-        });
-
         it("renders a hint with confirmation when requireTyping is defined and there's a match", async () => {
             const { fixture } = await createConfirmComponent({ requireTyping: "ANNULER" });
             const input = fixture.nativeElement.querySelector('[data-testid="confirm-action-input"]') as HTMLInputElement;

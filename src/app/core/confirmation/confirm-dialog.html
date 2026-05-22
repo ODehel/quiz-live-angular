@@ -24,20 +24,23 @@
     @if (dialogData.requireTyping) {
 
     <div class="dialog-typing">
-        <input data-testid="confirm-action-input" [value]="typedConfirmation()"
-            (input)="typedConfirmation.set($any($event.target).value)" />
-        <p data-testid="confirm-action-hint">
+        <div class="dialog-typing-label">
+            Pour confirmer, tapez <code>{{ dialogData.requireTyping }}</code> ci-dessous.
+        </div>
+        <input class="dialog-typing-input" [class.match]="typingMatches()" data-testid="confirm-action-input"
+            [value]="typedConfirmation()" (input)="typedConfirmation.set($any($event.target).value)" type="text"
+            placeholder="Tapez ici..." autocomplete="off" spellcheck="false" />
+        <div class="dialog-typing-hint" [class.matched]="typingMatches()" data-testid="confirm-action-hint">
+            <span class="check"><app-icon name="check" [size]="9" /></span>
             @if (typingMatches()) {
             Confirmation valide
-            } @else {
-            Tapez {{ dialogData.requireTyping }} pour confirmer
             }
-        </p>
+        </div>
     </div>
     }
 </div>
 <div class="dialog-footer">
-    <span class="dialog-keyboard-hint" data-testid="escape-tip">Esc pour {{ escapeTip }}</span>
+    <span class="dialog-keyboard-hint" data-testid="escape-tip"><kbd>Esc</kbd> pour {{ escapeTip }}</span>
     <div class="dialog-buttons">
         <button class="dialog-btn" data-testid="cancel" (click)="cancel()">{{dialogData.cancelLabel}}</button>
         <button class="dialog-btn confirm" data-testid="confirm" (click)="confirm()"

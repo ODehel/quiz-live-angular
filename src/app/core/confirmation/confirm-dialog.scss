@@ -16,7 +16,7 @@
 }
 
 :host::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -25,19 +25,19 @@
   background: var(--variant-color);
 }
 
-:host[data-variant="destructive"] {
+:host[data-variant='destructive'] {
   --variant-color: var(--semantic-danger);
   --variant-soft: var(--semantic-danger-soft);
   --variant-glow: rgba(239, 68, 68, 0.15);
 }
 
-:host[data-variant="warning"] {
+:host[data-variant='warning'] {
   --variant-color: var(--semantic-warning);
   --variant-soft: var(--semantic-warning-soft);
   --variant-glow: rgba(251, 191, 36, 0.15);
 }
 
-:host[data-variant="info"] {
+:host[data-variant='info'] {
   --variant-color: var(--accent-secondary);
   --variant-soft: var(--accent-secondary-soft);
   --variant-glow: rgba(77, 212, 232, 0.15);
@@ -97,7 +97,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
   flex-shrink: 0;
 }
 
@@ -143,10 +145,185 @@
   font-weight: 600;
 }
 
-.dialog-context-row[data-tone="warning"] .value {
+.dialog-context-row[data-tone='warning'] .value {
   color: var(--semantic-warning);
 }
 
-.dialog-context-row[data-tone="danger"] .value {
+.dialog-context-row[data-tone='danger'] .value {
   color: var(--semantic-danger);
+}
+
+.dialog-typing {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dialog-typing-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.dialog-typing-label code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--variant-color);
+  background: var(--variant-soft);
+  border: 1px solid color-mix(in srgb, var(--variant-color) 25%, transparent);
+  padding: 2px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.06em;
+}
+
+.dialog-typing-input {
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dialog-typing-input:focus {
+  border-color: var(--variant-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--variant-color) 15%, transparent);
+}
+
+.dialog-typing-input.match {
+  border-color: var(--variant-color);
+  color: var(--variant-color);
+  background: var(--variant-soft);
+}
+
+.dialog-typing-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.dialog-typing-hint .check {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg-surface-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog-typing-hint .check app-icon {
+  color: var(--text-muted);
+}
+
+.dialog-typing-hint.matched .check app-icon {
+  color: white;
+}
+
+.dialog-typing-hint.matched .check {
+  background: var(--variant-color);
+}
+
+.dialog-typing-hint.matched .check svg {
+  color: white;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 22px 18px;
+  margin-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.dialog-keyboard-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dialog-keyboard-hint kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.dialog-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.dialog-btn {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.dialog-btn:hover:not(:disabled) {
+  background: var(--bg-surface-3);
+  border-color: var(--border-strong);
+}
+
+.dialog-btn.confirm {
+  background: var(--variant-color);
+  border-color: transparent;
+  color: white;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.dialog-btn.confirm:hover:not(:disabled) {
+  box-shadow: 0 0 24px var(--variant-glow);
+  transform: translateY(-1px);
+}
+
+.dialog-btn.confirm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--bg-surface-3);
+  color: var(--text-muted);
+}
+
+:host[data-variant="warning"] .dialog-btn.confirm {
+  color: #1a1208;
+}
+
+:host[data-variant="info"] .dialog-btn.confirm {
+  background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+  color: white;
 }

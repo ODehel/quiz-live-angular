@@ -253,6 +253,21 @@ describe("Confirm Dialog", () => {
         });
     });
 
+    describe("cancel button icon", () => {
+        it("renders the cancel icon when cancelIcon is defined", async () => {
+            const { fixture } = await createConfirmComponent({ cancelIcon: "arrow-left" });
+            const iconCancelButton = fixture.debugElement.query(By.css('[data-testid="cancel-icon"]'));
+            const iconInstance: IconStub = iconCancelButton.componentInstance;
+            expect(iconInstance.name()).toBe("arrow-left");
+        });
+
+        it("doesn't render the cancel icon when cancelIcon is not defined", async () => {
+            const { fixture } = await createConfirmComponent({ });
+            const iconCancelButton = fixture.debugElement.query(By.css('[data-testid="cancel-icon"]'));
+            expect(iconCancelButton).toBeNull();
+        });
+    });
+
     async function createConfirmComponent(data: Partial<ConfirmOptions>) {
         const defaults: ConfirmOptions = { title: "any-title", confirmLabel: "any-confirm-label", cancelLabel: "any-cancel-label", variant: "info" };
         const mergedData = { ...defaults, ...data };
@@ -273,7 +288,7 @@ describe("Confirm Dialog", () => {
     function getButtonByContent(fixture: ComponentFixture<ConfirmDialogComponent>, buttonContent: string) {
         const root = fixture.nativeElement as HTMLElement;
         const buttons = Array.from(root.querySelectorAll<HTMLButtonElement>('button'));
-        return buttons.find(b => b.textContent === buttonContent);
+        return buttons.find(b => b.textContent?.trim() === buttonContent);
     }
 
     function getButtonByTestId(fixture: ComponentFixture<ConfirmDialogComponent>, buttonTestId: string) {

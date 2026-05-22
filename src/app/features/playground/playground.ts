@@ -40,6 +40,7 @@ export class Playground {
             ],
             confirmLabel: "Quitter quand même",
             cancelLabel: "Continuer l'édition",
+            cancelIcon: "arrow-left",
             variant: "warning"
         });
     }

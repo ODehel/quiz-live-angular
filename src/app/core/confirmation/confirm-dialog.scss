@@ -22,7 +22,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--variant-color);
+  background: linear-gradient(90deg, transparent, var(--variant-color), transparent);
 }
 
 :host[data-variant='destructive'] {

@@ -14,6 +14,7 @@ export interface ConfirmOptions {
     title: string;
     confirmLabel: string;
     cancelLabel: string;
+    cancelIcon?: string;
     message?: string;
     variant: 'destructive' | 'warning' | 'info';
     contextRows?: ContextRow[];

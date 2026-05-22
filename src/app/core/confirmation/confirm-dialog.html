@@ -42,7 +42,12 @@
 <div class="dialog-footer">
     <span class="dialog-keyboard-hint" data-testid="escape-tip"><kbd>Esc</kbd> pour {{ escapeTip }}</span>
     <div class="dialog-buttons">
-        <button class="dialog-btn" data-testid="cancel" (click)="cancel()">{{dialogData.cancelLabel}}</button>
+        <button class="dialog-btn" data-testid="cancel" (click)="cancel()">
+            @if (dialogData.cancelIcon) {
+            <app-icon data-testid="cancel-icon" [name]="dialogData.cancelIcon" [size]="14" />
+            }
+            {{dialogData.cancelLabel}}
+        </button>
         <button class="dialog-btn confirm" data-testid="confirm" (click)="confirm()"
             [disabled]="confirmDisabled()"><app-icon data-testid="confirm-icon" [name]="confirmIcon"
                 [size]="14" />{{dialogData.confirmLabel}}</button>

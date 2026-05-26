@@ -16,4 +16,11 @@ describe("ErrorService", () => {
         call(service);
         expect(service.currentError()?.variant).toBe(variant);
     });
+
+    it("clears the current error", () => {
+        const service = new ErrorService();
+        service.notFound();
+        service.clearError();
+        expect(service.currentError()).toBeNull();
+    });
 });

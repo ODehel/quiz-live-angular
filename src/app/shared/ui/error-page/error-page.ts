@@ -9,4 +9,8 @@ import { ErrorService } from "../../../core/error/error.service";
 export class ErrorPage {
     private readonly errorService = inject(ErrorService);
     readonly error = this.errorService.currentError;
+
+    goHome(): void { 
+        this.errorService.clearError();
+    }
 }

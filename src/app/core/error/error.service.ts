@@ -16,4 +16,5 @@ export class ErrorService {
   connectionLost(): void { this.setError('connection-lost'); }
   serverError(): void { this.setError('server-error'); }
   gameCorrupted(): void { this.setError('game-corrupted'); }
+  clearError(): void { this.currentError.set(null); }
 }

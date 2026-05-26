@@ -36,4 +36,13 @@ describe("ErrorPage", () => {
         const page = fixture.nativeElement.querySelector('[data-testid="error-screen"]');
         expect(page?.getAttribute('data-variant')).toBe(variant);
     });
+
+    it("clears the error when user asks to return on homepage", async () => {
+        const service = TestBed.inject(ErrorService)
+        service.notFound();
+        await fixture.whenStable();
+        const homeButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="home-button"]');
+        homeButton.click();
+        expect(service.currentError()).toBeNull();
+    });
 });

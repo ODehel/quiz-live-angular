@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ErrorPage } from "./error-page";
-import { ErrorService } from "../../../core/error/error.service";
+import { ErrorContext, ErrorService } from "../../../core/error/error.service";
 
 describe("ErrorPage", () => {
     let fixture: ComponentFixture<ErrorPage>;
@@ -22,5 +22,18 @@ describe("ErrorPage", () => {
         await fixture.whenStable();
         const nativeEl = fixture.nativeElement as HTMLElement;
         expect(nativeEl.querySelector('[data-testid="error-screen"]')).not.toBeNull();
+    });
+
+    it.each<{ variant: ErrorContext['variant'], call: (s: ErrorService) => void }>([
+        { variant: 'not-found', call: s => s.notFound() },
+        { variant: 'connection-lost', call: s => s.connectionLost() },
+        { variant: 'server-error', call: s => s.serverError() },
+        { variant: 'game-corrupted', call: s => s.gameCorrupted() }
+    ])("sets data-variant to '$variant' when error is $variant", async ({ variant, call }) => {
+        const service = TestBed.inject(ErrorService)
+        call(service);
+        await fixture.whenStable();
+        const page = fixture.nativeElement.querySelector('[data-testid="error-screen"]');
+        expect(page?.getAttribute('data-variant')).toBe(variant);
     });
 });

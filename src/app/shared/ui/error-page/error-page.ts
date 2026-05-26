@@ -3,11 +3,7 @@ import { ErrorService } from "../../../core/error/error.service";
 
 @Component({
     selector: 'app-error-page',
-    template: `
-        @if (error()) {
-            <div data-testid="error-screen"></div>
-        }
-    `,
+    templateUrl: './error-page.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ErrorPage {

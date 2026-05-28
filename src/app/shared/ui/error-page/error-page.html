@@ -1,5 +1,6 @@
 @if (error(); as err) {
     <div data-testid="error-screen" [attr.data-variant]="err.variant">
+        <app-icon data-testid="main-icon" [name]="mainIconFor(err.variant)"></app-icon>
         <button data-testid="home-button" (click)="goHome()"></button>
     </div>
 }

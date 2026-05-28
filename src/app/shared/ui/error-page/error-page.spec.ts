@@ -1,12 +1,16 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ErrorPage } from "./error-page";
 import { ErrorContext, ErrorService } from "../../../core/error/error.service";
+import { stubIconIn } from "../icon/icon.test-helpers";
+import { By } from "@angular/platform-browser";
+import { IconStub } from "../icon/icon.stub";
 
 describe("ErrorPage", () => {
     let fixture: ComponentFixture<ErrorPage>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({}).compileComponents();
+        stubIconIn(ErrorPage);
         fixture = TestBed.createComponent(ErrorPage);
     });
 
@@ -38,11 +42,25 @@ describe("ErrorPage", () => {
     });
 
     it("clears the error when user asks to return on homepage", async () => {
-        const service = TestBed.inject(ErrorService)
+        const service = TestBed.inject(ErrorService);
         service.notFound();
         await fixture.whenStable();
         const homeButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="home-button"]');
         homeButton.click();
         expect(service.currentError()).toBeNull();
+    });
+
+    it.each<{ variant: ErrorContext['variant'], call: (s: ErrorService) => void, iconName: string }>([
+        { variant: 'not-found', call: s => s.notFound(), iconName: "map-off" },
+        { variant: 'connection-lost', call: s => s.connectionLost(), iconName: "wifi-off" },
+        { variant: 'server-error', call: s => s.serverError(), iconName: "server-crash" },
+        { variant: 'game-corrupted', call: s => s.gameCorrupted(), iconName: "alert-octagon" }
+    ])("renders the main icon when error is $variant", async ({ variant, call, iconName }) => {
+        const service = TestBed.inject(ErrorService)
+        call(service);
+        await fixture.whenStable();
+        const mainIcon = fixture.debugElement.query(By.css('[data-testid="main-icon"]'));
+        const iconInstance: IconStub = mainIcon.componentInstance;
+        expect(iconInstance.name()).toBe(iconName);
     });
 });

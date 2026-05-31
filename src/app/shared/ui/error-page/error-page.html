@@ -1,6 +1,10 @@
 @if (error(); as err) {
+    @let config = configFor(err.variant);
     <div data-testid="error-screen" [attr.data-variant]="err.variant">
-        <app-icon data-testid="main-icon" [name]="mainIconFor(err.variant)"></app-icon>
+        <app-icon data-testid="main-icon" [name]="config.icon"></app-icon>
+        <span data-testid="eyebrow">{{config.eyebrow}}</span>
+        <h1 data-testid="title">{{config.title}}</h1>
+        <p data-testid="message">{{config.message}}</p>
         <button data-testid="home-button" (click)="goHome()"></button>
     </div>
 }

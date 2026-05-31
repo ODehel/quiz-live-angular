@@ -1,17 +1,23 @@
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { Button } from "../../shared/ui/button/button";
 import { ConfirmationService } from "../../core/confirmation/confirmation.service";
+import { ErrorService } from "../../core/error/error.service";
 
 @Component({
     selector: 'app-playground',
     template: `<app-button (click)="openDestructive()">Ouvrir destructive</app-button>
     <app-button (click)="openWarning()">Ouvrir warning</app-button>
-    <app-button (click)="openInfo()">Ouvrir info</app-button>`,
+    <app-button (click)="openInfo()">Ouvrir info</app-button>
+    <app-button (click)="showNotFoundErrorPage()">Page introuvable</app-button>
+    <app-button (click)="showConnectionLostErrorPage()">Connexion perdue</app-button>
+    <app-button (click)="showServerErrorPage()">Erreur 500</app-button>
+    <app-button (click)="showGameCorruptedErrorPage()">Partie en erreur</app-button>`,
     imports: [Button],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Playground {
     private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+    private readonly errorService: ErrorService = inject(ErrorService);
 
     openDestructive(): void {
         this.confirmationService.ask({
@@ -57,5 +63,21 @@ export class Playground {
             cancelLabel: "Attendre encore",
             variant: "info"
         });
+    }
+
+    showNotFoundErrorPage(): void {
+        this.errorService.notFound();
+    }
+
+    showConnectionLostErrorPage(): void {
+        this.errorService.connectionLost();
+    }
+
+    showServerErrorPage(): void {
+        this.errorService.serverError();
+    }
+
+    showGameCorruptedErrorPage(): void {
+        this.errorService.gameCorrupted();
     }
 }

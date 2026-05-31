@@ -11,7 +11,7 @@ export interface ErrorVariantConfig {
 
 const VARIANT_CONFIGS: Record<ErrorContext['variant'], ErrorVariantConfig> = {
     "not-found": {
-        icon: "map-off",
+        icon: "map-pin-off",
         eyebrow: "Erreur 404",
         title: "Cette page n'existe pas (encore)",
         message: "Le lien est cassé ou la ressource a été supprimée."
@@ -29,7 +29,7 @@ const VARIANT_CONFIGS: Record<ErrorContext['variant'], ErrorVariantConfig> = {
         message: "Une erreur inattendue s'est produite côté hub. L'incident a été enregistré dans les logs."
     },
     "game-corrupted": {
-        icon: "alert-octagon",
+        icon: "octagon-alert",
         eyebrow: "Incident critique",
         title: "Cette partie est corrompue",
         message: "L'état de la partie est devenu incohérent et ne peut pas être restauré. Les scores jusqu'ici sont conservés."

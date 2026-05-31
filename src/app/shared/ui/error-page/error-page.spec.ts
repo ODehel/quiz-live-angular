@@ -51,10 +51,10 @@ describe("ErrorPage", () => {
     });
 
     it.each<{ variant: ErrorContext['variant'], call: (s: ErrorService) => void, iconName: string }>([
-        { variant: 'not-found', call: s => s.notFound(), iconName: "map-off" },
+        { variant: 'not-found', call: s => s.notFound(), iconName: "map-pin-off" },
         { variant: 'connection-lost', call: s => s.connectionLost(), iconName: "wifi-off" },
         { variant: 'server-error', call: s => s.serverError(), iconName: "server-crash" },
-        { variant: 'game-corrupted', call: s => s.gameCorrupted(), iconName: "alert-octagon" }
+        { variant: 'game-corrupted', call: s => s.gameCorrupted(), iconName: "octagon-alert" }
     ])("renders the main icon when error is $variant", async ({ variant, call, iconName }) => {
         const service = TestBed.inject(ErrorService);
         call(service);

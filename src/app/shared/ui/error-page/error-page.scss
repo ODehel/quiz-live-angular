@@ -1,0 +1,266 @@
+:host {
+    display: block;
+}
+
+.error-screen {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* Le fond ambiant est défini par variante */
+}
+
+/* Fond ambiant — 404 (violet neutre) */
+[data-testid="error-screen"][data-variant="not-found"] {
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 30%, rgba(157, 107, 255, 0.10), transparent 70%),
+    radial-gradient(ellipse 60% 30% at 50% 70%, rgba(77, 212, 232, 0.06), transparent 70%),
+    var(--bg-base);
+  --variant-color: var(--accent-primary);
+  --variant-soft: var(--accent-primary-soft);
+  --variant-glow: var(--accent-primary-glow);
+}
+
+/* Fond ambiant — connection-lost (ambre, ton avertissement) */
+[data-testid="error-screen"][data-variant="connection-lost"] {
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 30%, rgba(251, 191, 36, 0.10), transparent 70%),
+    radial-gradient(ellipse 60% 30% at 50% 70%, rgba(251, 191, 36, 0.04), transparent 70%),
+    var(--bg-base);
+  --variant-color: var(--semantic-warning);
+  --variant-soft: var(--semantic-warning-soft);
+  --variant-glow: var(--semantic-warning-glow);
+}
+
+/* Fond ambiant — server-error (rouge, sérieux) */
+[data-testid="error-screen"][data-variant="server-error"] {
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 30%, rgba(239, 68, 68, 0.10), transparent 70%),
+    radial-gradient(ellipse 60% 30% at 50% 70%, rgba(239, 68, 68, 0.04), transparent 70%),
+    var(--bg-base);
+  --variant-color: var(--semantic-danger);
+  --variant-soft: var(--semantic-danger-soft);
+  --variant-glow: var(--semantic-danger-glow);
+}
+
+/* Fond ambiant — game-corrupted (rouge profond + magenta, critique) */
+[data-testid="error-screen"][data-variant="game-corrupted"] {
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 30%, rgba(220, 38, 38, 0.14), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 30% 70%, rgba(255, 77, 143, 0.10), transparent 70%),
+    var(--bg-base);
+  --variant-color: var(--semantic-critical);
+  --variant-soft: var(--semantic-critical-soft);
+  --variant-glow: var(--semantic-critical-glow);
+}
+
+/* ─── Mini-barre supérieure (logo + retour accueil) ─── */
+.error-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(11, 10, 16, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.error-bar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.error-bar-brand-icon {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 16px var(--accent-primary-glow);
+}
+
+.error-bar-brand-icon svg { width: 16px; height: 16px; color: white; }
+
+.error-bar-brand-text {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.error-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bar-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.bar-btn:hover {
+  background: var(--bg-surface-2);
+  border-color: var(--border-strong);
+}
+
+.bar-btn svg { width: 14px; height: 14px; }
+
+/* ─── Contenu central ─── */
+.error-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 28px;
+  gap: 24px;
+  text-align: center;
+}
+
+/* ─── Icône d'erreur ─── */
+.error-icon-wrap {
+  position: relative;
+  width: 124px;
+  height: 124px;
+  border-radius: 28px;
+  background: var(--variant-soft);
+  border: 1px solid color-mix(in srgb, var(--variant-color) 25%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  animation: icon-float 4s ease-in-out infinite;
+  overflow: hidden;
+}
+
+.error-icon-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--variant-color) 20%, transparent), transparent 60%);
+  pointer-events: none;
+}
+
+/* Halo lumineux derrière l'icône */
+.error-icon-wrap::after {
+  content: "";
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--variant-glow), transparent 70%);
+  opacity: 0.5;
+  z-index: -1;
+  pointer-events: none;
+  animation: pulse-soft 3s ease-in-out infinite;
+}
+
+.error-icon-wrap > .error-icon-svg {
+  width: 56px;
+  height: 56px;
+  color: var(--variant-color);
+  position: relative;
+  z-index: 1;
+}
+
+/* Variante critique : icône qui tremble légèrement */
+.variant-game-corrupted .error-icon-wrap {
+  animation: icon-shake 0.6s ease-in-out infinite, icon-float 4s ease-in-out infinite;
+}
+
+/* Effet "scan-line" pour la variante server-error */
+.variant-server-error .error-icon-wrap > .scan-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--variant-color) 30%, transparent), transparent);
+  animation: scan-line 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ─── Eyebrow (code d'erreur) ─── */
+.error-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--variant-soft);
+  border: 1px solid color-mix(in srgb, var(--variant-color) 25%, transparent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--variant-color);
+}
+
+.error-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--variant-color);
+  box-shadow: 0 0 8px var(--variant-color);
+}
+
+/* Animation de "trois points" pour connection-lost */
+.error-eyebrow-dots {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 4px;
+}
+
+.error-eyebrow-dots > span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--variant-color);
+  animation: dots-pulse 1.4s ease-in-out infinite;
+}
+
+.error-eyebrow-dots > span:nth-child(2) { animation-delay: 0.2s; }
+.error-eyebrow-dots > span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ─── Titre + message ─── */
+.error-title {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  max-width: 720px;
+}
+
+.error-title em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--variant-color) 0%, var(--accent-vivid) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.error-message {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: 560px;
+  margin-top: -4px;
+}

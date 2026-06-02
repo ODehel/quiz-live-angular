@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { ErrorContext, ErrorService } from "../../../core/error/error.service";
 import { Icon } from "../icon/icon";
+import { Router } from "@angular/router";
 
 export interface ErrorVariantConfig {
     icon: string;
@@ -39,15 +40,18 @@ const VARIANT_CONFIGS: Record<ErrorContext['variant'], ErrorVariantConfig> = {
 @Component({
     selector: 'app-error-page',
     templateUrl: './error-page.html',
+    styleUrl: './error-page.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [Icon]
 })
 export class ErrorPage {
     private readonly errorService = inject(ErrorService);
+    private readonly router = inject(Router);
     readonly error = this.errorService.currentError;
 
     goHome(): void {
         this.errorService.clearError();
+        this.router.navigate(['/']);
     }
 
     configFor(variant: ErrorContext['variant']): ErrorVariantConfig {

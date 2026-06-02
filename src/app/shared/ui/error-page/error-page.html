@@ -1,10 +1,28 @@
 @if (error(); as err) {
-    @let config = configFor(err.variant);
-    <div data-testid="error-screen" [attr.data-variant]="err.variant">
-        <app-icon data-testid="main-icon" [name]="config.icon"></app-icon>
-        <span data-testid="eyebrow">{{config.eyebrow}}</span>
-        <h1 data-testid="title">{{config.title}}</h1>
-        <p data-testid="message">{{config.message}}</p>
-        <button data-testid="home-button" (click)="goHome()"></button>
+@let config = configFor(err.variant);
+<div data-testid="error-screen" [attr.data-variant]="err.variant">
+    <div class="error-bar">
+        <div class="error-bar-brand">
+            <div class="error-bar-brand-icon">
+                <app-icon name="zap" [size]="16" style="color: white" />
+            </div>
+            <span class="error-bar-brand-text">Quiz Buzzer</span>
+        </div>
+        <button data-testid="home-button" class="bar-btn" (click)="goHome()">
+            <app-icon name="home" [size]="14" />
+            Retour à l'accueil
+        </button>
     </div>
+    <div class="error-content">
+        <div class="error-icon-wrap">
+            <app-icon data-testid="main-icon" [name]="config.icon" [size]="56" />
+        </div>
+        <span data-testid="eyebrow" class="error-eyebrow">
+            <span class="error-eyebrow-dot"></span>
+            {{config.eyebrow}}
+        </span>
+        <h1 data-testid="title" class="error-title">{{config.title}}</h1>
+        <p data-testid="message" class="error-message">{{config.message}}</p>
+    </div>
+</div>
 }

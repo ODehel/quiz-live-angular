@@ -4,12 +4,18 @@ import { ErrorContext, ErrorService } from "../../../core/error/error.service";
 import { stubIconIn } from "../icon/icon.test-helpers";
 import { By } from "@angular/platform-browser";
 import { IconStub } from "../icon/icon.stub";
+import { Router } from "@angular/router";
+import { Mock, Mocked } from "vitest";
 
 describe("ErrorPage", () => {
     let fixture: ComponentFixture<ErrorPage>;
+    let mockRouter: { navigate: Mock };
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({}).compileComponents();
+        mockRouter =  { navigate: vi.fn() };
+        await TestBed.configureTestingModule({
+            providers: [{ provide: Router, useValue: mockRouter }]
+        }).compileComponents();
         stubIconIn(ErrorPage);
         fixture = TestBed.createComponent(ErrorPage);
     });
@@ -101,5 +107,22 @@ describe("ErrorPage", () => {
         await fixture.whenStable();
         const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
         expect(messageField.textContent).toContain(message);
+    });
+
+    it("renders a label for Home button", async () => {
+        const service = TestBed.inject(ErrorService);
+        service.notFound();
+        await fixture.whenStable();
+        const homeButtonField = fixture.nativeElement.querySelector('[data-testid="home-button"]');
+        expect(homeButtonField.textContent).not.toBe("");
+    });
+
+    it("navigate to Home when clicking on Home button", async () => {
+        const service = TestBed.inject(ErrorService);
+        service.notFound();
+        await fixture.whenStable();
+        const homeButtonField: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="home-button"]');
+        homeButtonField.click();
+        expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
     });
 });

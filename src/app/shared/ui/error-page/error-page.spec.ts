@@ -1,18 +1,19 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { ErrorPage } from "./error-page";
+import { ErrorPage, ErrorVariantConfig } from "./error-page";
 import { ErrorContext, ErrorService } from "../../../core/error/error.service";
 import { stubIconIn } from "../icon/icon.test-helpers";
 import { By } from "@angular/platform-browser";
 import { IconStub } from "../icon/icon.stub";
 import { Router } from "@angular/router";
-import { Mock, Mocked } from "vitest";
+import { Mock } from "vitest";
+import { VariantConfigurationService } from "./variant-configuration.service";
 
 describe("ErrorPage", () => {
     let fixture: ComponentFixture<ErrorPage>;
     let mockRouter: { navigate: Mock };
 
     beforeEach(async () => {
-        mockRouter =  { navigate: vi.fn() };
+        mockRouter = { navigate: vi.fn() };
         await TestBed.configureTestingModule({
             providers: [{ provide: Router, useValue: mockRouter }]
         }).compileComponents();
@@ -93,7 +94,7 @@ describe("ErrorPage", () => {
         call(service);
         await fixture.whenStable();
         const titleField = fixture.nativeElement.querySelector('[data-testid="title"]');
-        expect(titleField.textContent).toContain(title);
+        expect(titleField.textContent.replace(/\s+/g, ' ').trim()).toContain(title);
     });
 
     it.each<{ variant: ErrorContext['variant'], call: (s: ErrorService) => void, message: string }>([
@@ -124,5 +125,39 @@ describe("ErrorPage", () => {
         const homeButtonField: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="home-button"]');
         homeButtonField.click();
         expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
+    });
+
+    
+});
+
+describe("Tag colors", async () => {
+    it("renders at least a em tag when a colored title is required", async () => {
+        let fixture: ComponentFixture<ErrorPage>;
+        let mockRouter: { navigate: Mock } = { navigate: vi.fn() };
+        let context: ErrorContext = { variant: "connection-lost" };
+        let mockService: { currentError: Mock } = { currentError: vi.fn().mockReturnValue(context) };
+        let variantConfig: ErrorVariantConfig = {
+            icon: "any-icon",
+            eyebrow: "any-eyebrow",
+            titleSegments: [
+                { content: "Any title " },
+                { content: "(for sure)", colored: true },
+                { content: "!!!" }
+            ],
+            message: "any-message"
+        };
+        let mockConfigurationService: { configFor: Mock } = { configFor: vi.fn().mockReturnValue(variantConfig) };
+        await TestBed.configureTestingModule({
+            providers: [
+                { provide: Router, useValue: mockRouter },
+                { provide: ErrorService, useValue: mockService },
+                { provide: VariantConfigurationService, useValue: mockConfigurationService }
+            ]
+        }).compileComponents();
+        stubIconIn(ErrorPage);
+        fixture = TestBed.createComponent(ErrorPage);
+        await fixture.whenStable();
+        const titleField: HTMLElement = fixture.nativeElement.querySelector('[data-testid="title"]');
+        expect(titleField.innerHTML).toContain("<em ");
     });
 });

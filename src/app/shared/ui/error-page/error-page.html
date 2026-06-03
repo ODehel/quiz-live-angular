@@ -21,7 +21,15 @@
             <span class="error-eyebrow-dot"></span>
             {{config.eyebrow}}
         </span>
-        <h1 data-testid="title" class="error-title">{{config.title}}</h1>
+        <h1 data-testid="title" class="error-title">
+            @for (titleSegment of config.titleSegments; track titleSegment) {
+                @if (titleSegment.colored) {
+                    <em>{{titleSegment.content}}</em>
+                } @else {
+                    {{titleSegment.content}}
+                }
+            }
+        </h1>
         <p data-testid="message" class="error-message">{{config.message}}</p>
     </div>
 </div>

@@ -10,5 +10,5 @@ import { LucideAngularModule } from 'lucide-angular';
 })  
 export class Icon {
     readonly name = input.required<string>();
-     readonly size = input<number | undefined>(undefined);
+    readonly size = input<number | undefined>(undefined);
 }

@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Buzzer — Classement intermédiaire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --bg-base: #0b0a10;
+  --bg-surface: #141221;
+  --bg-surface-2: #1c192e;
+  --bg-surface-3: #252238;
+
+  --text-primary: #f4f3f8;
+  --text-secondary: #a8a3bd;
+  --text-muted: #6b6680;
+
+  --border-subtle: #2a2740;
+  --border-default: #3a3654;
+  --border-strong: #4f4a70;
+
+  --accent-primary: #9d6bff;
+  --accent-primary-hover: #8a52ff;
+  --accent-primary-soft: rgba(157, 107, 255, 0.12);
+  --accent-primary-glow: rgba(157, 107, 255, 0.35);
+
+  --accent-secondary: #4dd4e8;
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+
+  --accent-vivid: #ff4d8f;
+  --accent-vivid-soft: rgba(255, 77, 143, 0.15);
+  --accent-vivid-glow: rgba(255, 77, 143, 0.35);
+
+  --semantic-success: #4ade80;
+  --semantic-success-soft: rgba(74, 222, 128, 0.12);
+  --semantic-success-glow: rgba(74, 222, 128, 0.4);
+
+  /* 10 buzzers */
+  --buzzer-1: #4dd4e8;
+  --buzzer-2: #5b8def;
+  --buzzer-3: #9d6bff;
+  --buzzer-4: #ff4d8f;
+  --buzzer-5: #ff7a59;
+  --buzzer-6: #fbbf24;
+  --buzzer-7: #a3e635;
+  --buzzer-8: #4ade80;
+  --buzzer-9: #34d399;
+  --buzzer-10: #7c5cf5;
+
+  --font-ui: "Geist", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", sans-serif;
+  --font-mono: "Geist Mono", "Menlo", monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes ranking-row-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes leader-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.3), 0 0 32px -8px rgba(251, 191, 36, 0.4); }
+  50%      { box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.5), 0 0 48px -8px rgba(251, 191, 36, 0.6); }
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* OVERLAY PLEIN ÉCRAN                                              */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.ranking-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  /* Fond ambiant accentué : plus marqué que les écrans normaux,
+     pour le côté "moment théâtral" sobre */
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(157, 107, 255, 0.18), transparent 65%),
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255, 77, 143, 0.10), transparent 70%),
+    var(--bg-base);
+  z-index: 100;
+  overflow-y: auto;
+}
+
+/* ─── Mini-barre supérieure ─── */
+.ranking-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(11, 10, 16, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.ranking-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ranking-bar-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--accent-primary-glow);
+}
+
+.ranking-bar-icon svg { width: 18px; height: 18px; color: white; }
+
+.ranking-bar-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ranking-bar-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.ranking-bar-subtitle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.ranking-bar-broadcast {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--accent-secondary-soft);
+  border: 1px solid rgba(77, 212, 232, 0.3);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-secondary);
+}
+
+.ranking-bar-broadcast .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-secondary);
+  box-shadow: 0 0 6px var(--accent-secondary);
+  animation: pulse-soft 1.2s ease-in-out infinite;
+}
+
+.ranking-bar-close {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.ranking-bar-close:hover {
+  background: var(--bg-surface-2);
+  border-color: var(--border-strong);
+}
+
+.ranking-bar-close svg { width: 14px; height: 14px; }
+
+.ranking-bar-close-shortcut {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+/* ─── Contenu central ─── */
+.ranking-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 28px 56px;
+  gap: 28px;
+}
+
+.ranking-headline {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 720px;
+}
+
+.ranking-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--accent-primary);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.ranking-eyebrow svg { width: 14px; height: 14px; }
+
+.ranking-title {
+  font-family: var(--font-display);
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.ranking-title em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-vivid) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.ranking-meta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.ranking-meta-sep { opacity: 0.4; }
+
+/* ─── Card du classement ─── */
+.ranking-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 880px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.6);
+}
+
+.ranking-card-header {
+  display: grid;
+  grid-template-columns: 56px 1fr 100px 110px;
+  gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface-2);
+}
+
+.ranking-card-header-cell {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.ranking-card-header-cell.rank { text-align: center; }
+.ranking-card-header-cell.delta { text-align: center; }
+.ranking-card-header-cell.score { text-align: right; }
+
+.ranking-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.ranking-row {
+  display: grid;
+  grid-template-columns: 56px 1fr 100px 110px;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.15s ease;
+  position: relative;
+  /* Animation d'entrée séquencée */
+  animation: ranking-row-enter 0.4s ease-out backwards;
+}
+
+.ranking-row:nth-child(1)  { animation-delay: 0.05s; }
+.ranking-row:nth-child(2)  { animation-delay: 0.10s; }
+.ranking-row:nth-child(3)  { animation-delay: 0.15s; }
+.ranking-row:nth-child(4)  { animation-delay: 0.20s; }
+.ranking-row:nth-child(5)  { animation-delay: 0.25s; }
+.ranking-row:nth-child(6)  { animation-delay: 0.30s; }
+.ranking-row:nth-child(7)  { animation-delay: 0.35s; }
+.ranking-row:nth-child(8)  { animation-delay: 0.40s; }
+.ranking-row:nth-child(9)  { animation-delay: 0.45s; }
+.ranking-row:nth-child(10) { animation-delay: 0.50s; }
+
+.ranking-row:last-child { border-bottom: none; }
+.ranking-row:hover { background: var(--bg-surface-2); }
+
+/* Barre verticale gauche pour le podium */
+.ranking-row.podium-1::before,
+.ranking-row.podium-2::before,
+.ranking-row.podium-3::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+}
+
+.ranking-row.podium-1::before { background: linear-gradient(180deg, #fbbf24, #f59e0b); }
+.ranking-row.podium-2::before { background: linear-gradient(180deg, #cbd5e1, #94a3b8); }
+.ranking-row.podium-3::before { background: linear-gradient(180deg, #d97706, #92400e); }
+
+/* Léger fond teinté pour le 1er */
+.ranking-row.podium-1 {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.06) 0%, transparent 60%);
+}
+
+.ranking-rank {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.ranking-rank.podium-1 {
+  color: #fbbf24;
+  text-shadow: 0 0 14px rgba(251, 191, 36, 0.5);
+  font-size: 26px;
+}
+.ranking-rank.podium-2 { color: #cbd5e1; font-size: 24px; }
+.ranking-rank.podium-3 { color: #d97706; font-size: 24px; }
+
+.ranking-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ranking-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: var(--player-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 14px var(--player-glow);
+}
+
+.ranking-player-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ranking-player-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ranking-row.podium-1 .ranking-player-name {
+  font-size: 18px;
+}
+
+.ranking-player-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ranking-delta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.ranking-delta.positive { color: var(--semantic-success); }
+.ranking-delta.zero { color: var(--text-muted); }
+
+.ranking-score {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.ranking-row.podium-1 .ranking-score {
+  font-size: 26px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.ranking-score-suffix {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+/* ─── Footer (return) ─── */
+.ranking-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 28px 32px;
+  flex-direction: column;
+}
+
+.ranking-return-btn {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  color: white;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.ranking-return-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent, rgba(255,255,255,0.15), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.ranking-return-btn:hover::before { transform: translateX(100%); }
+
+.ranking-return-btn:hover {
+  box-shadow: 0 0 32px var(--accent-primary-glow);
+  transform: translateY(-1px);
+}
+
+.ranking-return-btn svg { width: 16px; height: 16px; }
+
+.ranking-footer-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ranking-footer-hint .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-secondary);
+  box-shadow: 0 0 6px var(--accent-secondary);
+  animation: pulse-soft 1.5s ease-in-out infinite;
+}
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- OVERLAY PLEIN ÉCRAN — Classement intermédiaire                  -->
+<!-- Déclenché pendant Q.9 en cours (SPEED Histoire, QUESTION_OPEN)   -->
+<!-- Le pilotage et le chrono continuent en arrière-plan (US-014).    -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<div class="ranking-overlay">
+
+  <!-- Mini-barre supérieure -->
+  <div class="ranking-bar">
+    <div class="ranking-bar-left">
+      <div class="ranking-bar-icon"><i data-lucide="bar-chart-3"></i></div>
+      <div class="ranking-bar-text">
+        <div class="ranking-bar-title">Classement intermédiaire</div>
+        <div class="ranking-bar-subtitle">Soirée découverte du monde</div>
+      </div>
+      <div class="ranking-bar-broadcast">
+        <span class="live-dot"></span>
+        Diffusé aux buzzers
+      </div>
+    </div>
+    <button class="ranking-bar-close" title="Fermer (Échap)">
+      <i data-lucide="x"></i>
+      Fermer
+      <span class="ranking-bar-close-shortcut">ESC</span>
+    </button>
+  </div>
+
+  <!-- Contenu central -->
+  <div class="ranking-content">
+
+    <!-- Headline -->
+    <div class="ranking-headline">
+      <span class="ranking-eyebrow">
+        <i data-lucide="trophy"></i>
+        Classement à mi-parcours
+      </span>
+      <h1 class="ranking-title">
+        Voici où en sont <em>les 10 joueurs</em>
+      </h1>
+      <div class="ranking-meta">
+        <span>Après 8 questions sur 12</span>
+        <span class="ranking-meta-sep">·</span>
+        <span>Q.9 en cours</span>
+        <span class="ranking-meta-sep">·</span>
+        <span>3 questions restantes</span>
+      </div>
+    </div>
+
+    <!-- Card classement -->
+    <div class="ranking-card">
+
+      <!-- Header colonnes -->
+      <div class="ranking-card-header">
+        <div class="ranking-card-header-cell rank">Rang</div>
+        <div class="ranking-card-header-cell">Joueur</div>
+        <div class="ranking-card-header-cell delta">Q.8</div>
+        <div class="ranking-card-header-cell score">Score</div>
+      </div>
+
+      <div class="ranking-table">
+
+        <!-- 1 - Nina (b3, violet) - leader -->
+        <div class="ranking-row podium-1" style="--player-color: var(--buzzer-3); --player-glow: rgba(157, 107, 255, 0.5);">
+          <div class="ranking-rank podium-1">1</div>
+          <div class="ranking-player">
+            <div class="ranking-avatar">N</div>
+            <div class="ranking-player-info">
+              <div class="ranking-player-name">Nina</div>
+              <div class="ranking-player-meta">b3 · Violet</div>
+            </div>
+          </div>
+          <div class="ranking-delta positive">+200</div>
+          <div class="ranking-score">1 450<span class="ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 2 - Maya (b4, magenta) -->
+        <div class="ranking-row podium-2" style="--player-color: var(--buzzer-4); --player-glow: rgba(255, 77, 143, 0.5);">
+          <div class="ranking-rank podium-2">2</div>
+          <div class="ranking-player">
+            <div class="ranking-avatar">M</div>
+            <div class="ranking-player-info">
+              <div class="ranking-player-name">Maya</div>
+              <div class="ranking-player-meta">b4 · Magenta</div>
+            </div>
+          </div>
+          <div class="ranking-delta zero">—</div>
+          <div class="ranking-score">1 300<span class="ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 3 - Charlie (b1, cyan) -->
+        <div class="ranking-row podium-3" style="--player-color: var(--buzzer-1); --player-glow: rgba(77, 212, 232, 0.5);">
+          <div class="ranking-rank podium-3">3</div>
+          <div class="ranking-player">
+            <div class="ranking-avatar">C</div>
+            <div class="ranking-player-info">
+              <div class="ranking-player-name">Charlie</div>
+              <div class="ranking-player-meta">b1 · Cyan</div>
+            </div>
+          </div>
+          <div class="ranking-delta zero">—</div>
+          <div class="ranking-score">1 200<span class="ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 4 - Léo (b5, corail) - gagnant Q8 -->
+        <div class="ranking-row" style="--player-color: var(--buzzer-5); --player-glow: rgba(255, 122, 89, 0.4);">
+          <div class="ranking-rank">4</div>
+          <div class="ranking-player">
+            <div class="ranking-avatar">L</div>
+            <div class="ranking-player-info">
+              <div class="ranking-player-name">Léo</div>
+              <div class="ranking-player-meta">b5 · Corail</div>
+            </div>
+          </div>
+          <div class="ranking-delta positive">+200</div>
+          <div class="ranking-score">1 100<span class="ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 5 - Théo (b2, bleu) -->
+        <div class="ranking-row" style="--player-color: var(--buzzer-2); --player-glow: rgba(91, 141, 239, 0.4);">
+          <div class="ranking-rank">5</div>
+          <div class="ranking-player">
+            <div class="ranking-avatar">T</div>
+            <div class="ranking-player-info">
+              <div class="ranking-player-name">Théo</div>
+              <div class="ranking-player-meta">b2 · Bleu</div>
+            </div>
+          </div>
+          <div class="ranking-delta zero">—</div>
+          <div class="ranking-score">950<span class="ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 6 - Emma (b7, lime) -->
+        <div class="ranking-row" style="--player-color: var(--buzzer-7); --player-glow: rgba(163, 230, 53, 0.4);">
+          <div class="ranking-rank">6</div>
+          <div class="ranking-player">
+            <div class="ranking-avatar">E</div>
+            <div class="ranking-player-info">
+              <div class="ranking-player-name">Emma</div>
+              <div class="ranking-player-meta">b7 · Lime</div>
+            </div>
+          </div>
+          <div class="ranking-delta zero">—</div>
+          <div class="ranking-score">850<span class="ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 7 - Sam (b6, ambre) - gagnant Q8 -->
+        <div class="ranking-row" style="--player-color: var(--buzzer-6); --player-glow: rgba(251, 191, 36, 0.4);">
+          <div class="ranking-rank">7</div>
+          <div class="ranking-player">
+            <div class="ranking-avatar">S</div>
+            <div class="ranking-player-info">
+              <div class="ranking-player-name">Sam</div>
+              <div class="ranking-player-meta">b6 · Ambre</div>
+            </div>
+          </div>
+          <div class="ranking-delta positive">+200</div>
+          <div class="ranking-score">800<span class="ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 8 - Hugo (b8, vert) -->
+        <div class="ranking-row" style="--player-color: var(--buzzer-8); --player-glow: rgba(74, 222, 128, 0.4);">
+          <div class="ranking-rank">8</div>
+          <div class="ranking-player">
+            <div class="ranking-avatar">H</div>
+            <div class="ranking-player-info">
+              <div class="ranking-player-name">Hugo</div>
+              <div class="ranking-player-meta">b8 · Vert</div>
+            </div>
+          </div>
+          <div class="ranking-delta zero">—</div>
+          <div class="ranking-score">650<span class="ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 9 - Zoé (b9, turquoise) -->
+        <div class="ranking-row" style="--player-color: var(--buzzer-9); --player-glow: rgba(52, 211, 153, 0.4);">
+          <div class="ranking-rank">9</div>
+          <div class="ranking-player">
+            <div class="ranking-avatar">Z</div>
+            <div class="ranking-player-info">
+              <div class="ranking-player-name">Zoé</div>
+              <div class="ranking-player-meta">b9 · Turquoise</div>
+            </div>
+          </div>
+          <div class="ranking-delta zero">—</div>
+          <div class="ranking-score">500<span class="ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 10 - Ali (b10, indigo) - dernier -->
+        <div class="ranking-row" style="--player-color: var(--buzzer-10); --player-glow: rgba(124, 92, 245, 0.4);">
+          <div class="ranking-rank">10</div>
+          <div class="ranking-player">
+            <div class="ranking-avatar">A</div>
+            <div class="ranking-player-info">
+              <div class="ranking-player-name">Ali</div>
+              <div class="ranking-player-meta">b10 · Indigo</div>
+            </div>
+          </div>
+          <div class="ranking-delta zero">—</div>
+          <div class="ranking-score">350<span class="ranking-score-suffix">pts</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="ranking-footer">
+      <button class="ranking-return-btn">
+        <i data-lucide="arrow-left"></i>
+        Reprendre la question 9
+      </button>
+      <div class="ranking-footer-hint">
+        <span class="live-dot"></span>
+        Le chronomètre de la Q.9 continue de tourner
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  if (window.lucide) lucide.createIcons();
+</script>
+</body>
+</html>

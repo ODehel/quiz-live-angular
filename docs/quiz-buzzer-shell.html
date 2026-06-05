@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Buzzer — Shell applicatif</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --bg-base: #0b0a10;
+  --bg-surface: #141221;
+  --bg-surface-2: #1c192e;
+  --bg-surface-3: #252238;
+
+  --text-primary: #f4f3f8;
+  --text-secondary: #a8a3bd;
+  --text-muted: #6b6680;
+
+  --border-subtle: #2a2740;
+  --border-default: #3a3654;
+  --border-strong: #4f4a70;
+
+  --accent-primary: #9d6bff;
+  --accent-primary-hover: #8a52ff;
+  --accent-primary-soft: rgba(157, 107, 255, 0.12);
+  --accent-primary-glow: rgba(157, 107, 255, 0.35);
+
+  --accent-secondary: #4dd4e8;
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+
+  --accent-vivid: #ff4d8f;
+  --accent-vivid-soft: rgba(255, 77, 143, 0.15);
+  --accent-vivid-glow: rgba(255, 77, 143, 0.4);
+
+  --semantic-success: #4ade80;
+  --semantic-warning: #fbbf24;
+  --semantic-danger: #f87171;
+
+  --font-ui: "Geist", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", sans-serif;
+  --font-mono: "Geist Mono", "Menlo", monospace;
+
+  --sidebar-width: 252px;
+  --sidebar-width-compact: 64px;
+  --topbar-height: 52px;
+  --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  font-feature-settings: "ss01", "cv11";
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, var(--accent-primary-soft), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, var(--accent-secondary-soft), transparent 60%);
+  background-attachment: fixed;
+  padding: 32px;
+}
+
+.page-intro {
+  max-width: 1280px;
+  margin: 0 auto 32px;
+}
+
+.page-intro .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--accent-primary);
+  margin-bottom: 8px;
+}
+
+.page-intro h1 {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
+.page-intro p {
+  color: var(--text-secondary);
+  font-size: 15px;
+  max-width: 720px;
+  line-height: 1.6;
+}
+
+.demo-section {
+  max-width: 1280px;
+  margin: 0 auto 48px;
+}
+
+.demo-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.demo-label-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+}
+
+.demo-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+}
+
+.demo-toggle button {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.demo-toggle button.active {
+  background: var(--accent-primary);
+  color: white;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* SHELL — structure générale                                       */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  overflow: hidden;
+  height: 720px;
+  position: relative;
+  transition: grid-template-columns var(--transition);
+}
+
+.shell.compact { grid-template-columns: var(--sidebar-width-compact) 1fr; }
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* SIDEBAR                                                          */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* En-tête sidebar (logo + titre) */
+.sidebar-header {
+  padding: 20px 16px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  min-height: 80px;
+}
+
+.sidebar-logo {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-vivid) 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--accent-primary-glow);
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-logo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15), transparent 50%);
+}
+
+.sidebar-logo svg {
+  width: 20px;
+  height: 20px;
+  color: white;
+  z-index: 1;
+}
+
+.sidebar-brand {
+  flex: 1;
+  min-width: 0;
+  opacity: 1;
+  transition: opacity var(--transition);
+}
+
+.shell.compact .sidebar-brand {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-brand-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.sidebar-brand-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Bouton de toggle (rétracter / étendre) */
+.sidebar-toggle {
+  position: absolute;
+  top: 32px;
+  right: -12px;
+  width: 24px;
+  height: 24px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.sidebar-toggle:hover {
+  background: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+}
+
+.sidebar-toggle svg {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--transition);
+}
+
+.shell.compact .sidebar-toggle svg { transform: rotate(180deg); }
+
+/* Bannière de pilotage (visible uniquement si partie active) */
+.pilot-banner {
+  margin: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--accent-primary-soft), var(--accent-vivid-soft));
+  border: 1px solid var(--accent-primary);
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pilot-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top right, var(--accent-vivid-glow), transparent 70%);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.pilot-banner-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent-vivid);
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.pilot-banner-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: var(--accent-vivid);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent-vivid-glow);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.pilot-banner-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  position: relative;
+}
+
+.pilot-banner-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.pilot-banner-button {
+  width: 100%;
+  background: var(--accent-vivid);
+  color: white;
+  border: none;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.pilot-banner-button:hover {
+  background: #ff3a82;
+  box-shadow: 0 0 16px var(--accent-vivid-glow);
+}
+
+.pilot-banner-button svg { width: 14px; height: 14px; }
+
+.shell.compact .pilot-banner {
+  padding: 8px 0;
+  margin: 12px 8px;
+  text-align: center;
+}
+
+.shell.compact .pilot-banner-status,
+.shell.compact .pilot-banner-title,
+.shell.compact .pilot-banner-meta,
+.shell.compact .pilot-banner-button { display: none; }
+
+.shell.compact .pilot-banner::after {
+  content: "";
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin: 0 auto;
+  background: var(--accent-vivid);
+  border-radius: 50%;
+  box-shadow: 0 0 12px var(--accent-vivid-glow);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Navigation */
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nav-group-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  padding: 0 12px;
+  margin-bottom: 4px;
+  transition: opacity var(--transition);
+}
+
+.shell.compact .nav-group-label {
+  opacity: 0;
+  height: 0;
+  margin: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.nav-item:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+}
+
+.nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  background: var(--accent-primary);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-item.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.nav-item-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.nav-item-label {
+  flex: 1;
+  transition: opacity var(--transition);
+}
+
+.shell.compact .nav-item-label {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nav-item-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: var(--bg-surface-2);
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: opacity var(--transition);
+}
+
+.shell.compact .nav-item-badge {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nav-item.active .nav-item-badge {
+  background: var(--accent-primary);
+  color: white;
+}
+
+/* Tooltips en mode compact */
+.shell.compact .nav-item { justify-content: center; }
+.shell.compact .nav-item:hover::after {
+  content: attr(data-label);
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--text-primary);
+  z-index: 20;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  pointer-events: none;
+}
+
+/* Pied de sidebar (utilisateur + version) */
+.sidebar-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 12px;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.user-card:hover {
+  background: var(--bg-surface-2);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.user-info {
+  flex: 1;
+  min-width: 0;
+  transition: opacity var(--transition);
+}
+
+.shell.compact .user-info,
+.shell.compact .user-menu-icon { opacity: 0; pointer-events: none; }
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.user-role {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.user-menu-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  transition: opacity var(--transition);
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* MAIN — topbar + contenu                                          */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Topbar */
+.topbar {
+  height: var(--topbar-height);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar-breadcrumb-item {
+  color: var(--text-muted);
+}
+
+.topbar-breadcrumb-item.current {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.topbar-breadcrumb-sep {
+  color: var(--text-muted);
+  opacity: 0.4;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.connection-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.connection-status.connected .dot {
+  background: var(--semantic-success);
+  box-shadow: 0 0 6px var(--semantic-success);
+}
+
+.connection-status.connecting .dot {
+  background: var(--semantic-warning);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.connection-status.disconnected .dot {
+  background: var(--semantic-danger);
+}
+
+.connection-status .server {
+  color: var(--text-muted);
+}
+
+.topbar-icon-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.topbar-icon-btn:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.topbar-icon-btn svg { width: 16px; height: 16px; }
+
+.topbar-icon-btn .badge-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  background: var(--accent-vivid);
+  border-radius: 50%;
+  border: 2px solid var(--bg-surface);
+}
+
+/* Zone de contenu */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  background: var(--bg-base);
+}
+
+/* Placeholder dashboard */
+.dashboard-placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dash-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.dash-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.dash-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.dash-stat {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.dash-stat-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.dash-stat-value {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.dash-stat-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.dash-stat-meta strong {
+  color: var(--accent-secondary);
+  font-weight: 600;
+}
+
+.dash-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.dash-section h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+}
+
+.dash-section-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-family: var(--font-mono);
+}
+
+/* Indicateur partie active dans le contenu (grand) */
+.active-game-banner {
+  background: linear-gradient(135deg, var(--accent-primary-soft) 0%, var(--accent-vivid-soft) 100%);
+  border: 1px solid var(--accent-primary);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.active-game-banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 100%;
+  background: radial-gradient(ellipse at right, var(--accent-vivid-glow), transparent 70%);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.active-game-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--accent-vivid);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 20px var(--accent-vivid-glow);
+}
+
+.active-game-icon svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.active-game-text {
+  flex: 1;
+  position: relative;
+}
+
+.active-game-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent-vivid);
+  margin-bottom: 4px;
+}
+
+.active-game-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.active-game-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.active-game-button {
+  background: var(--accent-vivid);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.active-game-button:hover {
+  background: #ff3a82;
+  box-shadow: 0 4px 16px var(--accent-vivid-glow);
+}
+
+.active-game-button svg { width: 16px; height: 16px; }
+
+/* Notes en bas */
+.shell-note {
+  max-width: 1280px;
+  margin: -24px auto 32px;
+  padding: 16px 20px;
+  background: var(--accent-secondary-soft);
+  border-left: 3px solid var(--accent-secondary);
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.shell-note strong { color: var(--accent-secondary); }
+</style>
+</head>
+<body>
+
+<div class="page-intro">
+  <div class="eyebrow">QUIZ BUZZER · SHELL APPLICATIF</div>
+  <h1>Layout général</h1>
+  <p>La structure permanente qui entoure tous les écrans : sidebar rétractable, topbar avec statut de connexion, zone de contenu. Deux états sont maquettés : navigation normale et partie active (avec ses contraintes spécifiques).</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ÉTAT 1 — NORMAL (pas de partie active)                           -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section class="demo-section">
+  <div class="demo-label">
+    <span class="demo-label-text">État 1 — Navigation normale (aucune partie active)</span>
+    <div class="demo-toggle">
+      <button class="active" data-shell="1" data-state="expanded">Étendue</button>
+      <button data-shell="1" data-state="compact">Compacte</button>
+    </div>
+  </div>
+
+  <div class="shell" id="shell-1">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <i data-lucide="zap"></i>
+        </div>
+        <div class="sidebar-brand">
+          <div class="sidebar-brand-name">Quiz Buzzer</div>
+          <div class="sidebar-brand-tag">Hub de pilotage</div>
+        </div>
+      </div>
+
+      <button class="sidebar-toggle" onclick="toggleShell(1)">
+        <i data-lucide="chevron-left"></i>
+      </button>
+
+      <nav class="sidebar-nav">
+        <div>
+          <div class="nav-group-label">Général</div>
+          <div class="nav-group">
+            <a class="nav-item active" data-label="Tableau de bord">
+              <i data-lucide="layout-dashboard" class="nav-item-icon"></i>
+              <span class="nav-item-label">Tableau de bord</span>
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <div class="nav-group-label">Contenu</div>
+          <div class="nav-group">
+            <a class="nav-item" data-label="Thèmes">
+              <i data-lucide="folder-tree" class="nav-item-icon"></i>
+              <span class="nav-item-label">Thèmes</span>
+              <span class="nav-item-badge">12</span>
+            </a>
+            <a class="nav-item" data-label="Questions">
+              <i data-lucide="circle-help" class="nav-item-icon"></i>
+              <span class="nav-item-label">Questions</span>
+              <span class="nav-item-badge">147</span>
+            </a>
+            <a class="nav-item" data-label="Quiz">
+              <i data-lucide="book-open" class="nav-item-icon"></i>
+              <span class="nav-item-label">Quiz</span>
+              <span class="nav-item-badge">8</span>
+            </a>
+            <a class="nav-item" data-label="Jingles">
+              <i data-lucide="music-2" class="nav-item-icon"></i>
+              <span class="nav-item-label">Jingles</span>
+              <span class="nav-item-badge">23</span>
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <div class="nav-group-label">Parties</div>
+          <div class="nav-group">
+            <a class="nav-item" data-label="Toutes les parties">
+              <i data-lucide="trophy" class="nav-item-icon"></i>
+              <span class="nav-item-label">Toutes les parties</span>
+            </a>
+            <a class="nav-item" data-label="Nouvelle partie">
+              <i data-lucide="plus-circle" class="nav-item-icon"></i>
+              <span class="nav-item-label">Nouvelle partie</span>
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="user-avatar">A</div>
+          <div class="user-info">
+            <div class="user-name">admin</div>
+            <div class="user-role">Maître de jeu</div>
+          </div>
+          <i data-lucide="chevron-up" class="user-menu-icon"></i>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div class="topbar">
+        <div class="topbar-breadcrumb">
+          <span class="topbar-breadcrumb-item">Accueil</span>
+          <span class="topbar-breadcrumb-sep">/</span>
+          <span class="topbar-breadcrumb-item current">Tableau de bord</span>
+        </div>
+        <div class="topbar-actions">
+          <div class="connection-status connected">
+            <span class="dot"></span>
+            <span>Connecté</span>
+            <span class="server">· 192.168.1.10:3000</span>
+          </div>
+          <button class="topbar-icon-btn" title="Notifications">
+            <i data-lucide="bell"></i>
+          </button>
+          <button class="topbar-icon-btn" title="Paramètres">
+            <i data-lucide="settings"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="dashboard-placeholder">
+          <div class="dash-header">
+            <div>
+              <h1 class="dash-title">Tableau de bord</h1>
+              <p class="dash-subtitle">Vue d'ensemble du système · Dimanche 26 avril 2026</p>
+            </div>
+            <button class="active-game-button" style="background: var(--accent-primary);">
+              <i data-lucide="plus"></i>
+              Nouvelle partie
+            </button>
+          </div>
+
+          <div class="dash-grid">
+            <div class="dash-stat">
+              <div class="dash-stat-label">Buzzers connectés</div>
+              <div class="dash-stat-value">0</div>
+              <div class="dash-stat-meta">aucun buzzer en ligne</div>
+            </div>
+            <div class="dash-stat">
+              <div class="dash-stat-label">Quiz disponibles</div>
+              <div class="dash-stat-value">8</div>
+              <div class="dash-stat-meta"><strong>+2</strong> ce mois</div>
+            </div>
+            <div class="dash-stat">
+              <div class="dash-stat-label">Questions</div>
+              <div class="dash-stat-value">147</div>
+              <div class="dash-stat-meta"><strong>+15</strong> ce mois</div>
+            </div>
+            <div class="dash-stat">
+              <div class="dash-stat-label">Parties jouées</div>
+              <div class="dash-stat-value">42</div>
+              <div class="dash-stat-meta">total historique</div>
+            </div>
+          </div>
+
+          <div class="dash-section">
+            <h3>Dernières parties</h3>
+            <div class="dash-section-empty">— Placeholder · Le vrai contenu viendra dans les écrans dédiés —</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<div class="shell-note">
+  <strong>Sidebar rétractable.</strong> Cliquez sur la flèche au bord droit de la sidebar (entre la sidebar et la zone de contenu) ou utilisez les boutons "Étendue / Compacte" ci-dessus pour basculer entre les deux modes. En mode compact, les libellés disparaissent par fondu et un tooltip apparaît au survol des icônes. L'état est persisté entre les sessions via <code style="font-family: var(--font-mono); font-size: 13px; background: var(--bg-surface); padding: 1px 6px; border-radius: 3px;">localStorage</code>.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ÉTAT 2 — PARTIE ACTIVE                                            -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section class="demo-section">
+  <div class="demo-label">
+    <span class="demo-label-text">État 2 — Partie active en cours (contenu désactivé, bannière de pilotage)</span>
+    <div class="demo-toggle">
+      <button class="active" data-shell="2" data-state="expanded">Étendue</button>
+      <button data-shell="2" data-state="compact">Compacte</button>
+    </div>
+  </div>
+
+  <div class="shell" id="shell-2">
+    <!-- Sidebar avec partie active -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <i data-lucide="zap"></i>
+        </div>
+        <div class="sidebar-brand">
+          <div class="sidebar-brand-name">Quiz Buzzer</div>
+          <div class="sidebar-brand-tag">Hub de pilotage</div>
+        </div>
+      </div>
+
+      <button class="sidebar-toggle" onclick="toggleShell(2)">
+        <i data-lucide="chevron-left"></i>
+      </button>
+
+      <!-- Bannière de pilotage actif -->
+      <div class="pilot-banner">
+        <div class="pilot-banner-status">Partie en cours</div>
+        <div class="pilot-banner-title">Culture générale S1</div>
+        <div class="pilot-banner-meta">Question 4 / 10 · MCQ</div>
+        <button class="pilot-banner-button">
+          <i data-lucide="play"></i>
+          Reprendre le pilotage
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div>
+          <div class="nav-group-label">Général</div>
+          <div class="nav-group">
+            <a class="nav-item" data-label="Tableau de bord">
+              <i data-lucide="layout-dashboard" class="nav-item-icon"></i>
+              <span class="nav-item-label">Tableau de bord</span>
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <div class="nav-group-label">Contenu</div>
+          <div class="nav-group">
+            <a class="nav-item disabled" data-label="Thèmes (indisponible pendant une partie)">
+              <i data-lucide="folder-tree" class="nav-item-icon"></i>
+              <span class="nav-item-label">Thèmes</span>
+              <i data-lucide="lock" class="nav-item-icon" style="width: 12px; height: 12px; opacity: 0.6;"></i>
+            </a>
+            <a class="nav-item disabled" data-label="Questions (indisponible pendant une partie)">
+              <i data-lucide="circle-help" class="nav-item-icon"></i>
+              <span class="nav-item-label">Questions</span>
+              <i data-lucide="lock" class="nav-item-icon" style="width: 12px; height: 12px; opacity: 0.6;"></i>
+            </a>
+            <a class="nav-item disabled" data-label="Quiz (indisponible pendant une partie)">
+              <i data-lucide="book-open" class="nav-item-icon"></i>
+              <span class="nav-item-label">Quiz</span>
+              <i data-lucide="lock" class="nav-item-icon" style="width: 12px; height: 12px; opacity: 0.6;"></i>
+            </a>
+            <a class="nav-item disabled" data-label="Jingles (indisponible pendant une partie)">
+              <i data-lucide="music-2" class="nav-item-icon"></i>
+              <span class="nav-item-label">Jingles</span>
+              <i data-lucide="lock" class="nav-item-icon" style="width: 12px; height: 12px; opacity: 0.6;"></i>
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <div class="nav-group-label">Parties</div>
+          <div class="nav-group">
+            <a class="nav-item" data-label="Toutes les parties">
+              <i data-lucide="trophy" class="nav-item-icon"></i>
+              <span class="nav-item-label">Toutes les parties</span>
+            </a>
+            <a class="nav-item active" data-label="Pilotage en cours">
+              <i data-lucide="gamepad-2" class="nav-item-icon"></i>
+              <span class="nav-item-label">Pilotage</span>
+              <span class="nav-item-badge" style="background: var(--accent-vivid); color: white;">LIVE</span>
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="user-avatar">A</div>
+          <div class="user-info">
+            <div class="user-name">admin</div>
+            <div class="user-role">Maître de jeu</div>
+          </div>
+          <i data-lucide="chevron-up" class="user-menu-icon"></i>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div class="topbar">
+        <div class="topbar-breadcrumb">
+          <span class="topbar-breadcrumb-item">Accueil</span>
+          <span class="topbar-breadcrumb-sep">/</span>
+          <span class="topbar-breadcrumb-item current">Tableau de bord</span>
+        </div>
+        <div class="topbar-actions">
+          <div class="connection-status connected">
+            <span class="dot"></span>
+            <span>Connecté</span>
+            <span class="server">· 5 buzzers</span>
+          </div>
+          <button class="topbar-icon-btn" title="Notifications">
+            <i data-lucide="bell"></i>
+            <span class="badge-dot"></span>
+          </button>
+          <button class="topbar-icon-btn" title="Paramètres">
+            <i data-lucide="settings"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="dashboard-placeholder">
+          <div class="dash-header">
+            <div>
+              <h1 class="dash-title">Tableau de bord</h1>
+              <p class="dash-subtitle">Vue d'ensemble du système · Une partie est actuellement en cours</p>
+            </div>
+          </div>
+
+          <!-- Bannière proéminente partie active -->
+          <div class="active-game-banner">
+            <div class="active-game-icon">
+              <i data-lucide="gamepad-2"></i>
+            </div>
+            <div class="active-game-text">
+              <div class="active-game-label">Partie en cours</div>
+              <div class="active-game-title">Culture générale S1</div>
+              <div class="active-game-meta">5 participants · Question 4 / 10 · MCQ · 30 secondes restantes</div>
+            </div>
+            <button class="active-game-button">
+              <i data-lucide="play"></i>
+              Reprendre le pilotage
+            </button>
+          </div>
+
+          <div class="dash-grid">
+            <div class="dash-stat">
+              <div class="dash-stat-label">Buzzers connectés</div>
+              <div class="dash-stat-value" style="color: var(--accent-secondary);">5</div>
+              <div class="dash-stat-meta"><strong>Alice, Bob, Charlie</strong> +2</div>
+            </div>
+            <div class="dash-stat">
+              <div class="dash-stat-label">Quiz disponibles</div>
+              <div class="dash-stat-value">8</div>
+              <div class="dash-stat-meta"><strong>+2</strong> ce mois</div>
+            </div>
+            <div class="dash-stat">
+              <div class="dash-stat-label">Questions</div>
+              <div class="dash-stat-value">147</div>
+              <div class="dash-stat-meta"><strong>+15</strong> ce mois</div>
+            </div>
+            <div class="dash-stat">
+              <div class="dash-stat-label">Parties jouées</div>
+              <div class="dash-stat-value">42</div>
+              <div class="dash-stat-meta">total historique</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<div class="shell-note">
+  <strong>Comportement "partie active".</strong> Quand une partie est en cours : (1) une bannière apparaît dans la sidebar avec un bouton direct vers le pilotage, (2) le groupe Contenu est visuellement désactivé avec une icône de cadenas et le pointeur change, (3) un nouveau lien "Pilotage" apparaît dans la zone Parties avec un badge LIVE en magenta, (4) la zone de contenu affiche également une bannière proéminente pour rappeler qu'une partie attend. La cohérence des trois zones (sidebar, topbar, contenu) renforce l'attention sur l'état actif sans être agressive.
+</div>
+
+<script>
+  lucide.createIcons();
+
+  function toggleShell(shellId) {
+    const shell = document.getElementById('shell-' + shellId);
+    shell.classList.toggle('compact');
+    document.querySelectorAll(`[data-shell="${shellId}"]`).forEach(btn => {
+      const isCompact = shell.classList.contains('compact');
+      btn.classList.toggle('active', btn.dataset.state === (isCompact ? 'compact' : 'expanded'));
+    });
+  }
+
+  document.querySelectorAll('[data-shell]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const shellId = btn.dataset.shell;
+      const state = btn.dataset.state;
+      const shell = document.getElementById('shell-' + shellId);
+      shell.classList.toggle('compact', state === 'compact');
+      document.querySelectorAll(`[data-shell="${shellId}"]`).forEach(b => {
+        b.classList.toggle('active', b.dataset.state === state);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

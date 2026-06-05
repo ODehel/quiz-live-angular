@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Buzzer — Modales de confirmation (3 variantes)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --bg-base: #0b0a10;
+  --bg-surface: #141221;
+  --bg-surface-2: #1c192e;
+  --bg-surface-3: #252238;
+
+  --text-primary: #f4f3f8;
+  --text-secondary: #a8a3bd;
+  --text-muted: #6b6680;
+
+  --border-subtle: #2a2740;
+  --border-default: #3a3654;
+  --border-strong: #4f4a70;
+
+  --accent-primary: #9d6bff;
+  --accent-primary-soft: rgba(157, 107, 255, 0.12);
+  --accent-primary-glow: rgba(157, 107, 255, 0.35);
+
+  --accent-secondary: #4dd4e8;
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+  --accent-secondary-glow: rgba(77, 212, 232, 0.35);
+
+  --accent-vivid: #ff4d8f;
+  --accent-vivid-soft: rgba(255, 77, 143, 0.15);
+
+  --semantic-success: #4ade80;
+  --semantic-success-soft: rgba(74, 222, 128, 0.12);
+  --semantic-success-glow: rgba(74, 222, 128, 0.4);
+
+  --semantic-warning: #fbbf24;
+  --semantic-warning-soft: rgba(251, 191, 36, 0.12);
+  --semantic-warning-glow: rgba(251, 191, 36, 0.35);
+
+  --semantic-danger: #ef4444;
+  --semantic-danger-soft: rgba(239, 68, 68, 0.12);
+  --semantic-danger-glow: rgba(239, 68, 68, 0.35);
+
+  /* Couleurs joueurs (pour shell pilotage) */
+  --buzzer-1: #4dd4e8;
+  --buzzer-2: #5b8def;
+  --buzzer-3: #9d6bff;
+  --buzzer-4: #ff4d8f;
+  --buzzer-5: #ff7a59;
+  --buzzer-6: #fbbf24;
+  --buzzer-7: #a3e635;
+  --buzzer-8: #4ade80;
+  --buzzer-9: #34d399;
+  --buzzer-10: #7c5cf5;
+
+  --font-ui: "Geist", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", sans-serif;
+  --font-mono: "Geist Mono", "Menlo", monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+}
+
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes dialog-pop-in {
+  from { opacity: 0; transform: scale(0.94) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+
+@keyframes input-blink-cursor {
+  0%, 50%, 100% { border-right-color: transparent; }
+  25%, 75%      { border-right-color: var(--variant-color); }
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* DEMO BANNER                                                     */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.demo-banner {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.demo-banner-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-vivid);
+  box-shadow: 0 0 8px var(--accent-vivid);
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* SECTION (chaque section = un scénario complet 100vh)           */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.scenario-section {
+  position: relative;
+  height: 100vh;
+  min-height: 720px;
+  overflow: hidden;
+}
+
+/* ─── Le shell d'app derrière (sidebar + topbar + contenu) ─── */
+.app-shell-bg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 252px 1fr;
+  grid-template-rows: 52px 1fr;
+  /* Le contenu derrière sera flouté quand la modale est ouverte */
+  filter: blur(3px) brightness(0.6);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Sidebar (fond simulé) */
+.shell-sidebar {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.shell-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.shell-logo-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shell-logo-icon svg { width: 14px; height: 14px; color: white; }
+
+.shell-logo-text {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.shell-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.shell-nav-item.active {
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+}
+
+.shell-nav-item svg { width: 14px; height: 14px; }
+
+/* Topbar */
+.shell-topbar {
+  grid-column: 2;
+  grid-row: 1;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+
+.shell-topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.shell-topbar-title b { color: var(--text-primary); font-weight: 600; }
+
+.shell-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shell-topbar-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+}
+
+/* Zone de contenu */
+.shell-content {
+  grid-column: 2;
+  grid-row: 2;
+  background: var(--bg-base);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+
+/* ─── Variantes de contenu shell (selon le scénario) ─── */
+
+/* Pilotage MCQ en cours (variante destructive) */
+.shell-content.pilotage {
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 30%, rgba(157, 107, 255, 0.10), transparent 70%),
+    var(--bg-base);
+}
+
+.shell-fake-question {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shell-fake-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent-primary);
+}
+
+.shell-fake-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+
+.shell-fake-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.shell-fake-choice {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shell-fake-choice.correct {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+.shell-fake-choice-letter {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--bg-surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.shell-fake-choice.correct .shell-fake-choice-letter {
+  background: var(--semantic-success);
+  color: white;
+}
+
+.shell-fake-choice-text { font-size: 13px; color: var(--text-primary); }
+
+.shell-fake-players {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.shell-fake-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+.shell-fake-player-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.shell-fake-player-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Édition de question (variante warning) */
+.shell-content.editor {
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 30%, rgba(251, 191, 36, 0.06), transparent 70%),
+    var(--bg-base);
+}
+
+.shell-fake-form {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.shell-fake-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.shell-fake-form-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.shell-fake-form-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--semantic-warning-soft);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--semantic-warning);
+}
+
+.shell-fake-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shell-fake-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.shell-fake-input {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+/* Lobby (variante info) */
+.shell-content.lobby {
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 30%, rgba(77, 212, 232, 0.08), transparent 70%),
+    var(--bg-base);
+}
+
+.shell-fake-lobby-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.shell-fake-buzzer-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 10px;
+  text-align: center;
+  position: relative;
+}
+
+.shell-fake-buzzer-card.connected {
+  border-color: rgba(74, 222, 128, 0.3);
+  background: linear-gradient(180deg, rgba(74, 222, 128, 0.05), transparent), var(--bg-surface);
+}
+
+.shell-fake-buzzer-card.disconnected {
+  opacity: 0.5;
+  border-style: dashed;
+}
+
+.shell-fake-buzzer-color {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  margin: 0 auto 8px;
+}
+
+.shell-fake-buzzer-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.shell-fake-buzzer-status {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* OVERLAY + DIALOG                                                */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.dialog-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 10, 16, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: overlay-fade-in 0.2s ease-out;
+  z-index: 10;
+}
+
+.dialog {
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 32px 80px -8px rgba(0, 0, 0, 0.6),
+    0 0 60px var(--variant-glow, transparent);
+  animation: dialog-pop-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+/* Bordure colorée en haut selon variante */
+.dialog::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--variant-color), transparent);
+}
+
+/* ─── Variantes de couleurs ─── */
+.dialog.destructive {
+  --variant-color: var(--semantic-danger);
+  --variant-soft: var(--semantic-danger-soft);
+  --variant-glow: rgba(239, 68, 68, 0.15);
+}
+
+.dialog.warning {
+  --variant-color: var(--semantic-warning);
+  --variant-soft: var(--semantic-warning-soft);
+  --variant-glow: rgba(251, 191, 36, 0.15);
+}
+
+.dialog.info {
+  --variant-color: var(--accent-secondary);
+  --variant-soft: var(--accent-secondary-soft);
+  --variant-glow: rgba(77, 212, 232, 0.15);
+}
+
+/* ─── Header dialog ─── */
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 22px 14px;
+}
+
+.dialog-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--variant-soft);
+  border: 1px solid color-mix(in srgb, var(--variant-color) 25%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dialog-icon svg {
+  width: 20px;
+  height: 20px;
+  color: var(--variant-color);
+}
+
+.dialog-header-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 1px;
+}
+
+.dialog-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.dialog-message {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.dialog-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.dialog-close:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+.dialog-close svg { width: 14px; height: 14px; }
+
+/* ─── Body : contexte / détails / typing ─── */
+.dialog-body {
+  padding: 0 22px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Encart d'infos contextuelles (ex: "Partie en cours: 8/12 questions") */
+.dialog-context {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dialog-context-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.dialog-context-row .key {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.dialog-context-row .value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.dialog-context-row .value.warning {
+  color: var(--semantic-warning);
+}
+
+.dialog-context-row .value.danger {
+  color: var(--semantic-danger);
+}
+
+/* ─── Typing-required input ─── */
+.dialog-typing {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dialog-typing-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.dialog-typing-label code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--variant-color);
+  background: var(--variant-soft);
+  border: 1px solid color-mix(in srgb, var(--variant-color) 25%, transparent);
+  padding: 2px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.06em;
+}
+
+.dialog-typing-input {
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dialog-typing-input:focus {
+  border-color: var(--variant-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--variant-color) 15%, transparent);
+}
+
+.dialog-typing-input.match {
+  border-color: var(--variant-color);
+  color: var(--variant-color);
+  background: var(--variant-soft);
+}
+
+.dialog-typing-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.dialog-typing-hint .check {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg-surface-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog-typing-hint.matched .check {
+  background: var(--variant-color);
+}
+
+.dialog-typing-hint.matched .check svg { color: white; }
+
+.dialog-typing-hint.matched { color: var(--variant-color); }
+
+.dialog-typing-hint .check svg {
+  width: 9px;
+  height: 9px;
+  color: var(--text-muted);
+}
+
+/* ─── Footer (boutons) ─── */
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 22px 18px;
+  margin-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.dialog-keyboard-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dialog-keyboard-hint kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.dialog-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.dialog-btn {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.15s ease;
+}
+
+.dialog-btn:hover:not(:disabled) {
+  background: var(--bg-surface-3);
+  border-color: var(--border-strong);
+}
+
+.dialog-btn svg { width: 14px; height: 14px; }
+
+.dialog-btn.confirm {
+  background: var(--variant-color);
+  border-color: transparent;
+  color: white;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.dialog-btn.confirm:hover:not(:disabled) {
+  box-shadow: 0 0 24px var(--variant-glow);
+  transform: translateY(-1px);
+}
+
+.dialog-btn.confirm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--bg-surface-3);
+  color: var(--text-muted);
+}
+
+/* Variante warning : bouton confirmer secondaire (perte de données ≠ destructif) */
+.dialog.warning .dialog-btn.confirm {
+  background: var(--variant-color);
+  color: #1a1208;
+}
+
+/* Variante info : bouton confirmer en gradient violet/cyan */
+.dialog.info .dialog-btn.confirm {
+  background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+  color: white;
+}
+
+/* ─── Séparateur entre scénarios ─── */
+.scenario-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg-base);
+  border-top: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.scenario-separator-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.scenario-separator-label::before,
+.scenario-separator-label::after {
+  content: "";
+  width: 80px;
+  height: 1px;
+  background: var(--border-default);
+}
+
+</style>
+</head>
+<body>
+
+<!-- Banner de démonstration -->
+<div class="demo-banner">
+  <span class="demo-banner-dot"></span>
+  Démo · 3 variantes empilées
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SCÉNARIO 1 : DESTRUCTIVE                                     -->
+<!-- Annulation de partie en cours (8 questions déjà jouées)      -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="scenario-section">
+
+  <!-- ─── Shell d'app derrière (flouté) ─── -->
+  <div class="app-shell-bg">
+
+    <!-- Sidebar -->
+    <div class="shell-sidebar">
+      <div class="shell-logo">
+        <div class="shell-logo-icon"><i data-lucide="zap"></i></div>
+        <div class="shell-logo-text">Quiz Buzzer</div>
+      </div>
+      <div class="shell-nav-item"><i data-lucide="home"></i> Accueil</div>
+      <div class="shell-nav-item"><i data-lucide="library"></i> Quiz</div>
+      <div class="shell-nav-item active"><i data-lucide="play"></i> Partie en cours</div>
+      <div class="shell-nav-item"><i data-lucide="users"></i> Joueurs</div>
+      <div class="shell-nav-item"><i data-lucide="archive"></i> Historique</div>
+      <div class="shell-nav-item"><i data-lucide="settings"></i> Paramètres</div>
+    </div>
+
+    <!-- Topbar -->
+    <div class="shell-topbar">
+      <div class="shell-topbar-title">
+        Pilotage · <b>Soirée découverte du monde</b> · Q.8 / 12
+      </div>
+      <div class="shell-topbar-actions">
+        <span class="shell-topbar-pill">10 joueurs</span>
+        <span class="shell-topbar-pill">en cours</span>
+      </div>
+    </div>
+
+    <!-- Contenu : pilotage MCQ -->
+    <div class="shell-content pilotage">
+      <div class="shell-fake-question">
+        <div class="shell-fake-eyebrow">Question 8 · Géographie · MCQ</div>
+        <div class="shell-fake-title">Quelle est la capitale de l'Australie&nbsp;?</div>
+        <div class="shell-fake-choices">
+          <div class="shell-fake-choice">
+            <div class="shell-fake-choice-letter">A</div>
+            <div class="shell-fake-choice-text">Sydney</div>
+          </div>
+          <div class="shell-fake-choice">
+            <div class="shell-fake-choice-letter">B</div>
+            <div class="shell-fake-choice-text">Melbourne</div>
+          </div>
+          <div class="shell-fake-choice correct">
+            <div class="shell-fake-choice-letter">C</div>
+            <div class="shell-fake-choice-text">Canberra</div>
+          </div>
+          <div class="shell-fake-choice">
+            <div class="shell-fake-choice-letter">D</div>
+            <div class="shell-fake-choice-text">Brisbane</div>
+          </div>
+        </div>
+        <div class="shell-fake-players">
+          <div class="shell-fake-player"><span class="shell-fake-player-dot" style="background: var(--buzzer-1)"></span><span class="shell-fake-player-name">Charlie</span></div>
+          <div class="shell-fake-player"><span class="shell-fake-player-dot" style="background: var(--buzzer-3)"></span><span class="shell-fake-player-name">Nina</span></div>
+          <div class="shell-fake-player"><span class="shell-fake-player-dot" style="background: var(--buzzer-4)"></span><span class="shell-fake-player-name">Maya</span></div>
+          <div class="shell-fake-player"><span class="shell-fake-player-dot" style="background: var(--buzzer-5)"></span><span class="shell-fake-player-name">Léo</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── Overlay + Dialog ─── -->
+  <div class="dialog-overlay">
+    <div class="dialog destructive" role="dialog" aria-modal="true">
+
+      <div class="dialog-header">
+        <div class="dialog-icon">
+          <i data-lucide="alert-triangle"></i>
+        </div>
+        <div class="dialog-header-text">
+          <div class="dialog-title">Annuler la partie en cours&nbsp;?</div>
+          <div class="dialog-message">
+            Cette action est <strong style="color: var(--text-primary);">irréversible</strong>.
+            Les scores et la progression seront perdus définitivement.
+          </div>
+        </div>
+        <button class="dialog-close" aria-label="Fermer">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+
+        <!-- Encart contextuel : ce qui sera perdu -->
+        <div class="dialog-context">
+          <div class="dialog-context-row">
+            <span class="key">Quiz</span>
+            <span class="value">Soirée découverte du monde</span>
+          </div>
+          <div class="dialog-context-row">
+            <span class="key">Progression</span>
+            <span class="value warning">8 / 12 questions jouées</span>
+          </div>
+          <div class="dialog-context-row">
+            <span class="key">Joueurs actifs</span>
+            <span class="value">10 connectés</span>
+          </div>
+          <div class="dialog-context-row">
+            <span class="key">Scores cumulés</span>
+            <span class="value danger">Seront supprimés</span>
+          </div>
+        </div>
+
+        <!-- Typing required (variante critique) -->
+        <div class="dialog-typing">
+          <div class="dialog-typing-label">
+            Pour confirmer, tapez <code>ANNULER</code> ci-dessous.
+          </div>
+          <input
+            type="text"
+            class="dialog-typing-input match"
+            placeholder="Tapez ici…"
+            value="ANNULER"
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <div class="dialog-typing-hint matched">
+            <span class="check"><i data-lucide="check"></i></span>
+            Confirmation valide
+          </div>
+        </div>
+
+      </div>
+
+      <div class="dialog-footer">
+        <span class="dialog-keyboard-hint">
+          <kbd>Esc</kbd> pour annuler
+        </span>
+        <div class="dialog-buttons">
+          <button class="dialog-btn">
+            Continuer la partie
+          </button>
+          <button class="dialog-btn confirm">
+            <i data-lucide="trash-2"></i>
+            Oui, annuler
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Séparateur -->
+<div class="scenario-separator">
+  <span class="scenario-separator-label">Variante suivante · Warning · Quitter sans sauvegarder</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SCÉNARIO 2 : WARNING                                         -->
+<!-- Quitter l'éditeur sans sauvegarder                           -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="scenario-section">
+
+  <div class="app-shell-bg">
+
+    <div class="shell-sidebar">
+      <div class="shell-logo">
+        <div class="shell-logo-icon"><i data-lucide="zap"></i></div>
+        <div class="shell-logo-text">Quiz Buzzer</div>
+      </div>
+      <div class="shell-nav-item"><i data-lucide="home"></i> Accueil</div>
+      <div class="shell-nav-item active"><i data-lucide="library"></i> Quiz</div>
+      <div class="shell-nav-item"><i data-lucide="play"></i> Parties</div>
+      <div class="shell-nav-item"><i data-lucide="users"></i> Joueurs</div>
+      <div class="shell-nav-item"><i data-lucide="archive"></i> Historique</div>
+      <div class="shell-nav-item"><i data-lucide="settings"></i> Paramètres</div>
+    </div>
+
+    <div class="shell-topbar">
+      <div class="shell-topbar-title">
+        Édition · Quiz <b>Soirée découverte du monde</b> · Question 5
+      </div>
+      <div class="shell-topbar-actions">
+        <span class="shell-topbar-pill">non sauvegardé</span>
+      </div>
+    </div>
+
+    <div class="shell-content editor">
+      <div class="shell-fake-form">
+        <div class="shell-fake-form-header">
+          <div class="shell-fake-form-title">Question 5 · MCQ Cinéma</div>
+          <span class="shell-fake-form-pill">Modifications non sauvegardées</span>
+        </div>
+        <div class="shell-fake-field">
+          <span class="shell-fake-label">Énoncé</span>
+          <div class="shell-fake-input">Quel film a remporté l'Oscar du meilleur film en 2024&nbsp;?</div>
+        </div>
+        <div class="shell-fake-field">
+          <span class="shell-fake-label">Réponse A</span>
+          <div class="shell-fake-input">Oppenheimer</div>
+        </div>
+        <div class="shell-fake-field">
+          <span class="shell-fake-label">Réponse B</span>
+          <div class="shell-fake-input">Barbie</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dialog-overlay">
+    <div class="dialog warning" role="dialog" aria-modal="true">
+
+      <div class="dialog-header">
+        <div class="dialog-icon">
+          <i data-lucide="alert-circle"></i>
+        </div>
+        <div class="dialog-header-text">
+          <div class="dialog-title">Quitter sans sauvegarder&nbsp;?</div>
+          <div class="dialog-message">
+            Vous avez des modifications non enregistrées sur cette question.
+            Si vous quittez maintenant, elles seront perdues.
+          </div>
+        </div>
+        <button class="dialog-close" aria-label="Fermer">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <div class="dialog-context">
+          <div class="dialog-context-row">
+            <span class="key">Question</span>
+            <span class="value">Q.5 · MCQ Cinéma</span>
+          </div>
+          <div class="dialog-context-row">
+            <span class="key">Modifications</span>
+            <span class="value warning">Énoncé + 2 réponses modifiées</span>
+          </div>
+          <div class="dialog-context-row">
+            <span class="key">Dernière sauvegarde</span>
+            <span class="value">il y a 4 minutes</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-footer">
+        <span class="dialog-keyboard-hint">
+          <kbd>Esc</kbd> pour rester
+        </span>
+        <div class="dialog-buttons">
+          <button class="dialog-btn">
+            <i data-lucide="arrow-left"></i>
+            Continuer l'édition
+          </button>
+          <button class="dialog-btn confirm">
+            <i data-lucide="log-out"></i>
+            Quitter quand même
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Séparateur -->
+<div class="scenario-separator">
+  <span class="scenario-separator-label">Variante suivante · Info · Lancer la partie</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SCÉNARIO 3 : INFO                                            -->
+<!-- Lancer la partie alors qu'un joueur n'est pas connecté       -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="scenario-section">
+
+  <div class="app-shell-bg">
+
+    <div class="shell-sidebar">
+      <div class="shell-logo">
+        <div class="shell-logo-icon"><i data-lucide="zap"></i></div>
+        <div class="shell-logo-text">Quiz Buzzer</div>
+      </div>
+      <div class="shell-nav-item"><i data-lucide="home"></i> Accueil</div>
+      <div class="shell-nav-item"><i data-lucide="library"></i> Quiz</div>
+      <div class="shell-nav-item active"><i data-lucide="play"></i> Lobby</div>
+      <div class="shell-nav-item"><i data-lucide="users"></i> Joueurs</div>
+      <div class="shell-nav-item"><i data-lucide="archive"></i> Historique</div>
+      <div class="shell-nav-item"><i data-lucide="settings"></i> Paramètres</div>
+    </div>
+
+    <div class="shell-topbar">
+      <div class="shell-topbar-title">
+        Lobby · <b>Soirée découverte du monde</b> · 9 / 10 connectés
+      </div>
+      <div class="shell-topbar-actions">
+        <span class="shell-topbar-pill">en attente</span>
+      </div>
+    </div>
+
+    <div class="shell-content lobby">
+      <div class="shell-fake-lobby-grid">
+        <div class="shell-fake-buzzer-card connected">
+          <div class="shell-fake-buzzer-color" style="background: var(--buzzer-1)"></div>
+          <div class="shell-fake-buzzer-name">Charlie</div>
+          <div class="shell-fake-buzzer-status">b1 · ok</div>
+        </div>
+        <div class="shell-fake-buzzer-card connected">
+          <div class="shell-fake-buzzer-color" style="background: var(--buzzer-2)"></div>
+          <div class="shell-fake-buzzer-name">Théo</div>
+          <div class="shell-fake-buzzer-status">b2 · ok</div>
+        </div>
+        <div class="shell-fake-buzzer-card connected">
+          <div class="shell-fake-buzzer-color" style="background: var(--buzzer-3)"></div>
+          <div class="shell-fake-buzzer-name">Nina</div>
+          <div class="shell-fake-buzzer-status">b3 · ok</div>
+        </div>
+        <div class="shell-fake-buzzer-card connected">
+          <div class="shell-fake-buzzer-color" style="background: var(--buzzer-4)"></div>
+          <div class="shell-fake-buzzer-name">Maya</div>
+          <div class="shell-fake-buzzer-status">b4 · ok</div>
+        </div>
+        <div class="shell-fake-buzzer-card connected">
+          <div class="shell-fake-buzzer-color" style="background: var(--buzzer-5)"></div>
+          <div class="shell-fake-buzzer-name">Léo</div>
+          <div class="shell-fake-buzzer-status">b5 · ok</div>
+        </div>
+        <div class="shell-fake-buzzer-card connected">
+          <div class="shell-fake-buzzer-color" style="background: var(--buzzer-6)"></div>
+          <div class="shell-fake-buzzer-name">Sam</div>
+          <div class="shell-fake-buzzer-status">b6 · ok</div>
+        </div>
+        <div class="shell-fake-buzzer-card connected">
+          <div class="shell-fake-buzzer-color" style="background: var(--buzzer-7)"></div>
+          <div class="shell-fake-buzzer-name">Emma</div>
+          <div class="shell-fake-buzzer-status">b7 · ok</div>
+        </div>
+        <div class="shell-fake-buzzer-card connected">
+          <div class="shell-fake-buzzer-color" style="background: var(--buzzer-8)"></div>
+          <div class="shell-fake-buzzer-name">Hugo</div>
+          <div class="shell-fake-buzzer-status">b8 · ok</div>
+        </div>
+        <div class="shell-fake-buzzer-card connected">
+          <div class="shell-fake-buzzer-color" style="background: var(--buzzer-9)"></div>
+          <div class="shell-fake-buzzer-name">Zoé</div>
+          <div class="shell-fake-buzzer-status">b9 · ok</div>
+        </div>
+        <div class="shell-fake-buzzer-card disconnected">
+          <div class="shell-fake-buzzer-color" style="background: var(--buzzer-10); opacity: 0.4;"></div>
+          <div class="shell-fake-buzzer-name">Ali</div>
+          <div class="shell-fake-buzzer-status">b10 · attente</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dialog-overlay">
+    <div class="dialog info" role="dialog" aria-modal="true">
+
+      <div class="dialog-header">
+        <div class="dialog-icon">
+          <i data-lucide="play-circle"></i>
+        </div>
+        <div class="dialog-header-text">
+          <div class="dialog-title">Lancer la partie maintenant&nbsp;?</div>
+          <div class="dialog-message">
+            Un joueur n'est pas encore connecté. Vous pouvez démarrer
+            sans lui&nbsp;: il pourra rejoindre dès que son buzzer sera détecté.
+          </div>
+        </div>
+        <button class="dialog-close" aria-label="Fermer">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <div class="dialog-context">
+          <div class="dialog-context-row">
+            <span class="key">Connectés</span>
+            <span class="value">9 / 10 buzzers</span>
+          </div>
+          <div class="dialog-context-row">
+            <span class="key">En attente</span>
+            <span class="value warning">Ali · b10 · Indigo</span>
+          </div>
+          <div class="dialog-context-row">
+            <span class="key">Quiz</span>
+            <span class="value">Soirée découverte du monde</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-footer">
+        <span class="dialog-keyboard-hint">
+          <kbd>Esc</kbd> pour attendre
+        </span>
+        <div class="dialog-buttons">
+          <button class="dialog-btn">
+            Attendre encore
+          </button>
+          <button class="dialog-btn confirm">
+            <i data-lucide="play"></i>
+            Lancer maintenant
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  if (window.lucide) lucide.createIcons();
+</script>
+</body>
+</html>

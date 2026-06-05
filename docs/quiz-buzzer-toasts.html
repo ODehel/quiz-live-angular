@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Buzzer — Toasts &amp; notifications</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --bg-base: #0b0a10;
+  --bg-surface: #141221;
+  --bg-surface-2: #1c192e;
+  --bg-surface-3: #252238;
+
+  --text-primary: #f4f3f8;
+  --text-secondary: #a8a3bd;
+  --text-muted: #6b6680;
+
+  --border-subtle: #2a2740;
+  --border-default: #3a3654;
+  --border-strong: #4f4a70;
+
+  --accent-primary: #9d6bff;
+  --accent-primary-soft: rgba(157, 107, 255, 0.12);
+  --accent-primary-glow: rgba(157, 107, 255, 0.35);
+
+  --accent-secondary: #4dd4e8;
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+  --accent-secondary-glow: rgba(77, 212, 232, 0.35);
+
+  --accent-vivid: #ff4d8f;
+
+  --semantic-success: #4ade80;
+  --semantic-success-soft: rgba(74, 222, 128, 0.12);
+  --semantic-success-glow: rgba(74, 222, 128, 0.35);
+
+  --semantic-warning: #fbbf24;
+  --semantic-warning-soft: rgba(251, 191, 36, 0.12);
+  --semantic-warning-glow: rgba(251, 191, 36, 0.35);
+
+  --semantic-danger: #ef4444;
+  --semantic-danger-soft: rgba(239, 68, 68, 0.12);
+  --semantic-danger-glow: rgba(239, 68, 68, 0.35);
+
+  /* Couleurs joueurs */
+  --buzzer-1: #4dd4e8;
+  --buzzer-2: #5b8def;
+  --buzzer-3: #9d6bff;
+  --buzzer-4: #ff4d8f;
+  --buzzer-5: #ff7a59;
+  --buzzer-6: #fbbf24;
+  --buzzer-7: #a3e635;
+  --buzzer-8: #4ade80;
+  --buzzer-9: #34d399;
+  --buzzer-10: #7c5cf5;
+
+  --font-ui: "Geist", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", sans-serif;
+  --font-mono: "Geist Mono", "Menlo", monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+  overflow: hidden;
+  height: 100vh;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(40px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes progress-shrink {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+@keyframes pulse-error-icon {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50%      { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* DEMO BANNER                                                     */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.demo-banner {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1000;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.demo-banner-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-vivid);
+  box-shadow: 0 0 8px var(--accent-vivid);
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* SHELL D'APP (lobby — non flouté, juste assombri)                */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.app-shell {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 252px 1fr;
+  grid-template-rows: 52px 1fr;
+}
+
+/* Sidebar */
+.shell-sidebar {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.shell-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.shell-logo-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px var(--accent-primary-glow);
+}
+
+.shell-logo-icon svg { width: 14px; height: 14px; color: white; }
+
+.shell-logo-text {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.shell-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shell-nav-item:hover { background: var(--bg-surface-2); color: var(--text-primary); }
+
+.shell-nav-item.active {
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+}
+
+.shell-nav-item svg { width: 14px; height: 14px; }
+
+/* Topbar */
+.shell-topbar {
+  grid-column: 2;
+  grid-row: 1;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+
+.shell-topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.shell-topbar-title b { color: var(--text-primary); font-weight: 600; }
+
+.shell-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shell-topbar-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.shell-topbar-pill.live {
+  background: var(--semantic-success-soft);
+  border-color: rgba(74, 222, 128, 0.3);
+  color: var(--semantic-success);
+}
+
+.shell-topbar-pill.live::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--semantic-success);
+  margin-right: 5px;
+  vertical-align: 1px;
+  box-shadow: 0 0 6px var(--semantic-success);
+}
+
+/* Zone de contenu */
+.shell-content {
+  grid-column: 2;
+  grid-row: 2;
+  background:
+    radial-gradient(ellipse 60% 30% at 50% 30%, rgba(77, 212, 232, 0.08), transparent 70%),
+    radial-gradient(ellipse 60% 30% at 70% 80%, rgba(157, 107, 255, 0.06), transparent 70%),
+    var(--bg-base);
+  padding: 32px 32px;
+  overflow: auto;
+}
+
+.lobby-headline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.lobby-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--accent-secondary);
+  font-weight: 600;
+}
+
+.lobby-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.lobby-meta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.lobby-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  max-width: 760px;
+}
+
+.lobby-buzzer-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px 12px;
+  text-align: center;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.lobby-buzzer-card.connected {
+  border-color: rgba(74, 222, 128, 0.3);
+  background: linear-gradient(180deg, rgba(74, 222, 128, 0.04), transparent), var(--bg-surface);
+}
+
+.lobby-buzzer-card.disconnected {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
+.lobby-buzzer-card.warning {
+  border-color: rgba(251, 191, 36, 0.4);
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.06), transparent), var(--bg-surface);
+}
+
+.lobby-buzzer-color {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  margin: 0 auto 10px;
+  box-shadow: 0 0 20px var(--card-glow, transparent);
+}
+
+.lobby-buzzer-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.lobby-buzzer-status {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 3px;
+}
+
+.lobby-buzzer-card.connected .lobby-buzzer-status {
+  color: var(--semantic-success);
+}
+
+.lobby-buzzer-card.warning .lobby-buzzer-status {
+  color: var(--semantic-warning);
+}
+
+/* Indicateur batterie en coin */
+.lobby-buzzer-battery {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lobby-buzzer-battery svg {
+  width: 10px;
+  height: 10px;
+  color: var(--semantic-warning);
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* TOAST CONTAINER (bas-droite)                                    */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column-reverse; /* Le plus récent en bas */
+  gap: 10px;
+  width: 380px;
+  max-width: calc(100vw - 40px);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  padding: 14px 16px 14px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 12px 32px -8px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  animation: toast-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* Liseré coloré à gauche par variante */
+.toast::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--variant-color);
+  border-radius: 12px 0 0 12px;
+}
+
+/* Variantes */
+.toast.success {
+  --variant-color: var(--semantic-success);
+  --variant-soft: var(--semantic-success-soft);
+  --variant-glow: var(--semantic-success-glow);
+}
+
+.toast.info {
+  --variant-color: var(--accent-secondary);
+  --variant-soft: var(--accent-secondary-soft);
+  --variant-glow: var(--accent-secondary-glow);
+}
+
+.toast.warning {
+  --variant-color: var(--semantic-warning);
+  --variant-soft: var(--semantic-warning-soft);
+  --variant-glow: var(--semantic-warning-glow);
+}
+
+.toast.error {
+  --variant-color: var(--semantic-danger);
+  --variant-soft: var(--semantic-danger-soft);
+  --variant-glow: var(--semantic-danger-glow);
+  /* Halo discret sur erreur */
+  box-shadow:
+    0 0 0 1px rgba(239, 68, 68, 0.15),
+    0 12px 32px -8px rgba(0, 0, 0, 0.6),
+    0 0 28px rgba(239, 68, 68, 0.12);
+}
+
+/* Animation séquentielle entrée (du plus ancien au plus récent) */
+.toast:nth-child(5) { animation-delay: 0s; }
+.toast:nth-child(4) { animation-delay: 0.08s; }
+.toast:nth-child(3) { animation-delay: 0.16s; }
+.toast:nth-child(2) { animation-delay: 0.24s; }
+.toast:nth-child(1) { animation-delay: 0.32s; }
+
+/* ─── Icône à gauche ─── */
+.toast-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--variant-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.toast-icon svg {
+  width: 16px;
+  height: 16px;
+  color: var(--variant-color);
+}
+
+.toast.error .toast-icon {
+  animation: pulse-error-icon 2s ease-in-out infinite;
+}
+
+/* Variante "icône joueur" : avatar coloré au lieu de l'icône sémantique */
+.toast-icon.player-avatar {
+  background: var(--player-color);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 14px var(--player-glow);
+}
+
+.toast-icon.player-avatar > .player-letter {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.02em;
+}
+
+.toast-icon.player-avatar > .player-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--variant-color);
+  border: 2px solid var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-icon.player-avatar > .player-badge svg {
+  width: 8px;
+  height: 8px;
+  color: white;
+}
+
+.toast-icon.player-avatar { position: relative; overflow: visible; }
+
+/* ─── Contenu central ─── */
+.toast-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.toast-title {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.toast-description {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.toast-description code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--variant-color);
+  font-weight: 600;
+}
+
+.toast-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 2px;
+}
+
+.toast-meta b {
+  color: var(--variant-color);
+  font-weight: 600;
+}
+
+/* Action button (Annuler, Réessayer, Voir détails) */
+.toast-action-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.toast-action {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.toast-action:hover {
+  background: var(--bg-surface-2);
+  border-color: var(--border-strong);
+}
+
+.toast-action svg { width: 12px; height: 12px; }
+
+.toast-action.primary {
+  background: var(--variant-soft);
+  border-color: color-mix(in srgb, var(--variant-color) 30%, transparent);
+  color: var(--variant-color);
+  font-weight: 600;
+}
+
+.toast-action.primary:hover {
+  background: color-mix(in srgb, var(--variant-color) 18%, transparent);
+}
+
+/* ─── Bouton de fermeture ─── */
+.toast-close {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  margin-top: -1px;
+}
+
+.toast-close:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+.toast-close svg { width: 12px; height: 12px; }
+
+/* ─── Barre de progression auto-dismiss ─── */
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--bg-surface-2);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.toast-progress-bar {
+  height: 100%;
+  background: var(--variant-color);
+  box-shadow: 0 0 8px var(--variant-color);
+  transform-origin: left center;
+  /* Démo : valeurs différentes pour montrer plusieurs états */
+  transform: scaleX(var(--progress, 1));
+}
+
+/* État statique pour la démo : différentes valeurs de progression */
+.toast[data-progress="0.85"] .toast-progress-bar { transform: scaleX(0.85); }
+.toast[data-progress="0.65"] .toast-progress-bar { transform: scaleX(0.65); }
+.toast[data-progress="0.45"] .toast-progress-bar { transform: scaleX(0.45); }
+.toast[data-progress="0.25"] .toast-progress-bar { transform: scaleX(0.25); }
+.toast[data-progress="0.10"] .toast-progress-bar { transform: scaleX(0.10); }
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* DEMO TRIGGER (en bas-gauche pour expliquer)                     */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.demo-tip {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  max-width: 300px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.demo-tip-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent-primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.demo-tip-label svg { width: 12px; height: 12px; }
+
+.demo-tip-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.demo-tip-text b { color: var(--text-primary); font-weight: 600; }
+
+</style>
+</head>
+<body>
+
+<!-- Banner de démonstration -->
+<div class="demo-banner">
+  <span class="demo-banner-dot"></span>
+  Démo · 5 toasts empilés
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SHELL D'APP : Lobby                                            -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <div class="shell-sidebar">
+    <div class="shell-logo">
+      <div class="shell-logo-icon"><i data-lucide="zap"></i></div>
+      <div class="shell-logo-text">Quiz Buzzer</div>
+    </div>
+    <div class="shell-nav-item"><i data-lucide="home"></i> Accueil</div>
+    <div class="shell-nav-item"><i data-lucide="library"></i> Quiz</div>
+    <div class="shell-nav-item active"><i data-lucide="play"></i> Lobby</div>
+    <div class="shell-nav-item"><i data-lucide="users"></i> Joueurs</div>
+    <div class="shell-nav-item"><i data-lucide="archive"></i> Historique</div>
+    <div class="shell-nav-item"><i data-lucide="settings"></i> Paramètres</div>
+  </div>
+
+  <!-- Topbar -->
+  <div class="shell-topbar">
+    <div class="shell-topbar-title">
+      Lobby · <b>Soirée découverte du monde</b>
+    </div>
+    <div class="shell-topbar-actions">
+      <span class="shell-topbar-pill">10 buzzers</span>
+      <span class="shell-topbar-pill live">en attente</span>
+    </div>
+  </div>
+
+  <!-- Contenu : lobby -->
+  <div class="shell-content">
+
+    <div class="lobby-headline">
+      <span class="lobby-eyebrow">Préparation</span>
+      <h1 class="lobby-title">Vérification des buzzers</h1>
+      <span class="lobby-meta">9 / 10 connectés · prêt au lancement</span>
+    </div>
+
+    <div class="lobby-grid">
+
+      <div class="lobby-buzzer-card connected" style="--card-glow: rgba(77, 212, 232, 0.3);">
+        <div class="lobby-buzzer-color" style="background: var(--buzzer-1)"></div>
+        <div class="lobby-buzzer-name">Charlie</div>
+        <div class="lobby-buzzer-status">b1 · OK</div>
+      </div>
+
+      <div class="lobby-buzzer-card connected" style="--card-glow: rgba(91, 141, 239, 0.3);">
+        <div class="lobby-buzzer-color" style="background: var(--buzzer-2)"></div>
+        <div class="lobby-buzzer-name">Théo</div>
+        <div class="lobby-buzzer-status">b2 · OK</div>
+      </div>
+
+      <div class="lobby-buzzer-card connected" style="--card-glow: rgba(157, 107, 255, 0.3);">
+        <div class="lobby-buzzer-color" style="background: var(--buzzer-3)"></div>
+        <div class="lobby-buzzer-name">Nina</div>
+        <div class="lobby-buzzer-status">b3 · OK</div>
+      </div>
+
+      <div class="lobby-buzzer-card connected" style="--card-glow: rgba(255, 77, 143, 0.3);">
+        <div class="lobby-buzzer-color" style="background: var(--buzzer-4)"></div>
+        <div class="lobby-buzzer-name">Maya</div>
+        <div class="lobby-buzzer-status">b4 · OK</div>
+      </div>
+
+      <div class="lobby-buzzer-card connected" style="--card-glow: rgba(255, 122, 89, 0.3);">
+        <div class="lobby-buzzer-color" style="background: var(--buzzer-5)"></div>
+        <div class="lobby-buzzer-name">Léo</div>
+        <div class="lobby-buzzer-status">b5 · OK</div>
+      </div>
+
+      <div class="lobby-buzzer-card connected" style="--card-glow: rgba(251, 191, 36, 0.3);">
+        <div class="lobby-buzzer-color" style="background: var(--buzzer-6)"></div>
+        <div class="lobby-buzzer-name">Sam</div>
+        <div class="lobby-buzzer-status">b6 · OK</div>
+      </div>
+
+      <div class="lobby-buzzer-card connected" style="--card-glow: rgba(163, 230, 53, 0.3);">
+        <div class="lobby-buzzer-color" style="background: var(--buzzer-7)"></div>
+        <div class="lobby-buzzer-name">Emma</div>
+        <div class="lobby-buzzer-status">b7 · OK</div>
+      </div>
+
+      <!-- Hugo : vient de se connecter (toast 1 success) -->
+      <div class="lobby-buzzer-card connected" style="--card-glow: rgba(74, 222, 128, 0.4);">
+        <div class="lobby-buzzer-color" style="background: var(--buzzer-8)"></div>
+        <div class="lobby-buzzer-name">Hugo</div>
+        <div class="lobby-buzzer-status">b8 · OK</div>
+      </div>
+
+      <div class="lobby-buzzer-card connected" style="--card-glow: rgba(52, 211, 153, 0.3);">
+        <div class="lobby-buzzer-color" style="background: var(--buzzer-9)"></div>
+        <div class="lobby-buzzer-name">Zoé</div>
+        <div class="lobby-buzzer-status">b9 · OK</div>
+      </div>
+
+      <!-- Ali : batterie faible (toast 2 warning) -->
+      <div class="lobby-buzzer-card warning">
+        <div class="lobby-buzzer-battery"><i data-lucide="battery-low"></i></div>
+        <div class="lobby-buzzer-color" style="background: var(--buzzer-10)"></div>
+        <div class="lobby-buzzer-name">Ali</div>
+        <div class="lobby-buzzer-status">b10 · 12%</div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- DEMO TIP (bas-gauche) — explication du comportement            -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="demo-tip">
+  <span class="demo-tip-label">
+    <i data-lucide="info"></i>
+    Comportement
+  </span>
+  <span class="demo-tip-text">
+    Stack en <b>bas-droite</b>, le plus récent en bas. Auto-dismiss <b>~5s</b>
+    avec barre de progression. La barre est figée à des valeurs différentes
+    pour la démo (chaque toast aurait son propre timer en réalité).
+  </span>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- TOAST STACK (bas-droite)                                       -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--
+  Note : column-reverse → le 1er du markup est en bas (le + récent).
+  J'utilise donc l'ordre inverse : du plus récent (en haut du markup)
+  au plus ancien (en bas du markup), pour faciliter la lecture.
+-->
+<div class="toast-container">
+
+  <!-- Toast 1 (bas, le plus récent) : SUCCESS — Hugo connecté -->
+  <div class="toast success" data-progress="0.85" role="status">
+    <div class="toast-icon player-avatar"
+         style="--player-color: var(--buzzer-8); --player-glow: rgba(74, 222, 128, 0.4);">
+      <span class="player-letter">H</span>
+      <span class="player-badge"><i data-lucide="check"></i></span>
+    </div>
+    <div class="toast-body">
+      <div class="toast-title">Hugo s'est connecté</div>
+      <div class="toast-description">Buzzer <code>b8</code> · Vert · 9 / 10 connectés</div>
+    </div>
+    <button class="toast-close" aria-label="Fermer">
+      <i data-lucide="x"></i>
+    </button>
+    <div class="toast-progress"><div class="toast-progress-bar"></div></div>
+  </div>
+
+  <!-- Toast 2 : WARNING — batterie faible -->
+  <div class="toast warning" data-progress="0.65" role="status">
+    <div class="toast-icon">
+      <i data-lucide="battery-low"></i>
+    </div>
+    <div class="toast-body">
+      <div class="toast-title">Buzzer Ali — batterie faible</div>
+      <div class="toast-description">Niveau actuel <code>12 %</code>. Pensez à le recharger avant de lancer la partie.</div>
+      <div class="toast-action-row">
+        <button class="toast-action primary">
+          <i data-lucide="external-link"></i>
+          Voir le buzzer
+        </button>
+      </div>
+    </div>
+    <button class="toast-close" aria-label="Fermer">
+      <i data-lucide="x"></i>
+    </button>
+    <div class="toast-progress"><div class="toast-progress-bar"></div></div>
+  </div>
+
+  <!-- Toast 3 : SUCCESS avec undo — Quiz sauvegardé -->
+  <div class="toast success" data-progress="0.45" role="status">
+    <div class="toast-icon">
+      <i data-lucide="check-circle-2"></i>
+    </div>
+    <div class="toast-body">
+      <div class="toast-title">Quiz sauvegardé</div>
+      <div class="toast-description">12 questions enregistrées · Soirée découverte du monde</div>
+      <div class="toast-action-row">
+        <button class="toast-action">
+          <i data-lucide="undo-2"></i>
+          Annuler
+        </button>
+      </div>
+    </div>
+    <button class="toast-close" aria-label="Fermer">
+      <i data-lucide="x"></i>
+    </button>
+    <div class="toast-progress"><div class="toast-progress-bar"></div></div>
+  </div>
+
+  <!-- Toast 4 : ERROR avec retry — Échec connexion hub -->
+  <div class="toast error" data-progress="0.25" role="alert">
+    <div class="toast-icon">
+      <i data-lucide="x-circle"></i>
+    </div>
+    <div class="toast-body">
+      <div class="toast-title">Échec de connexion au hub</div>
+      <div class="toast-description">Le serveur ne répond pas sur <code>192.168.1.42:8080</code>.</div>
+      <div class="toast-meta">
+        <i data-lucide="repeat"></i>
+        Tentative <b>2 / 5</b>
+      </div>
+      <div class="toast-action-row">
+        <button class="toast-action primary">
+          <i data-lucide="rotate-ccw"></i>
+          Réessayer
+        </button>
+        <button class="toast-action">
+          Détails
+        </button>
+      </div>
+    </div>
+    <button class="toast-close" aria-label="Fermer">
+      <i data-lucide="x"></i>
+    </button>
+    <div class="toast-progress"><div class="toast-progress-bar"></div></div>
+  </div>
+
+  <!-- Toast 5 (haut, le plus ancien) : INFO compact — joueurs ont rejoint -->
+  <div class="toast info" data-progress="0.10" role="status">
+    <div class="toast-icon">
+      <i data-lucide="users-round"></i>
+    </div>
+    <div class="toast-body">
+      <div class="toast-title">3 nouveaux joueurs ont rejoint</div>
+      <div class="toast-description">Emma, Hugo, Zoé · 9 / 10 connectés au total</div>
+    </div>
+    <button class="toast-close" aria-label="Fermer">
+      <i data-lucide="x"></i>
+    </button>
+    <div class="toast-progress"><div class="toast-progress-bar"></div></div>
+  </div>
+
+</div>
+
+<script>
+  if (window.lucide) lucide.createIcons();
+</script>
+</body>
+</html>

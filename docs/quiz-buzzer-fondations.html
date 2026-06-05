@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Buzzer — Écrans de pilotage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-base: #0b0a10;
+  --bg-surface: #141221;
+  --bg-surface-2: #1c192e;
+  --bg-surface-3: #252238;
+
+  --text-primary: #f4f3f8;
+  --text-secondary: #a8a3bd;
+  --text-muted: #6b6680;
+
+  --border-subtle: #2a2740;
+  --border-default: #3a3654;
+  --border-strong: #4f4a70;
+
+  --accent-primary: #9d6bff;
+  --accent-primary-hover: #8a52ff;
+  --accent-primary-soft: rgba(157, 107, 255, 0.12);
+  --accent-primary-glow: rgba(157, 107, 255, 0.35);
+
+  --accent-secondary: #4dd4e8;
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+
+  --accent-vivid: #ff4d8f;
+  --accent-vivid-soft: rgba(255, 77, 143, 0.15);
+  --accent-vivid-glow: rgba(255, 77, 143, 0.4);
+
+  --semantic-success: #4ade80;
+  --semantic-success-soft: rgba(74, 222, 128, 0.12);
+  --semantic-warning: #fbbf24;
+  --semantic-warning-soft: rgba(251, 191, 36, 0.12);
+  --semantic-danger: #f87171;
+  --semantic-danger-soft: rgba(248, 113, 113, 0.12);
+
+  --font-ui: "Geist", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", sans-serif;
+  --font-mono: "Geist Mono", "Menlo", monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, var(--accent-primary-soft), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, var(--accent-secondary-soft), transparent 60%);
+  background-attachment: fixed;
+  padding: 32px;
+}
+
+.page-header {
+  max-width: 1280px;
+  margin: 0 auto 24px;
+}
+
+.page-header .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--accent-primary);
+  margin-bottom: 8px;
+}
+
+.page-header h1 {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
+.page-header p {
+  color: var(--text-secondary);
+  font-size: 15px;
+  max-width: 720px;
+}
+
+/* === SCREEN — l'écran de pilotage === */
+.screen-section {
+  max-width: 1280px;
+  margin: 0 auto 48px;
+}
+
+.screen-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.screen-label-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+}
+
+.screen-label-state {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary-soft);
+}
+
+.screen-label-state.closed {
+  background: var(--semantic-success-soft);
+  color: var(--semantic-success);
+  border-color: var(--semantic-success-soft);
+}
+
+.screen-label-state.speed {
+  background: var(--accent-vivid-soft);
+  color: var(--accent-vivid);
+  border-color: var(--accent-vivid-soft);
+}
+
+.screen {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* === HEADER de l'écran (méta + chrono) === */
+.screen-header {
+  padding: 20px 32px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: center;
+}
+
+.q-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.q-meta-item {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.q-meta-item.highlight {
+  color: var(--accent-primary);
+  background: var(--accent-primary-soft);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.q-meta-item.points {
+  color: var(--accent-vivid);
+}
+
+.q-meta-sep {
+  color: var(--text-muted);
+  opacity: 0.4;
+}
+
+.q-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--accent-primary-soft);
+  border: 1px solid var(--accent-primary-soft);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-primary);
+}
+
+.q-status-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent-primary-glow);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.q-status-pill.closed {
+  background: var(--semantic-success-soft);
+  border-color: var(--semantic-success-soft);
+  color: var(--semantic-success);
+}
+
+.q-status-pill.closed::before {
+  background: var(--semantic-success);
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+  animation: none;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* === CHRONOMÈTRE === */
+.timer-bar {
+  position: relative;
+  height: 8px;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.timer-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-vivid));
+  transform-origin: left;
+  transition: transform 1s linear;
+  box-shadow: 0 0 16px var(--accent-primary-glow);
+}
+
+.timer-fill.warning {
+  background: linear-gradient(90deg, var(--semantic-warning), var(--accent-vivid));
+}
+
+.timer-fill.danger {
+  background: linear-gradient(90deg, var(--semantic-danger), var(--accent-vivid));
+  animation: timer-pulse 0.6s ease-in-out infinite;
+}
+
+.timer-fill.ended {
+  background: var(--semantic-danger);
+  animation: none;
+}
+
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.timer-time {
+  position: absolute;
+  top: -28px;
+  right: 32px;
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.timer-time.warning { color: var(--semantic-warning); }
+.timer-time.danger { color: var(--semantic-danger); }
+.timer-time.ended { color: var(--semantic-danger); opacity: 0.6; }
+
+/* === BODY de l'écran === */
+.screen-body {
+  padding: 40px 32px 24px;
+}
+
+.q-title {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 3.2vw, 44px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  margin-bottom: 32px;
+  text-align: center;
+  max-width: 920px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* === GRILLE DES CHOIX === */
+.choices-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.choice {
+  background: var(--bg-surface-2);
+  border: 1.5px solid var(--border-default);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 180px;
+}
+
+.choice:hover {
+  border-color: var(--border-strong);
+}
+
+.choice.correct {
+  background: var(--semantic-success-soft);
+  border-color: var(--semantic-success);
+  box-shadow: 0 0 0 1px var(--semantic-success), 0 0 24px rgba(74, 222, 128, 0.15);
+}
+
+.choice.wrong {
+  opacity: 0.45;
+  background: var(--bg-surface);
+}
+
+.choice-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.choice-letter {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.choice.correct .choice-letter {
+  background: var(--semantic-success);
+  color: var(--bg-base);
+  border-color: var(--semantic-success);
+}
+
+.choice-text {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.choice.correct .choice-text {
+  color: var(--semantic-success);
+}
+
+.choice-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: var(--bg-base);
+  padding: 4px 10px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.choice.correct .choice-count {
+  background: var(--semantic-success);
+  color: var(--bg-base);
+}
+
+/* === Joueurs sur un choix === */
+.choice-players {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-subtle);
+  min-height: 60px;
+}
+
+.choice.correct .choice-players { border-top-color: var(--semantic-success); }
+
+.choice-player {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-base);
+  border-radius: 8px;
+  font-size: 14px;
+  animation: player-appear 0.4s ease-out;
+}
+
+@keyframes player-appear {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.choice.correct .choice-player {
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.player-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+  font-family: var(--font-ui);
+}
+
+.player-avatar.c1 { background: linear-gradient(135deg, #9d6bff, #ff4d8f); }
+.player-avatar.c2 { background: linear-gradient(135deg, #4dd4e8, #9d6bff); }
+.player-avatar.c3 { background: linear-gradient(135deg, #ff4d8f, #fbbf24); }
+.player-avatar.c4 { background: linear-gradient(135deg, #4ade80, #4dd4e8); }
+.player-avatar.c5 { background: linear-gradient(135deg, #fbbf24, #ff4d8f); }
+
+.player-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.choice.correct .player-time {
+  color: var(--semantic-success);
+}
+
+.choice-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 20px 0;
+  font-style: italic;
+  font-family: var(--font-mono);
+}
+
+/* === Footer actions === */
+.screen-footer {
+  padding: 16px 32px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.footer-stats {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.footer-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+}
+
+.footer-stat strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: var(--accent-primary);
+  color: white;
+}
+.btn-primary:hover { background: var(--accent-primary-hover); box-shadow: 0 0 24px var(--accent-primary-glow); }
+
+.btn-secondary {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+.btn-secondary:hover { background: var(--bg-surface-3); }
+
+.btn-success {
+  background: var(--semantic-success);
+  color: var(--bg-base);
+}
+.btn-success:hover { filter: brightness(1.1); }
+
+.btn-disabled {
+  background: var(--bg-surface-2);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  border-color: var(--border-subtle);
+}
+
+/* === SPEED — Liste de joueurs === */
+.speed-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+.buzz-spotlight {
+  background: linear-gradient(135deg, var(--accent-vivid-soft), var(--accent-primary-soft));
+  border: 2px solid var(--accent-vivid);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  animation: spotlight-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes spotlight-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-vivid-glow); }
+  50% { box-shadow: 0 0 32px 8px var(--accent-vivid-glow); }
+}
+
+.buzz-spotlight-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--accent-vivid);
+  margin-bottom: 12px;
+}
+
+.buzz-spotlight-name {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, var(--accent-vivid), var(--accent-primary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.buzz-spotlight-time {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.buzz-spotlight-time strong {
+  color: var(--accent-vivid);
+  font-weight: 600;
+}
+
+.players-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.player-card {
+  background: var(--bg-surface-2);
+  border: 1.5px solid var(--border-default);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.player-card.locked {
+  opacity: 0.5;
+  background: var(--bg-surface);
+}
+
+.player-card.invalidated {
+  background: var(--semantic-danger-soft);
+  border-color: var(--semantic-danger);
+  opacity: 0.6;
+}
+
+.player-card.invalidated .player-card-name {
+  text-decoration: line-through;
+  color: var(--semantic-danger);
+}
+
+.player-card-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+}
+
+.player-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-card-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.player-card-status {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.player-card.locked .player-card-status { color: var(--text-muted); }
+.player-card.invalidated .player-card-status { color: var(--semantic-danger); }
+
+/* Note */
+.note {
+  background: var(--accent-secondary-soft);
+  border-left: 3px solid var(--accent-secondary);
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin: 16px 0 24px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.note strong { color: var(--accent-secondary); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="eyebrow">QUIZ BUZZER · ÉCRANS DE PILOTAGE</div>
+  <h1>Pilotage en direct</h1>
+  <p>Trois états maquettés ci-dessous : MCQ pendant la question (chrono actif, joueurs en train de répondre), MCQ après correction (bonne réponse en vert, fausses grisées), et SPEED avec un buzz en cours. La même structure visuelle sert les états avant/après — seul le statut des éléments change.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ÉCRAN 1 — MCQ EN COURS                                           -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section class="screen-section">
+  <div class="screen-label">
+    <span class="screen-label-text">Écran 1 — Question MCQ en cours</span>
+    <span class="screen-label-state">QUESTION_OPEN</span>
+  </div>
+
+  <div class="screen">
+    <!-- Header -->
+    <div class="screen-header">
+      <div class="q-meta">
+        <span class="q-meta-item highlight">Question 4 / 10</span>
+        <span class="q-meta-sep">·</span>
+        <span class="q-meta-item">MCQ</span>
+        <span class="q-meta-sep">·</span>
+        <span class="q-meta-item">Niveau ★★★</span>
+        <span class="q-meta-sep">·</span>
+        <span class="q-meta-item points">+30 pts</span>
+      </div>
+      <div class="q-status-pill">En cours</div>
+    </div>
+
+    <!-- Timer bar -->
+    <div class="timer-bar">
+      <div class="timer-time">18s</div>
+      <div class="timer-fill" style="transform: scaleX(0.6);"></div>
+    </div>
+
+    <!-- Body -->
+    <div class="screen-body">
+      <h2 class="q-title">Quelle est la capitale de l'Australie ?</h2>
+
+      <div class="choices-grid">
+        <!-- Choix A : 2 joueurs -->
+        <div class="choice">
+          <div class="choice-header">
+            <div class="choice-letter">A</div>
+            <div class="choice-text">Sydney</div>
+            <div class="choice-count">2 joueurs</div>
+          </div>
+          <div class="choice-players">
+            <div class="choice-player">
+              <span class="player-name"><span class="player-avatar c1">A</span>Alice</span>
+              <span class="player-time">2.3s</span>
+            </div>
+            <div class="choice-player">
+              <span class="player-name"><span class="player-avatar c3">É</span>Émilie</span>
+              <span class="player-time">7.8s</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Choix B : 1 joueur -->
+        <div class="choice">
+          <div class="choice-header">
+            <div class="choice-letter">B</div>
+            <div class="choice-text">Canberra</div>
+            <div class="choice-count">1 joueur</div>
+          </div>
+          <div class="choice-players">
+            <div class="choice-player">
+              <span class="player-name"><span class="player-avatar c2">B</span>Bob</span>
+              <span class="player-time">4.1s</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Choix C : aucun joueur -->
+        <div class="choice">
+          <div class="choice-header">
+            <div class="choice-letter">C</div>
+            <div class="choice-text">Melbourne</div>
+            <div class="choice-count">0 joueur</div>
+          </div>
+          <div class="choice-players">
+            <div class="choice-empty">— Aucun choix —</div>
+          </div>
+        </div>
+
+        <!-- Choix D : 1 joueur -->
+        <div class="choice">
+          <div class="choice-header">
+            <div class="choice-letter">D</div>
+            <div class="choice-text">Brisbane</div>
+            <div class="choice-count">1 joueur</div>
+          </div>
+          <div class="choice-players">
+            <div class="choice-player">
+              <span class="player-name"><span class="player-avatar c4">C</span>Charlie</span>
+              <span class="player-time">5.6s</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer actions -->
+    <div class="screen-footer">
+      <div class="footer-stats">
+        <div class="footer-stat">Réponses : <strong>4 / 5</strong></div>
+        <div class="footer-stat">En attente : <strong>David</strong></div>
+      </div>
+      <div class="footer-actions">
+        <button class="btn btn-secondary">Classement</button>
+        <button class="btn btn-disabled">Corriger (en attente)</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ÉCRAN 2 — MCQ APRÈS CORRECTION                                   -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section class="screen-section">
+  <div class="screen-label">
+    <span class="screen-label-text">Écran 2 — Même question, après correction</span>
+    <span class="screen-label-state closed">QUESTION_CLOSED</span>
+  </div>
+
+  <div class="screen">
+    <!-- Header -->
+    <div class="screen-header">
+      <div class="q-meta">
+        <span class="q-meta-item highlight">Question 4 / 10</span>
+        <span class="q-meta-sep">·</span>
+        <span class="q-meta-item">MCQ</span>
+        <span class="q-meta-sep">·</span>
+        <span class="q-meta-item">Niveau ★★★</span>
+        <span class="q-meta-sep">·</span>
+        <span class="q-meta-item points">+30 pts</span>
+      </div>
+      <div class="q-status-pill closed">Corrigée</div>
+    </div>
+
+    <!-- Timer ended -->
+    <div class="timer-bar">
+      <div class="timer-time ended">0s</div>
+      <div class="timer-fill ended" style="transform: scaleX(0);"></div>
+    </div>
+
+    <div class="screen-body">
+      <h2 class="q-title">Quelle est la capitale de l'Australie ?</h2>
+
+      <div class="choices-grid">
+        <!-- A : faux -->
+        <div class="choice wrong">
+          <div class="choice-header">
+            <div class="choice-letter">A</div>
+            <div class="choice-text">Sydney</div>
+            <div class="choice-count">2 joueurs</div>
+          </div>
+          <div class="choice-players">
+            <div class="choice-player">
+              <span class="player-name"><span class="player-avatar c1">A</span>Alice</span>
+              <span class="player-time">2.3s</span>
+            </div>
+            <div class="choice-player">
+              <span class="player-name"><span class="player-avatar c3">É</span>Émilie</span>
+              <span class="player-time">7.8s</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- B : CORRECT -->
+        <div class="choice correct">
+          <div class="choice-header">
+            <div class="choice-letter">B</div>
+            <div class="choice-text">Canberra</div>
+            <div class="choice-count">+30 pts</div>
+          </div>
+          <div class="choice-players">
+            <div class="choice-player">
+              <span class="player-name"><span class="player-avatar c2">B</span>Bob</span>
+              <span class="player-time">4.1s</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- C : faux (vide) -->
+        <div class="choice wrong">
+          <div class="choice-header">
+            <div class="choice-letter">C</div>
+            <div class="choice-text">Melbourne</div>
+            <div class="choice-count">0 joueur</div>
+          </div>
+          <div class="choice-players">
+            <div class="choice-empty">— Aucun choix —</div>
+          </div>
+        </div>
+
+        <!-- D : faux -->
+        <div class="choice wrong">
+          <div class="choice-header">
+            <div class="choice-letter">D</div>
+            <div class="choice-text">Brisbane</div>
+            <div class="choice-count">1 joueur</div>
+          </div>
+          <div class="choice-players">
+            <div class="choice-player">
+              <span class="player-name"><span class="player-avatar c4">C</span>Charlie</span>
+              <span class="player-time">5.6s</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-footer">
+      <div class="footer-stats">
+        <div class="footer-stat">Bonne réponse : <strong style="color: var(--semantic-success)">Canberra (B)</strong></div>
+        <div class="footer-stat">Gagnant : <strong>Bob</strong> (+30)</div>
+      </div>
+      <div class="footer-actions">
+        <button class="btn btn-secondary">Classement</button>
+        <button class="btn btn-primary">Question suivante →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ÉCRAN 3 — SPEED AVEC BUZZ EN COURS                               -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section class="screen-section">
+  <div class="screen-label">
+    <span class="screen-label-text">Écran 3 — Question SPEED, un joueur a buzzé</span>
+    <span class="screen-label-state speed">QUESTION_BUZZED</span>
+  </div>
+
+  <div class="screen">
+    <!-- Header -->
+    <div class="screen-header">
+      <div class="q-meta">
+        <span class="q-meta-item highlight">Question 7 / 10</span>
+        <span class="q-meta-sep">·</span>
+        <span class="q-meta-item">SPEED</span>
+        <span class="q-meta-sep">·</span>
+        <span class="q-meta-item">Niveau ★★★★</span>
+        <span class="q-meta-sep">·</span>
+        <span class="q-meta-item points">+50 pts</span>
+      </div>
+      <div class="q-status-pill" style="background: var(--accent-vivid-soft); border-color: var(--accent-vivid-soft); color: var(--accent-vivid);">
+        <span style="background: var(--accent-vivid); width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 4px;"></span>
+        Buzz reçu
+      </div>
+    </div>
+
+    <!-- Timer suspendu -->
+    <div class="timer-bar">
+      <div class="timer-time warning">12s</div>
+      <div class="timer-fill warning" style="transform: scaleX(0.4); animation: none; opacity: 0.5;"></div>
+    </div>
+
+    <div class="screen-body">
+      <h2 class="q-title">Quel est le plus grand océan du monde ?</h2>
+
+      <div class="speed-layout">
+        <!-- Spotlight buzzeur -->
+        <div class="buzz-spotlight">
+          <div class="buzz-spotlight-label">★ A buzzé en premier ★</div>
+          <div class="buzz-spotlight-name">Charlie</div>
+          <div class="buzz-spotlight-time">Temps de réaction : <strong>3.2s</strong></div>
+        </div>
+
+        <!-- Liste des autres joueurs -->
+        <div class="players-list">
+          <div class="player-card invalidated">
+            <div class="player-card-avatar" style="background: linear-gradient(135deg, #9d6bff, #ff4d8f);">A</div>
+            <div class="player-card-info">
+              <div class="player-card-name">Alice</div>
+              <div class="player-card-status">Invalidée</div>
+            </div>
+          </div>
+          <div class="player-card locked">
+            <div class="player-card-avatar" style="background: linear-gradient(135deg, #4dd4e8, #9d6bff);">B</div>
+            <div class="player-card-info">
+              <div class="player-card-name">Bob</div>
+              <div class="player-card-status">Bloqué</div>
+            </div>
+          </div>
+          <div class="player-card locked">
+            <div class="player-card-avatar" style="background: linear-gradient(135deg, #ff4d8f, #fbbf24);">É</div>
+            <div class="player-card-info">
+              <div class="player-card-name">Émilie</div>
+              <div class="player-card-status">Bloquée</div>
+            </div>
+          </div>
+          <div class="player-card locked">
+            <div class="player-card-avatar" style="background: linear-gradient(135deg, #fbbf24, #4ade80);">D</div>
+            <div class="player-card-info">
+              <div class="player-card-name">David</div>
+              <div class="player-card-status">Bloqué</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-footer">
+      <div class="footer-stats">
+        <div class="footer-stat">Buzzeur : <strong style="color: var(--accent-vivid)">Charlie</strong></div>
+        <div class="footer-stat">Joueurs restants : <strong>3</strong></div>
+      </div>
+      <div class="footer-actions">
+        <button class="btn btn-secondary">Invalider</button>
+        <button class="btn btn-success">Valider la réponse ✓</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="page-header" style="text-align: center; padding-top: 16px; opacity: 0.6;">
+  <p style="font-size: 13px;">Trois écrans, une grammaire visuelle commune.<br>Le maître de jeu reconnaît instantanément l'état du jeu sans avoir à lire.</p>
+</div>
+
+</body>
+</html>

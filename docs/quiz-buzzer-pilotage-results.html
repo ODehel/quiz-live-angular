@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Buzzer — Résultats finaux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --bg-base: #0b0a10;
+  --bg-surface: #141221;
+  --bg-surface-2: #1c192e;
+  --bg-surface-3: #252238;
+
+  --text-primary: #f4f3f8;
+  --text-secondary: #a8a3bd;
+  --text-muted: #6b6680;
+
+  --border-subtle: #2a2740;
+  --border-default: #3a3654;
+  --border-strong: #4f4a70;
+
+  --accent-primary: #9d6bff;
+  --accent-primary-soft: rgba(157, 107, 255, 0.12);
+  --accent-primary-glow: rgba(157, 107, 255, 0.35);
+
+  --accent-secondary: #4dd4e8;
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+
+  --accent-vivid: #ff4d8f;
+  --accent-vivid-soft: rgba(255, 77, 143, 0.15);
+  --accent-vivid-glow: rgba(255, 77, 143, 0.35);
+
+  --semantic-success: #4ade80;
+  --semantic-success-soft: rgba(74, 222, 128, 0.12);
+  --semantic-success-glow: rgba(74, 222, 128, 0.4);
+
+  /* Couleurs podium */
+  --gold: #fbbf24;
+  --gold-2: #f59e0b;
+  --gold-glow: rgba(251, 191, 36, 0.5);
+  --silver: #cbd5e1;
+  --silver-2: #94a3b8;
+  --silver-glow: rgba(203, 213, 225, 0.4);
+  --bronze: #d97706;
+  --bronze-2: #92400e;
+  --bronze-glow: rgba(217, 119, 6, 0.4);
+
+  /* 10 buzzers */
+  --buzzer-1: #4dd4e8;
+  --buzzer-2: #5b8def;
+  --buzzer-3: #9d6bff;
+  --buzzer-4: #ff4d8f;
+  --buzzer-5: #ff7a59;
+  --buzzer-6: #fbbf24;
+  --buzzer-7: #a3e635;
+  --buzzer-8: #4ade80;
+  --buzzer-9: #34d399;
+  --buzzer-10: #7c5cf5;
+
+  --font-ui: "Geist", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", sans-serif;
+  --font-mono: "Geist Mono", "Menlo", monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes podium-rise-1 {
+  from { opacity: 0; transform: translateY(40px) scaleY(0.6); }
+  to   { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+
+@keyframes podium-rise-2 {
+  from { opacity: 0; transform: translateY(30px) scaleY(0.7); }
+  to   { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+
+@keyframes podium-rise-3 {
+  from { opacity: 0; transform: translateY(25px) scaleY(0.7); }
+  to   { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+
+@keyframes avatar-pop {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes crown-shine {
+  0%, 100% { filter: drop-shadow(0 0 12px var(--gold-glow)); }
+  50%      { filter: drop-shadow(0 0 24px var(--gold-glow)); }
+}
+
+@keyframes ranking-row-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* CONTENEUR PLEIN ÉCRAN                                           */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.results-screen {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* Fond ambiant festif : violet + magenta + or doux */
+  background:
+    radial-gradient(ellipse 60% 35% at 50% 5%, rgba(251, 191, 36, 0.10), transparent 70%),
+    radial-gradient(ellipse 80% 40% at 30% 30%, rgba(157, 107, 255, 0.18), transparent 70%),
+    radial-gradient(ellipse 70% 40% at 70% 70%, rgba(255, 77, 143, 0.12), transparent 70%),
+    var(--bg-base);
+}
+
+/* ─── Mini-barre supérieure ─── */
+.results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(11, 10, 16, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.results-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.results-bar-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-2));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--gold-glow);
+}
+
+.results-bar-icon svg { width: 18px; height: 18px; color: white; }
+
+.results-bar-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.results-bar-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.results-bar-subtitle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.results-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bar-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.bar-btn:hover {
+  background: var(--bg-surface-2);
+  border-color: var(--border-strong);
+}
+
+.bar-btn svg { width: 14px; height: 14px; }
+
+.bar-btn.primary {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  border-color: transparent;
+  color: white;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.bar-btn.primary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent, rgba(255,255,255,0.15), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.bar-btn.primary:hover::before { transform: translateX(100%); }
+
+.bar-btn.primary:hover {
+  box-shadow: 0 0 32px var(--accent-primary-glow);
+  transform: translateY(-1px);
+}
+
+/* ─── Contenu central ─── */
+.results-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 28px 56px;
+  gap: 36px;
+  width: 100%;
+}
+
+/* ─── Headline ─── */
+.results-headline {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 720px;
+}
+
+.results-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.results-eyebrow svg { width: 14px; height: 14px; }
+
+.results-eyebrow .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
+}
+
+.results-title {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.results-title em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--accent-vivid) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.results-meta-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.results-meta-row .sep { opacity: 0.4; }
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* PODIUM 3D                                                       */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.podium-wrap {
+  width: 100%;
+  max-width: 880px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14px;
+  padding: 60px 20px 0;
+}
+
+.podium-step {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.podium-step.first  { width: 240px; }
+.podium-step.second { width: 200px; }
+.podium-step.third  { width: 200px; }
+
+/* Avatar + couronne au-dessus du bloc podium */
+.podium-avatar-wrap {
+  position: relative;
+  margin-bottom: 14px;
+  animation: avatar-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.podium-step.first .podium-avatar-wrap  { animation-delay: 0.7s; }
+.podium-step.second .podium-avatar-wrap { animation-delay: 0.4s; }
+.podium-step.third .podium-avatar-wrap  { animation-delay: 0.55s; }
+
+.podium-crown {
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: crown-shine 2.5s ease-in-out infinite;
+}
+
+.podium-crown svg {
+  width: 38px;
+  height: 38px;
+  color: var(--gold);
+  fill: var(--gold);
+}
+
+.podium-medal {
+  position: absolute;
+  top: -14px;
+  right: -10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  border: 3px solid var(--bg-base);
+}
+
+.podium-medal.silver {
+  background: linear-gradient(135deg, var(--silver), var(--silver-2));
+  box-shadow: 0 0 14px var(--silver-glow);
+}
+
+.podium-medal.bronze {
+  background: linear-gradient(135deg, var(--bronze), var(--bronze-2));
+  box-shadow: 0 0 14px var(--bronze-glow);
+}
+
+.podium-avatar {
+  border-radius: 16px;
+  background: var(--player-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  position: relative;
+}
+
+.podium-step.first .podium-avatar {
+  width: 96px;
+  height: 96px;
+  font-size: 44px;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.12),
+    0 0 0 4px var(--gold),
+    0 0 60px var(--player-glow),
+    0 12px 28px rgba(0, 0, 0, 0.5);
+}
+
+.podium-step.second .podium-avatar,
+.podium-step.third .podium-avatar {
+  width: 76px;
+  height: 76px;
+  font-size: 32px;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.10),
+    0 0 30px var(--player-glow),
+    0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Bloc 3D du podium */
+.podium-block {
+  position: relative;
+  width: 100%;
+  border-radius: 14px 14px 0 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 22px 16px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 1px solid rgba(255, 255, 255, 0.04);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  animation-fill-mode: backwards;
+}
+
+/* 1er — plus haut, gradient or */
+.podium-step.first .podium-block {
+  height: 200px;
+  background:
+    linear-gradient(180deg, rgba(251, 191, 36, 0.18) 0%, rgba(251, 191, 36, 0.04) 100%),
+    var(--bg-surface);
+  box-shadow:
+    inset 0 1px 0 rgba(251, 191, 36, 0.3),
+    0 -8px 32px rgba(251, 191, 36, 0.15);
+  animation: podium-rise-1 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  animation-delay: 0.2s;
+}
+
+.podium-step.first .podium-block::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+/* 2e — moyen, gradient argent */
+.podium-step.second .podium-block {
+  height: 150px;
+  background:
+    linear-gradient(180deg, rgba(203, 213, 225, 0.12) 0%, rgba(203, 213, 225, 0.03) 100%),
+    var(--bg-surface);
+  box-shadow:
+    inset 0 1px 0 rgba(203, 213, 225, 0.25),
+    0 -6px 24px rgba(203, 213, 225, 0.1);
+  animation: podium-rise-2 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  animation-delay: 0s;
+}
+
+.podium-step.second .podium-block::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--silver), transparent);
+}
+
+/* 3e — plus bas, gradient bronze */
+.podium-step.third .podium-block {
+  height: 120px;
+  background:
+    linear-gradient(180deg, rgba(217, 119, 6, 0.12) 0%, rgba(217, 119, 6, 0.03) 100%),
+    var(--bg-surface);
+  box-shadow:
+    inset 0 1px 0 rgba(217, 119, 6, 0.25),
+    0 -6px 24px rgba(217, 119, 6, 0.1);
+  animation: podium-rise-3 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  animation-delay: 0.1s;
+}
+
+.podium-step.third .podium-block::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--bronze), transparent);
+}
+
+/* Numéro de rang énorme dans le bloc */
+.podium-rank-number {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.podium-step.first .podium-rank-number {
+  font-size: 96px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 40px rgba(251, 191, 36, 0.4);
+}
+
+.podium-step.second .podium-rank-number {
+  font-size: 72px;
+  background: linear-gradient(135deg, var(--silver), var(--silver-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.podium-step.third .podium-rank-number {
+  font-size: 64px;
+  background: linear-gradient(135deg, var(--bronze), var(--bronze-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* CARDS PODIUM (sous le podium 3D)                                */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.podium-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  width: 100%;
+  max-width: 880px;
+}
+
+/* Réordonner pour que le 1er soit au centre comme le podium */
+.podium-cards > .podium-card.first { order: 2; }
+.podium-cards > .podium-card.second { order: 1; }
+.podium-cards > .podium-card.third { order: 3; }
+
+.podium-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 18px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.podium-card.first {
+  border-color: rgba(251, 191, 36, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(251, 191, 36, 0.2),
+    0 12px 36px -8px rgba(251, 191, 36, 0.2);
+}
+
+.podium-card.first::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-2));
+}
+
+.podium-card.second::before,
+.podium-card.third::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+}
+
+.podium-card.second::before {
+  background: linear-gradient(90deg, var(--silver), var(--silver-2));
+}
+
+.podium-card.third::before {
+  background: linear-gradient(90deg, var(--bronze), var(--bronze-2));
+}
+
+.podium-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.podium-card-rank-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.podium-card-rank-pill svg { width: 11px; height: 11px; }
+
+.podium-card.first .podium-card-rank-pill {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--gold);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.podium-card.second .podium-card-rank-pill {
+  background: rgba(203, 213, 225, 0.10);
+  color: var(--silver);
+  border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.podium-card.third .podium-card-rank-pill {
+  background: rgba(217, 119, 6, 0.10);
+  color: var(--bronze);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
+.podium-card-buzzer-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.podium-card-name {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+
+.podium-card.first .podium-card-name { font-size: 30px; }
+
+.podium-card-score {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.podium-card.first .podium-card-score {
+  font-size: 38px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.podium-card.second .podium-card-score {
+  background: linear-gradient(135deg, var(--silver), var(--silver-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.podium-card.third .podium-card-score {
+  background: linear-gradient(135deg, var(--bronze), var(--bronze-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.podium-card-score-suffix {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-left: 4px;
+  -webkit-text-fill-color: var(--text-muted);
+  background: none;
+}
+
+/* Fun fact */
+.podium-card-funfact {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+.podium-card-funfact-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--accent-primary-soft);
+}
+
+.podium-card-funfact-icon svg {
+  width: 14px;
+  height: 14px;
+  color: var(--accent-primary);
+}
+
+.podium-card.first .podium-card-funfact-icon {
+  background: rgba(251, 191, 36, 0.15);
+}
+.podium-card.first .podium-card-funfact-icon svg { color: var(--gold); }
+
+.podium-card-funfact-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.podium-card-funfact-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.podium-card-funfact-value {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* CLASSEMENT COMPLET 4-10                                         */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.full-ranking-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 880px;
+  overflow: hidden;
+}
+
+.full-ranking-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.full-ranking-header-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.full-ranking-header-title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--accent-primary);
+}
+
+.full-ranking-header-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.full-ranking-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.full-ranking-row {
+  display: grid;
+  grid-template-columns: 50px 1fr 130px 110px;
+  gap: 14px;
+  align-items: center;
+  padding: 13px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.15s ease;
+  animation: ranking-row-enter 0.4s ease-out backwards;
+}
+
+.full-ranking-row:nth-child(1)  { animation-delay: 0.10s; }
+.full-ranking-row:nth-child(2)  { animation-delay: 0.16s; }
+.full-ranking-row:nth-child(3)  { animation-delay: 0.22s; }
+.full-ranking-row:nth-child(4)  { animation-delay: 0.28s; }
+.full-ranking-row:nth-child(5)  { animation-delay: 0.34s; }
+.full-ranking-row:nth-child(6)  { animation-delay: 0.40s; }
+.full-ranking-row:nth-child(7)  { animation-delay: 0.46s; }
+
+.full-ranking-row:last-child { border-bottom: none; }
+.full-ranking-row:hover { background: var(--bg-surface-2); }
+
+.full-ranking-rank {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.full-ranking-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.full-ranking-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--player-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 14px var(--player-glow);
+}
+
+.full-ranking-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.full-ranking-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.full-ranking-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Stat répartition MCQ / SPEED */
+.full-ranking-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.full-ranking-breakdown b {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.full-ranking-score {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.full-ranking-score-suffix {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+/* Marquage des ex-aequo (Sam et Hugo à 800) */
+.full-ranking-row.tied {
+  position: relative;
+}
+
+.full-ranking-row.tied::after {
+  content: "ex æquo";
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%) translateY(20px);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-secondary);
+  background: var(--accent-secondary-soft);
+  border: 1px solid rgba(77, 212, 232, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* ─── Footer actions ─── */
+.results-footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+</style>
+</head>
+<body>
+
+<div class="results-screen">
+
+  <!-- ═══════ MINI-BARRE SUPÉRIEURE ═══════ -->
+  <div class="results-bar">
+    <div class="results-bar-left">
+      <div class="results-bar-icon"><i data-lucide="trophy"></i></div>
+      <div class="results-bar-text">
+        <div class="results-bar-title">Résultats finaux</div>
+        <div class="results-bar-subtitle">Soirée découverte du monde</div>
+      </div>
+    </div>
+    <div class="results-bar-actions">
+      <button class="bar-btn">
+        <i data-lucide="download"></i>
+        Exporter
+      </button>
+      <button class="bar-btn primary">
+        <i data-lucide="rotate-ccw"></i>
+        Nouvelle partie
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════ CONTENU CENTRAL ═══════ -->
+  <div class="results-content">
+
+    <!-- Headline -->
+    <div class="results-headline">
+      <span class="results-eyebrow">
+        <span class="live-dot"></span>
+        Partie terminée
+      </span>
+      <h1 class="results-title">
+        Bravo aux <em>10 joueurs</em>&nbsp;!
+      </h1>
+      <div class="results-meta-row">
+        <span>12 questions</span>
+        <span class="sep">·</span>
+        <span>8'47 de jeu</span>
+        <span class="sep">·</span>
+        <span>8 100 points distribués</span>
+        <span class="sep">·</span>
+        <span>4 SPEED · 8 MCQ</span>
+      </div>
+    </div>
+
+    <!-- ═══════ PODIUM 3D ═══════ -->
+    <div class="podium-wrap">
+
+      <!-- 2e — Nina (b3, violet) -->
+      <div class="podium-step second">
+        <div class="podium-avatar-wrap">
+          <div class="podium-medal silver">2</div>
+          <div class="podium-avatar" style="--player-color: var(--buzzer-3); --player-glow: rgba(157, 107, 255, 0.5);">N</div>
+        </div>
+        <div class="podium-block">
+          <div class="podium-rank-number">2</div>
+        </div>
+      </div>
+
+      <!-- 1er — Charlie (b1, cyan) -->
+      <div class="podium-step first">
+        <div class="podium-avatar-wrap">
+          <div class="podium-crown">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L9 7l-5-2 1.5 9h13L20 5l-5 2-3-5z" />
+              <rect x="4" y="17" width="16" height="3" rx="0.5" />
+            </svg>
+          </div>
+          <div class="podium-avatar" style="--player-color: var(--buzzer-1); --player-glow: rgba(77, 212, 232, 0.6);">C</div>
+        </div>
+        <div class="podium-block">
+          <div class="podium-rank-number">1</div>
+        </div>
+      </div>
+
+      <!-- 3e — Maya (b4, magenta) -->
+      <div class="podium-step third">
+        <div class="podium-avatar-wrap">
+          <div class="podium-medal bronze">3</div>
+          <div class="podium-avatar" style="--player-color: var(--buzzer-4); --player-glow: rgba(255, 77, 143, 0.5);">M</div>
+        </div>
+        <div class="podium-block">
+          <div class="podium-rank-number">3</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════ CARDS PODIUM (détails) ═══════ -->
+    <div class="podium-cards">
+
+      <!-- 2e Nina -->
+      <div class="podium-card second">
+        <div class="podium-card-row">
+          <span class="podium-card-rank-pill">
+            <i data-lucide="medal"></i>
+            2e place
+          </span>
+          <span class="podium-card-buzzer-meta">b3 · Violet</span>
+        </div>
+        <div class="podium-card-name">Nina</div>
+        <div class="podium-card-score">1 800<span class="podium-card-score-suffix">pts</span></div>
+        <div class="podium-card-funfact">
+          <div class="podium-card-funfact-icon">
+            <i data-lucide="list-checks"></i>
+          </div>
+          <div class="podium-card-funfact-text">
+            <span class="podium-card-funfact-label">Fun fact</span>
+            <span class="podium-card-funfact-value">Reine du MCQ — 8 bonnes réponses sur 8</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1er Charlie -->
+      <div class="podium-card first">
+        <div class="podium-card-row">
+          <span class="podium-card-rank-pill">
+            <i data-lucide="crown"></i>
+            Champion
+          </span>
+          <span class="podium-card-buzzer-meta">b1 · Cyan</span>
+        </div>
+        <div class="podium-card-name">Charlie</div>
+        <div class="podium-card-score">1 850<span class="podium-card-score-suffix">pts</span></div>
+        <div class="podium-card-funfact">
+          <div class="podium-card-funfact-icon">
+            <i data-lucide="zap"></i>
+          </div>
+          <div class="podium-card-funfact-text">
+            <span class="podium-card-funfact-label">Fun fact</span>
+            <span class="podium-card-funfact-value">Spécialiste du buzz tardif — 3 SPEED gagnés en fin de partie</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3e Maya -->
+      <div class="podium-card third">
+        <div class="podium-card-row">
+          <span class="podium-card-rank-pill">
+            <i data-lucide="award"></i>
+            3e place
+          </span>
+          <span class="podium-card-buzzer-meta">b4 · Magenta</span>
+        </div>
+        <div class="podium-card-name">Maya</div>
+        <div class="podium-card-score">1 650<span class="podium-card-score-suffix">pts</span></div>
+        <div class="podium-card-funfact">
+          <div class="podium-card-funfact-icon">
+            <i data-lucide="line-chart"></i>
+          </div>
+          <div class="podium-card-funfact-text">
+            <span class="podium-card-funfact-label">Fun fact</span>
+            <span class="podium-card-funfact-value">La plus régulière — toujours dans le top 3 sur les 12 questions</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════ CLASSEMENT COMPLET 4-10 ═══════ -->
+    <div class="full-ranking-card">
+      <div class="full-ranking-header">
+        <div class="full-ranking-header-title">
+          <i data-lucide="users"></i>
+          Classement complet
+        </div>
+        <div class="full-ranking-header-meta">10 joueurs · 12 questions</div>
+      </div>
+
+      <div class="full-ranking-table">
+
+        <!-- 4 - Léo (b5, corail) -->
+        <div class="full-ranking-row" style="--player-color: var(--buzzer-5); --player-glow: rgba(255, 122, 89, 0.4);">
+          <div class="full-ranking-rank">4</div>
+          <div class="full-ranking-player">
+            <div class="full-ranking-avatar">L</div>
+            <div class="full-ranking-info">
+              <div class="full-ranking-name">Léo</div>
+              <div class="full-ranking-meta">b5 · Corail</div>
+            </div>
+          </div>
+          <div class="full-ranking-breakdown">
+            <span><b>2</b> MCQ · <b>2</b> SPEED</span>
+          </div>
+          <div class="full-ranking-score">1 350<span class="full-ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 5 - Théo (b2, bleu) -->
+        <div class="full-ranking-row" style="--player-color: var(--buzzer-2); --player-glow: rgba(91, 141, 239, 0.4);">
+          <div class="full-ranking-rank">5</div>
+          <div class="full-ranking-player">
+            <div class="full-ranking-avatar">T</div>
+            <div class="full-ranking-info">
+              <div class="full-ranking-name">Théo</div>
+              <div class="full-ranking-meta">b2 · Bleu</div>
+            </div>
+          </div>
+          <div class="full-ranking-breakdown">
+            <span><b>5</b> MCQ · <b>0</b> SPEED</span>
+          </div>
+          <div class="full-ranking-score">1 150<span class="full-ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 6 - Emma (b7, lime) -->
+        <div class="full-ranking-row" style="--player-color: var(--buzzer-7); --player-glow: rgba(163, 230, 53, 0.4);">
+          <div class="full-ranking-rank">6</div>
+          <div class="full-ranking-player">
+            <div class="full-ranking-avatar">E</div>
+            <div class="full-ranking-info">
+              <div class="full-ranking-name">Emma</div>
+              <div class="full-ranking-meta">b7 · Lime</div>
+            </div>
+          </div>
+          <div class="full-ranking-breakdown">
+            <span><b>4</b> MCQ · <b>1</b> SPEED</span>
+          </div>
+          <div class="full-ranking-score">850<span class="full-ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 7 - Sam (b6, ambre) - ex-aequo avec Hugo -->
+        <div class="full-ranking-row tied" style="--player-color: var(--buzzer-6); --player-glow: rgba(251, 191, 36, 0.4);">
+          <div class="full-ranking-rank">7</div>
+          <div class="full-ranking-player">
+            <div class="full-ranking-avatar">S</div>
+            <div class="full-ranking-info">
+              <div class="full-ranking-name">Sam</div>
+              <div class="full-ranking-meta">b6 · Ambre</div>
+            </div>
+          </div>
+          <div class="full-ranking-breakdown">
+            <span><b>3</b> MCQ · <b>1</b> SPEED</span>
+          </div>
+          <div class="full-ranking-score">800<span class="full-ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 8 - Hugo (b8, vert) - ex-aequo avec Sam -->
+        <div class="full-ranking-row tied" style="--player-color: var(--buzzer-8); --player-glow: rgba(74, 222, 128, 0.4);">
+          <div class="full-ranking-rank">8</div>
+          <div class="full-ranking-player">
+            <div class="full-ranking-avatar">H</div>
+            <div class="full-ranking-info">
+              <div class="full-ranking-name">Hugo</div>
+              <div class="full-ranking-meta">b8 · Vert</div>
+            </div>
+          </div>
+          <div class="full-ranking-breakdown">
+            <span><b>4</b> MCQ · <b>0</b> SPEED</span>
+          </div>
+          <div class="full-ranking-score">800<span class="full-ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 9 - Zoé (b9, turquoise) -->
+        <div class="full-ranking-row" style="--player-color: var(--buzzer-9); --player-glow: rgba(52, 211, 153, 0.4);">
+          <div class="full-ranking-rank">9</div>
+          <div class="full-ranking-player">
+            <div class="full-ranking-avatar">Z</div>
+            <div class="full-ranking-info">
+              <div class="full-ranking-name">Zoé</div>
+              <div class="full-ranking-meta">b9 · Turquoise</div>
+            </div>
+          </div>
+          <div class="full-ranking-breakdown">
+            <span><b>2</b> MCQ · <b>1</b> SPEED</span>
+          </div>
+          <div class="full-ranking-score">500<span class="full-ranking-score-suffix">pts</span></div>
+        </div>
+
+        <!-- 10 - Ali (b10, indigo) -->
+        <div class="full-ranking-row" style="--player-color: var(--buzzer-10); --player-glow: rgba(124, 92, 245, 0.4);">
+          <div class="full-ranking-rank">10</div>
+          <div class="full-ranking-player">
+            <div class="full-ranking-avatar">A</div>
+            <div class="full-ranking-info">
+              <div class="full-ranking-name">Ali</div>
+              <div class="full-ranking-meta">b10 · Indigo</div>
+            </div>
+          </div>
+          <div class="full-ranking-breakdown">
+            <span><b>1</b> MCQ · <b>1</b> SPEED</span>
+          </div>
+          <div class="full-ranking-score">350<span class="full-ranking-score-suffix">pts</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─── Footer actions ─── -->
+    <div class="results-footer-actions">
+      <button class="bar-btn">
+        <i data-lucide="bar-chart-3"></i>
+        Voir les détails par question
+      </button>
+      <button class="bar-btn primary">
+        <i data-lucide="rotate-ccw"></i>
+        Lancer une nouvelle partie
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  if (window.lucide) lucide.createIcons();
+</script>
+</body>
+</html>

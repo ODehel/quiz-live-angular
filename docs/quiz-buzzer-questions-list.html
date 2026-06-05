@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Buzzer — Liste des questions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --bg-base: #0b0a10;
+  --bg-surface: #141221;
+  --bg-surface-2: #1c192e;
+  --bg-surface-3: #252238;
+
+  --text-primary: #f4f3f8;
+  --text-secondary: #a8a3bd;
+  --text-muted: #6b6680;
+
+  --border-subtle: #2a2740;
+  --border-default: #3a3654;
+  --border-strong: #4f4a70;
+
+  --accent-primary: #9d6bff;
+  --accent-primary-hover: #8a52ff;
+  --accent-primary-soft: rgba(157, 107, 255, 0.12);
+  --accent-primary-glow: rgba(157, 107, 255, 0.35);
+
+  --accent-secondary: #4dd4e8;
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+
+  --accent-vivid: #ff4d8f;
+  --accent-vivid-soft: rgba(255, 77, 143, 0.15);
+
+  --semantic-success: #4ade80;
+  --semantic-warning: #fbbf24;
+  --semantic-danger: #f87171;
+  --semantic-danger-soft: rgba(248, 113, 113, 0.12);
+
+  --font-ui: "Geist", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", sans-serif;
+  --font-mono: "Geist Mono", "Menlo", monospace;
+
+  --sidebar-width: 252px;
+  --topbar-height: 52px;
+  --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* SHELL                                                            */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, var(--accent-primary-soft), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, var(--accent-secondary-soft), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* ═══════ SIDEBAR ═══════ */
+.sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px 16px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sidebar-logo {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-vivid) 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--accent-primary-glow);
+  position: relative;
+}
+
+.sidebar-logo svg { width: 20px; height: 20px; color: white; z-index: 1; }
+
+.sidebar-brand-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.sidebar-brand-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nav-group-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  padding: 0 12px;
+  margin-bottom: 4px;
+}
+
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.nav-item:hover { background: var(--bg-surface-2); color: var(--text-primary); }
+
+.nav-item.expanded {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+.nav-item.expanded > .nav-chevron {
+  transform: rotate(90deg);
+}
+
+.nav-item-icon { width: 18px; height: 18px; flex-shrink: 0; }
+.nav-item-label { flex: 1; }
+.nav-item-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: var(--bg-surface-2);
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.nav-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+/* Sous-navigation */
+.nav-subitems {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 0 4px 28px;
+  margin-top: 2px;
+  position: relative;
+}
+
+.nav-subitems::before {
+  content: "";
+  position: absolute;
+  left: 19px;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: var(--border-default);
+}
+
+.nav-subitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.nav-subitem::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  width: 6px;
+  height: 1px;
+  background: var(--border-default);
+}
+
+.nav-subitem:hover { background: var(--bg-surface-3); color: var(--text-primary); }
+
+.nav-subitem.active {
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+  font-weight: 500;
+}
+
+.nav-subitem.active::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background: var(--accent-primary);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-subitem-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.nav-subitem.active .nav-subitem-count { color: var(--accent-primary); }
+
+.sidebar-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 12px;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.user-card:hover { background: var(--bg-surface-2); }
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.user-name { font-size: 13px; font-weight: 600; }
+.user-role {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ═══════ MAIN ═══════ */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  height: var(--topbar-height);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  flex: 1;
+}
+
+.topbar-breadcrumb-item { color: var(--text-muted); }
+.topbar-breadcrumb-item.current { color: var(--text-primary); font-weight: 500; }
+.topbar-breadcrumb-sep { color: var(--text-muted); opacity: 0.4; }
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.connection-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--semantic-success);
+  box-shadow: 0 0 6px var(--semantic-success);
+}
+
+.connection-status .server { color: var(--text-muted); }
+
+.topbar-icon-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.topbar-icon-btn:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.topbar-icon-btn svg { width: 16px; height: 16px; }
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* CONTENT — page de questions                                      */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.content {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* En-tête de page */
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.page-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent-primary);
+  margin-bottom: 6px;
+}
+
+.page-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.page-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.page-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn svg { width: 16px; height: 16px; }
+
+.btn-primary {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--accent-primary-hover);
+  box-shadow: 0 0 24px var(--accent-primary-glow);
+}
+
+.btn-secondary {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-surface-3);
+  border-color: var(--border-strong);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+}
+
+.btn-ghost:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  justify-content: center;
+}
+
+/* ═══════ FILTRES INLINE ═══════ */
+.filter-bar {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 8px 12px;
+  flex: 1;
+  min-width: 240px;
+  transition: border-color 0.15s ease;
+}
+
+.search-input:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-primary-soft);
+}
+
+.search-input svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.search-input input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  width: 100%;
+}
+
+.search-input input::placeholder { color: var(--text-muted); }
+
+.filter-select {
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.filter-select:hover { border-color: var(--border-strong); }
+.filter-select.has-value { border-color: var(--accent-primary); color: var(--accent-primary); }
+.filter-select svg { width: 14px; height: 14px; opacity: 0.6; }
+
+/* Toggle MCQ / SPEED */
+.filter-toggle {
+  display: flex;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.filter-toggle button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-toggle button.active {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.filter-toggle button:hover:not(.active) {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+/* Bouton filtres avancés (avec popover) */
+.filter-advanced {
+  position: relative;
+}
+
+.btn-advanced {
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.btn-advanced:hover { border-color: var(--border-strong); }
+.btn-advanced.active {
+  background: var(--accent-primary-soft);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.btn-advanced svg { width: 14px; height: 14px; }
+
+.btn-advanced .badge {
+  background: var(--accent-primary);
+  color: white;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* Popover */
+.popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 360px;
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+  z-index: 100;
+  display: none;
+}
+
+.popover.open { display: block; }
+
+.popover::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: 24px;
+  width: 12px;
+  height: 12px;
+  background: var(--bg-surface-2);
+  border-top: 1px solid var(--border-default);
+  border-left: 1px solid var(--border-default);
+  transform: rotate(45deg);
+}
+
+.popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.popover-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.popover-section {
+  margin-bottom: 16px;
+}
+
+.popover-section:last-child { margin-bottom: 0; }
+
+.popover-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.popover-label-value {
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+/* Range sliders */
+.range-track {
+  position: relative;
+  height: 6px;
+  background: var(--bg-base);
+  border-radius: 3px;
+  margin: 12px 0 8px;
+}
+
+.range-fill {
+  position: absolute;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-vivid));
+  border-radius: 3px;
+  left: 20%;
+  right: 20%;
+}
+
+.range-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4), 0 0 0 2px var(--accent-primary);
+}
+
+.range-marks {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 0 4px;
+}
+
+.popover-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.popover-actions .btn { flex: 1; padding: 8px 12px; font-size: 13px; }
+
+/* ═══════ GRILLE DE CARDS ═══════ */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.q-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.q-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--accent-primary);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.q-card:hover {
+  border-color: var(--border-default);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,0.4);
+}
+
+.q-card:hover::before { opacity: 1; }
+
+.q-card.speed::before { background: var(--accent-vivid); }
+
+/* Header de card */
+.q-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.q-card-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tag-mcq { background: var(--accent-primary-soft); color: var(--accent-primary); }
+.tag-speed { background: var(--accent-vivid-soft); color: var(--accent-vivid); }
+
+.tag-theme {
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  text-transform: none;
+  font-family: var(--font-ui);
+  letter-spacing: 0;
+  padding: 3px 10px;
+}
+
+.q-card-points {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent-vivid);
+  letter-spacing: -0.01em;
+}
+
+.q-card-points::before { content: "+"; }
+
+/* Titre */
+.q-card-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6em;
+}
+
+/* Niveau (5 dots) */
+.q-card-level {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.level-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.level-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+}
+
+.level-dot.filled {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 4px var(--accent-primary-glow);
+}
+
+.q-card.speed .level-dot.filled {
+  background: var(--accent-vivid);
+  border-color: var(--accent-vivid);
+  box-shadow: 0 0 4px var(--accent-vivid);
+}
+
+.level-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Footer */
+.q-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.q-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.q-card-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.q-card-meta-item svg {
+  width: 13px;
+  height: 13px;
+}
+
+.q-card-meta-item.has-media {
+  color: var(--accent-secondary);
+}
+
+.q-card-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.q-card:hover .q-card-actions { opacity: 1; }
+
+.q-card-action {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.q-card-action:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.q-card-action.danger:hover {
+  background: var(--semantic-danger-soft);
+  color: var(--semantic-danger);
+  border-color: var(--semantic-danger);
+}
+
+.q-card-action svg { width: 14px; height: 14px; }
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.pagination-info {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.pagination-info strong { color: var(--text-secondary); font-weight: 600; }
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.pagination-btn:hover:not(.disabled):not(.active) {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+.pagination-btn.active {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.pagination-btn.disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.pagination-btn svg { width: 14px; height: 14px; }
+
+.pagination-ellipsis {
+  color: var(--text-muted);
+  padding: 0 4px;
+  font-family: var(--font-mono);
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══════ SIDEBAR ═══════ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><i data-lucide="zap"></i></div>
+      <div>
+        <div class="sidebar-brand-name">Quiz Buzzer</div>
+        <div class="sidebar-brand-tag">Hub de pilotage</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div>
+        <div class="nav-group-label">Général</div>
+        <div class="nav-group">
+          <a class="nav-item">
+            <i data-lucide="layout-dashboard" class="nav-item-icon"></i>
+            <span class="nav-item-label">Tableau de bord</span>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Contenu</div>
+        <div class="nav-group">
+          <!-- Item parent dépl​oyé -->
+          <a class="nav-item expanded">
+            <i data-lucide="folder-open" class="nav-item-icon"></i>
+            <span class="nav-item-label">Contenu</span>
+            <i data-lucide="chevron-right" class="nav-chevron"></i>
+          </a>
+          <div class="nav-subitems">
+            <a class="nav-subitem">
+              <i data-lucide="folder-tree" style="width: 14px; height: 14px;"></i>
+              Thèmes
+              <span class="nav-subitem-count">12</span>
+            </a>
+            <a class="nav-subitem active">
+              <i data-lucide="circle-help" style="width: 14px; height: 14px;"></i>
+              Questions
+              <span class="nav-subitem-count">147</span>
+            </a>
+            <a class="nav-subitem">
+              <i data-lucide="book-open" style="width: 14px; height: 14px;"></i>
+              Quiz
+              <span class="nav-subitem-count">8</span>
+            </a>
+            <a class="nav-subitem">
+              <i data-lucide="music-2" style="width: 14px; height: 14px;"></i>
+              Jingles
+              <span class="nav-subitem-count">23</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Parties</div>
+        <div class="nav-group">
+          <a class="nav-item">
+            <i data-lucide="trophy" class="nav-item-icon"></i>
+            <span class="nav-item-label">Toutes les parties</span>
+          </a>
+          <a class="nav-item">
+            <i data-lucide="plus-circle" class="nav-item-icon"></i>
+            <span class="nav-item-label">Nouvelle partie</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">A</div>
+        <div>
+          <div class="user-name">admin</div>
+          <div class="user-role">Maître de jeu</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════ MAIN ═══════ -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">
+        <span class="topbar-breadcrumb-item">Accueil</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item">Contenu</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item current">Questions</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="connection-status">
+          <span class="dot"></span>
+          <span>Connecté</span>
+          <span class="server">· 192.168.1.10:3000</span>
+        </div>
+        <button class="topbar-icon-btn" title="Notifications"><i data-lucide="bell"></i></button>
+        <button class="topbar-icon-btn" title="Paramètres"><i data-lucide="settings"></i></button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- En-tête de page -->
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">Backoffice · Contenu</div>
+          <div class="page-title-row">
+            <h1 class="page-title">Questions</h1>
+            <span class="page-count">147 au total</span>
+          </div>
+          <p class="page-subtitle">La banque de questions de votre quiz. Filtrez, modifiez, et organisez votre contenu pour préparer vos parties.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary">
+            <i data-lucide="download"></i>
+            Exporter
+          </button>
+          <button class="btn btn-primary">
+            <i data-lucide="plus"></i>
+            Nouvelle question
+          </button>
+        </div>
+      </div>
+
+      <!-- Barre de filtres -->
+      <div class="filter-bar">
+        <!-- Recherche -->
+        <div class="search-input">
+          <i data-lucide="search"></i>
+          <input type="text" placeholder="Rechercher dans les titres..." value="">
+        </div>
+
+        <!-- Filtre thème -->
+        <button class="filter-select has-value">
+          <i data-lucide="folder-tree" style="width: 14px; height: 14px;"></i>
+          Géographie
+          <i data-lucide="chevron-down"></i>
+        </button>
+
+        <!-- Toggle MCQ / SPEED -->
+        <div class="filter-toggle">
+          <button class="active">Tous</button>
+          <button>MCQ</button>
+          <button>SPEED</button>
+        </div>
+
+        <!-- Filtres avancés avec popover -->
+        <div class="filter-advanced">
+          <button class="btn-advanced active" onclick="document.getElementById('popover').classList.toggle('open')">
+            <i data-lucide="sliders-horizontal"></i>
+            Filtres avancés
+            <span class="badge">2</span>
+          </button>
+
+          <!-- POPOVER (ouvert par défaut pour la maquette) -->
+          <div class="popover open" id="popover">
+            <div class="popover-header">
+              <div class="popover-title">Filtres avancés</div>
+              <button class="btn-icon btn-ghost" onclick="document.getElementById('popover').classList.remove('open')">
+                <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+              </button>
+            </div>
+
+            <div class="popover-section">
+              <div class="popover-label">
+                Niveau
+                <span class="popover-label-value">2 → 4</span>
+              </div>
+              <div class="range-track">
+                <div class="range-fill"></div>
+                <div class="range-thumb" style="left: 20%;"></div>
+                <div class="range-thumb" style="left: 80%;"></div>
+              </div>
+              <div class="range-marks">
+                <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+              </div>
+            </div>
+
+            <div class="popover-section">
+              <div class="popover-label">
+                Durée (secondes)
+                <span class="popover-label-value">15 → 60</span>
+              </div>
+              <div class="range-track">
+                <div class="range-fill" style="left: 16%; right: 50%;"></div>
+                <div class="range-thumb" style="left: 16%;"></div>
+                <div class="range-thumb" style="left: 50%;"></div>
+              </div>
+              <div class="range-marks">
+                <span>5</span><span>30</span><span>60</span><span>90</span><span>120</span>
+              </div>
+            </div>
+
+            <div class="popover-section">
+              <div class="popover-label">
+                Points
+                <span style="color: var(--text-muted);">Tous</span>
+              </div>
+              <div class="range-track">
+                <div class="range-fill" style="left: 0%; right: 0%;"></div>
+                <div class="range-thumb" style="left: 0%;"></div>
+                <div class="range-thumb" style="left: calc(100% - 14px);"></div>
+              </div>
+              <div class="range-marks">
+                <span>50</span><span>150</span><span>250</span><span>400</span><span>500</span>
+              </div>
+            </div>
+
+            <div class="popover-actions">
+              <button class="btn btn-ghost">Réinitialiser</button>
+              <button class="btn btn-primary">Appliquer</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-icon btn-ghost" title="Réinitialiser tous les filtres">
+          <i data-lucide="rotate-ccw"></i>
+        </button>
+      </div>
+
+      <!-- Grille de cards -->
+      <div class="cards-grid">
+
+        <!-- Card 1 — MCQ avec image -->
+        <div class="q-card">
+          <div class="q-card-header">
+            <div class="q-card-tags">
+              <span class="tag tag-mcq"><i data-lucide="list" style="width: 10px; height: 10px;"></i> MCQ</span>
+              <span class="tag tag-theme">Géographie</span>
+            </div>
+            <span class="q-card-points">200</span>
+          </div>
+          <h3 class="q-card-title">Quelle est la capitale de l'Australie ?</h3>
+          <div class="q-card-level">
+            <div class="level-dots">
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot"></span>
+              <span class="level-dot"></span>
+            </div>
+            <span class="level-label">Niveau 3</span>
+          </div>
+          <div class="q-card-footer">
+            <div class="q-card-meta">
+              <span class="q-card-meta-item"><i data-lucide="clock"></i> 30s</span>
+              <span class="q-card-meta-item has-media"><i data-lucide="image"></i></span>
+            </div>
+            <div class="q-card-actions">
+              <button class="q-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="q-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 — SPEED avec audio -->
+        <div class="q-card speed">
+          <div class="q-card-header">
+            <div class="q-card-tags">
+              <span class="tag tag-speed"><i data-lucide="zap" style="width: 10px; height: 10px;"></i> SPEED</span>
+              <span class="tag tag-theme">Musique</span>
+            </div>
+            <span class="q-card-points">300</span>
+          </div>
+          <h3 class="q-card-title">Reconnaissez ce morceau de musique classique</h3>
+          <div class="q-card-level">
+            <div class="level-dots">
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot"></span>
+            </div>
+            <span class="level-label">Niveau 4</span>
+          </div>
+          <div class="q-card-footer">
+            <div class="q-card-meta">
+              <span class="q-card-meta-item"><i data-lucide="clock"></i> 15s</span>
+              <span class="q-card-meta-item has-media"><i data-lucide="music"></i></span>
+            </div>
+            <div class="q-card-actions">
+              <button class="q-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="q-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 — MCQ classique -->
+        <div class="q-card">
+          <div class="q-card-header">
+            <div class="q-card-tags">
+              <span class="tag tag-mcq"><i data-lucide="list" style="width: 10px; height: 10px;"></i> MCQ</span>
+              <span class="tag tag-theme">Histoire</span>
+            </div>
+            <span class="q-card-points">150</span>
+          </div>
+          <h3 class="q-card-title">En quelle année eut lieu la chute du mur de Berlin ?</h3>
+          <div class="q-card-level">
+            <div class="level-dots">
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot"></span>
+              <span class="level-dot"></span>
+              <span class="level-dot"></span>
+            </div>
+            <span class="level-label">Niveau 2</span>
+          </div>
+          <div class="q-card-footer">
+            <div class="q-card-meta">
+              <span class="q-card-meta-item"><i data-lucide="clock"></i> 25s</span>
+            </div>
+            <div class="q-card-actions">
+              <button class="q-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="q-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4 — SPEED avec image et audio -->
+        <div class="q-card speed">
+          <div class="q-card-header">
+            <div class="q-card-tags">
+              <span class="tag tag-speed"><i data-lucide="zap" style="width: 10px; height: 10px;"></i> SPEED</span>
+              <span class="tag tag-theme">Cinéma</span>
+            </div>
+            <span class="q-card-points">450</span>
+          </div>
+          <h3 class="q-card-title">Quel est ce film d'auteur sorti en 1995 ?</h3>
+          <div class="q-card-level">
+            <div class="level-dots">
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+            </div>
+            <span class="level-label">Niveau 5</span>
+          </div>
+          <div class="q-card-footer">
+            <div class="q-card-meta">
+              <span class="q-card-meta-item"><i data-lucide="clock"></i> 20s</span>
+              <span class="q-card-meta-item has-media"><i data-lucide="image"></i></span>
+              <span class="q-card-meta-item has-media"><i data-lucide="music"></i></span>
+            </div>
+            <div class="q-card-actions">
+              <button class="q-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="q-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5 — MCQ niveau 1 -->
+        <div class="q-card">
+          <div class="q-card-header">
+            <div class="q-card-tags">
+              <span class="tag tag-mcq"><i data-lucide="list" style="width: 10px; height: 10px;"></i> MCQ</span>
+              <span class="tag tag-theme">Géographie</span>
+            </div>
+            <span class="q-card-points">100</span>
+          </div>
+          <h3 class="q-card-title">Quelle mer borde la Croatie ?</h3>
+          <div class="q-card-level">
+            <div class="level-dots">
+              <span class="level-dot filled"></span>
+              <span class="level-dot"></span>
+              <span class="level-dot"></span>
+              <span class="level-dot"></span>
+              <span class="level-dot"></span>
+            </div>
+            <span class="level-label">Niveau 1</span>
+          </div>
+          <div class="q-card-footer">
+            <div class="q-card-meta">
+              <span class="q-card-meta-item"><i data-lucide="clock"></i> 30s</span>
+            </div>
+            <div class="q-card-actions">
+              <button class="q-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="q-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6 — MCQ Sciences -->
+        <div class="q-card">
+          <div class="q-card-header">
+            <div class="q-card-tags">
+              <span class="tag tag-mcq"><i data-lucide="list" style="width: 10px; height: 10px;"></i> MCQ</span>
+              <span class="tag tag-theme">Sciences</span>
+            </div>
+            <span class="q-card-points">250</span>
+          </div>
+          <h3 class="q-card-title">Quel est le plus petit os du corps humain ?</h3>
+          <div class="q-card-level">
+            <div class="level-dots">
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot"></span>
+              <span class="level-dot"></span>
+            </div>
+            <span class="level-label">Niveau 3</span>
+          </div>
+          <div class="q-card-footer">
+            <div class="q-card-meta">
+              <span class="q-card-meta-item"><i data-lucide="clock"></i> 30s</span>
+            </div>
+            <div class="q-card-actions">
+              <button class="q-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="q-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 7 -->
+        <div class="q-card">
+          <div class="q-card-header">
+            <div class="q-card-tags">
+              <span class="tag tag-mcq"><i data-lucide="list" style="width: 10px; height: 10px;"></i> MCQ</span>
+              <span class="tag tag-theme">Sport</span>
+            </div>
+            <span class="q-card-points">200</span>
+          </div>
+          <h3 class="q-card-title">Combien de joueurs composent une équipe de rugby à XV sur le terrain ?</h3>
+          <div class="q-card-level">
+            <div class="level-dots">
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot"></span>
+              <span class="level-dot"></span>
+              <span class="level-dot"></span>
+            </div>
+            <span class="level-label">Niveau 2</span>
+          </div>
+          <div class="q-card-footer">
+            <div class="q-card-meta">
+              <span class="q-card-meta-item"><i data-lucide="clock"></i> 20s</span>
+            </div>
+            <div class="q-card-actions">
+              <button class="q-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="q-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 8 — SPEED -->
+        <div class="q-card speed">
+          <div class="q-card-header">
+            <div class="q-card-tags">
+              <span class="tag tag-speed"><i data-lucide="zap" style="width: 10px; height: 10px;"></i> SPEED</span>
+              <span class="tag tag-theme">Géographie</span>
+            </div>
+            <span class="q-card-points">350</span>
+          </div>
+          <h3 class="q-card-title">Quel pays a la forme géographique d'une botte ?</h3>
+          <div class="q-card-level">
+            <div class="level-dots">
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot"></span>
+              <span class="level-dot"></span>
+              <span class="level-dot"></span>
+            </div>
+            <span class="level-label">Niveau 2</span>
+          </div>
+          <div class="q-card-footer">
+            <div class="q-card-meta">
+              <span class="q-card-meta-item"><i data-lucide="clock"></i> 10s</span>
+              <span class="q-card-meta-item has-media"><i data-lucide="image"></i></span>
+            </div>
+            <div class="q-card-actions">
+              <button class="q-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="q-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 9 -->
+        <div class="q-card">
+          <div class="q-card-header">
+            <div class="q-card-tags">
+              <span class="tag tag-mcq"><i data-lucide="list" style="width: 10px; height: 10px;"></i> MCQ</span>
+              <span class="tag tag-theme">Littérature</span>
+            </div>
+            <span class="q-card-points">300</span>
+          </div>
+          <h3 class="q-card-title">Qui a écrit "Cent ans de solitude" ?</h3>
+          <div class="q-card-level">
+            <div class="level-dots">
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot filled"></span>
+              <span class="level-dot"></span>
+            </div>
+            <span class="level-label">Niveau 4</span>
+          </div>
+          <div class="q-card-footer">
+            <div class="q-card-meta">
+              <span class="q-card-meta-item"><i data-lucide="clock"></i> 25s</span>
+            </div>
+            <div class="q-card-actions">
+              <button class="q-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="q-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination">
+        <div class="pagination-info">
+          Affichage de <strong>1–9</strong> sur <strong>147</strong> questions · Page 1 sur 17
+        </div>
+        <div class="pagination-controls">
+          <button class="pagination-btn disabled"><i data-lucide="chevron-left"></i></button>
+          <button class="pagination-btn active">1</button>
+          <button class="pagination-btn">2</button>
+          <button class="pagination-btn">3</button>
+          <span class="pagination-ellipsis">…</span>
+          <button class="pagination-btn">17</button>
+          <button class="pagination-btn"><i data-lucide="chevron-right"></i></button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+<script>
+  lucide.createIcons();
+</script>
+
+</body>
+</html>

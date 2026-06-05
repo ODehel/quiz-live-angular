@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Buzzer — Édition d'une question SPEED</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --bg-base: #0b0a10;
+  --bg-surface: #141221;
+  --bg-surface-2: #1c192e;
+  --bg-surface-3: #252238;
+
+  --text-primary: #f4f3f8;
+  --text-secondary: #a8a3bd;
+  --text-muted: #6b6680;
+
+  --border-subtle: #2a2740;
+  --border-default: #3a3654;
+  --border-strong: #4f4a70;
+
+  --accent-primary: #9d6bff;
+  --accent-primary-hover: #8a52ff;
+  --accent-primary-soft: rgba(157, 107, 255, 0.12);
+  --accent-primary-glow: rgba(157, 107, 255, 0.35);
+
+  --accent-secondary: #4dd4e8;
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+
+  --accent-vivid: #ff4d8f;
+  --accent-vivid-soft: rgba(255, 77, 143, 0.15);
+  --accent-vivid-glow: rgba(255, 77, 143, 0.35);
+
+  --semantic-success: #4ade80;
+  --semantic-warning: #fbbf24;
+  --semantic-danger: #f87171;
+  --semantic-success-soft: rgba(74, 222, 128, 0.12);
+  --semantic-warning-soft: rgba(251, 191, 36, 0.12);
+  --semantic-danger-soft: rgba(248, 113, 113, 0.12);
+
+  --font-ui: "Geist", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", sans-serif;
+  --font-mono: "Geist Mono", "Menlo", monospace;
+
+  --sidebar-width: 252px;
+  --topbar-height: 52px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══════ SHELL ═══════ */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, var(--accent-vivid-soft), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, var(--accent-primary-soft), transparent 60%);
+  background-attachment: fixed;
+}
+
+.sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px 16px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sidebar-logo {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-vivid) 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--accent-primary-glow);
+}
+
+.sidebar-logo svg { width: 20px; height: 20px; color: white; }
+
+.sidebar-brand-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.sidebar-brand-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nav-group-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  padding: 0 12px;
+  margin-bottom: 4px;
+}
+
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.nav-item:hover { background: var(--bg-surface-2); color: var(--text-primary); }
+.nav-item.expanded { background: var(--bg-surface-2); color: var(--text-primary); }
+.nav-item.expanded > .nav-chevron { transform: rotate(90deg); }
+.nav-item-icon { width: 18px; height: 18px; flex-shrink: 0; }
+.nav-item-label { flex: 1; }
+.nav-chevron { width: 14px; height: 14px; color: var(--text-muted); transition: transform 0.2s ease; }
+
+.nav-subitems {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 0 4px 28px;
+  margin-top: 2px;
+  position: relative;
+}
+
+.nav-subitems::before {
+  content: "";
+  position: absolute;
+  left: 19px;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: var(--border-default);
+}
+
+.nav-subitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.nav-subitem::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  width: 6px;
+  height: 1px;
+  background: var(--border-default);
+}
+
+.nav-subitem:hover { background: var(--bg-surface-3); color: var(--text-primary); }
+
+.nav-subitem.active {
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+  font-weight: 500;
+}
+
+.nav-subitem.active::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background: var(--accent-primary);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-subitem-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.nav-subitem.active .nav-subitem-count { color: var(--accent-primary); }
+
+.sidebar-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 12px;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.user-card:hover { background: var(--bg-surface-2); }
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.user-name { font-size: 13px; font-weight: 600; }
+.user-role {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ═══════ MAIN ═══════ */
+.main { display: flex; flex-direction: column; min-width: 0; }
+
+.topbar {
+  height: var(--topbar-height);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar-breadcrumb-item {
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-breadcrumb-item.link { cursor: pointer; transition: color 0.15s ease; }
+.topbar-breadcrumb-item.link:hover { color: var(--text-secondary); }
+.topbar-breadcrumb-item.current {
+  color: var(--text-primary);
+  font-weight: 500;
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-breadcrumb-sep { color: var(--text-muted); opacity: 0.4; }
+
+.topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.connection-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--semantic-success);
+  box-shadow: 0 0 6px var(--semantic-success);
+}
+
+.connection-status .server { color: var(--text-muted); }
+
+.topbar-icon-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.topbar-icon-btn:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.topbar-icon-btn svg { width: 16px; height: 16px; }
+
+/* ═══════ CONTENT ═══════ */
+.content {
+  padding: 24px 32px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-header-edit {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.page-header-edit .left { flex: 1; min-width: 0; }
+
+.page-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent-vivid);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-eyebrow svg { width: 13px; height: 13px; }
+
+.page-title-edit {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.15;
+}
+
+.page-subtitle-edit {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  background: var(--bg-surface-2);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.save-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--semantic-success);
+}
+
+/* ═══════ LAYOUT 2 COLONNES ═══════ */
+.edit-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  flex: 1;
+  padding-bottom: 100px;
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.preview-column {
+  position: sticky;
+  top: calc(var(--topbar-height) + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.preview-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.preview-title svg { width: 13px; height: 13px; color: var(--accent-secondary); }
+
+.preview-mode-toggle {
+  display: flex;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.preview-mode-toggle button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.preview-mode-toggle button.active {
+  background: var(--accent-vivid);
+  color: white;
+}
+
+/* ═══════ SECTIONS ═══════ */
+.form-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--accent-vivid-soft);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-vivid);
+}
+
+.section-title-icon svg { width: 14px; height: 14px; }
+
+.section-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+/* Type de question : 2 cards */
+.type-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.type-card {
+  background: var(--bg-base);
+  border: 2px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.type-card:hover { border-color: var(--border-default); }
+
+.type-card.selected {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary-soft);
+}
+
+.type-card.speed.selected {
+  border-color: var(--accent-vivid);
+  background: var(--accent-vivid-soft);
+}
+
+.type-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.type-card-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
+}
+
+.type-card.selected .type-card-icon-wrap {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.type-card.speed.selected .type-card-icon-wrap {
+  background: var(--accent-vivid);
+  color: white;
+}
+
+.type-card-icon-wrap svg { width: 16px; height: 16px; }
+
+.type-card-radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.type-card.selected .type-card-radio {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary);
+}
+
+.type-card.speed.selected .type-card-radio {
+  border-color: var(--accent-vivid);
+  background: var(--accent-vivid);
+}
+
+.type-card.selected .type-card-radio::after,
+.type-card.speed.selected .type-card-radio::after {
+  content: "";
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+}
+
+.type-card-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.type-card-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ═══════ Champs ═══════ */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-row {
+  display: grid;
+  gap: 12px;
+}
+
+.field-row.cols-2 { grid-template-columns: 1fr 1fr; }
+.field-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.field-row.cols-mixed { grid-template-columns: 2fr 1fr 1fr; }
+
+.field-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.field-label .required {
+  color: var(--accent-vivid);
+  margin-left: 2px;
+}
+
+.field-label-hint {
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: normal;
+}
+
+.field-input,
+.field-textarea,
+.field-select {
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.field-textarea {
+  min-height: 80px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.field-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6680' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.field-input:focus,
+.field-textarea:focus,
+.field-select:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-primary-soft);
+}
+
+.field-input::placeholder,
+.field-textarea::placeholder { color: var(--text-muted); }
+
+.field-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field-input-group .field-input { padding-right: 40px; }
+
+.field-input-suffix {
+  position: absolute;
+  right: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* Niveau picker */
+.level-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.level-picker-dots { display: flex; gap: 6px; }
+
+.level-picker-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.level-picker-dot:hover { border-color: var(--border-strong); }
+
+.level-picker-dot.filled {
+  background: var(--accent-vivid);
+  border-color: var(--accent-vivid);
+  box-shadow: 0 0 6px var(--accent-vivid-glow);
+}
+
+.level-picker-label {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent-vivid);
+  font-weight: 600;
+}
+
+/* ═══════ RÉPONSE SPEED ═══════ */
+.main-answer-block {
+  background: var(--bg-base);
+  border: 1px solid var(--accent-vivid);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  box-shadow: 0 0 0 3px var(--accent-vivid-soft);
+}
+
+.main-answer-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-vivid);
+  font-weight: 600;
+}
+
+.main-answer-label svg { width: 12px; height: 12px; }
+
+.main-answer-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  width: 100%;
+}
+
+.main-answer-input::placeholder {
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+/* Variantes (chip input) */
+.variants-input-wrap {
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  cursor: text;
+  min-height: 50px;
+  transition: all 0.15s ease;
+}
+
+.variants-input-wrap:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-primary-soft);
+}
+
+.variant-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-primary-soft);
+  border: 1px solid rgba(157, 107, 255, 0.3);
+  color: var(--accent-primary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 4px 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.variant-chip-remove {
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--accent-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: all 0.15s ease;
+}
+
+.variant-chip-remove:hover {
+  background: var(--accent-primary);
+  color: white;
+  opacity: 1;
+}
+
+.variant-chip-remove svg { width: 11px; height: 11px; }
+
+.variants-input {
+  flex: 1;
+  min-width: 120px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  padding: 4px 0;
+}
+
+.variants-input::placeholder { color: var(--text-muted); }
+
+.variants-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.variants-info svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+.variants-info b {
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+}
+
+/* Toggle stricte/tolérante */
+.match-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+}
+
+.match-toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.match-toggle-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.match-toggle-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.match-toggle-desc code {
+  font-family: var(--font-mono);
+  background: var(--bg-surface-2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--accent-secondary);
+  font-size: 10px;
+}
+
+/* Switch toggle */
+.switch {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.switch.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.switch.active::after {
+  left: 18px;
+  background: white;
+}
+
+/* ═══════ Médias ═══════ */
+.media-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.media-dropzone {
+  background: var(--bg-base);
+  border: 1px dashed var(--border-default);
+  border-radius: 10px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.media-dropzone:hover {
+  border-color: var(--accent-vivid);
+  background: var(--accent-vivid-soft);
+}
+
+.media-dropzone-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--bg-surface-2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.media-dropzone:hover .media-dropzone-icon {
+  background: var(--accent-vivid);
+  color: white;
+}
+
+.media-dropzone-icon svg { width: 16px; height: 16px; }
+
+.media-dropzone-title {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.media-dropzone-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.media-preview {
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.media-preview-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #2c2440, #4a3870);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-secondary);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.media-preview-thumb svg { width: 22px; height: 22px; }
+
+/* Audio waveform mini */
+.media-preview-thumb.audio {
+  background: linear-gradient(135deg, var(--bg-surface-3), #2a2438);
+}
+
+.media-preview-thumb.audio svg { width: 28px; height: 28px; color: var(--accent-vivid); }
+
+.media-preview-info { flex: 1; min-width: 0; }
+
+.media-preview-name {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.media-preview-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.media-preview-actions { display: flex; gap: 4px; }
+
+.media-preview-action {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.media-preview-action:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.media-preview-action.danger:hover {
+  background: var(--semantic-danger-soft);
+  color: var(--semantic-danger);
+  border-color: var(--semantic-danger);
+}
+
+.media-preview-action svg { width: 13px; height: 13px; }
+
+/* ═══════ APERÇU LIVE SPEED ═══════ */
+.preview-frame {
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  background-image:
+    radial-gradient(ellipse 60% 40% at 50% 30%, var(--accent-vivid-soft), transparent 70%);
+}
+
+.preview-screen {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.preview-mock-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.preview-mock-topbar-left,
+.preview-mock-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-mock-tag {
+  background: var(--accent-vivid-soft);
+  color: var(--accent-vivid);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 9px;
+}
+
+.preview-q-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.preview-q-meta { display: flex; align-items: center; gap: 8px; }
+
+.preview-q-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.preview-q-tag.theme { background: var(--bg-surface-2); color: var(--text-secondary); }
+.preview-q-tag.type { background: var(--accent-vivid-soft); color: var(--accent-vivid); }
+
+.preview-q-points {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent-vivid);
+}
+
+.preview-q-points::before { content: "+"; }
+
+/* Question text */
+.preview-question {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  text-align: center;
+  padding: 6px 0;
+}
+
+/* SPOTLIGHT du joueur qui a buzzé */
+.preview-spotlight {
+  background: linear-gradient(135deg, rgba(157, 107, 255, 0.15), rgba(255, 77, 143, 0.15));
+  border: 1px solid var(--accent-vivid);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.preview-spotlight::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 60%;
+  background: radial-gradient(ellipse, var(--accent-vivid-soft), transparent 70%);
+  pointer-events: none;
+}
+
+.preview-spotlight-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent-vivid);
+  font-weight: 600;
+  z-index: 1;
+}
+
+.preview-spotlight-name {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-vivid), var(--accent-primary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
+  z-index: 1;
+}
+
+.preview-spotlight-time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  z-index: 1;
+}
+
+.preview-spotlight-time b {
+  color: var(--accent-vivid);
+  font-weight: 700;
+}
+
+/* Bloc d'aide à la décision (réponse + variantes) */
+.preview-answer-helper {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview-answer-helper-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.preview-answer-helper-label svg { width: 11px; height: 11px; }
+
+.preview-answer-helper-main {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.preview-answer-helper-variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.preview-variant-chip {
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+
+/* Boutons valider/invalider (mock) */
+.preview-decision {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.preview-decision-btn {
+  padding: 8px;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  border: 1px solid;
+}
+
+.preview-decision-btn.ok {
+  background: var(--semantic-success-soft);
+  color: var(--semantic-success);
+  border-color: var(--semantic-success);
+}
+
+.preview-decision-btn.ko {
+  background: var(--semantic-danger-soft);
+  color: var(--semantic-danger);
+  border-color: var(--semantic-danger);
+}
+
+.preview-info-banner {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.preview-info-banner svg {
+  width: 14px;
+  height: 14px;
+  color: var(--accent-secondary);
+  flex-shrink: 0;
+}
+
+/* Footer fixe */
+.form-footer {
+  position: fixed;
+  bottom: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-default);
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 60;
+  box-shadow: 0 -4px 20px -4px rgba(0,0,0,0.5);
+}
+
+.form-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.form-footer-actions { display: flex; gap: 8px; }
+
+.btn {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn svg { width: 16px; height: 16px; }
+.btn-primary { background: var(--accent-primary); color: white; }
+.btn-primary:hover { background: var(--accent-primary-hover); box-shadow: 0 0 24px var(--accent-primary-glow); }
+
+.btn-secondary {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+.btn-secondary:hover { background: var(--bg-surface-3); border-color: var(--border-strong); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+}
+.btn-ghost:hover { background: var(--bg-surface-2); color: var(--text-primary); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══════ SIDEBAR ═══════ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><i data-lucide="zap"></i></div>
+      <div>
+        <div class="sidebar-brand-name">Quiz Buzzer</div>
+        <div class="sidebar-brand-tag">Hub de pilotage</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div>
+        <div class="nav-group-label">Général</div>
+        <div class="nav-group">
+          <a class="nav-item">
+            <i data-lucide="layout-dashboard" class="nav-item-icon"></i>
+            <span class="nav-item-label">Tableau de bord</span>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Contenu</div>
+        <div class="nav-group">
+          <a class="nav-item expanded">
+            <i data-lucide="folder-open" class="nav-item-icon"></i>
+            <span class="nav-item-label">Contenu</span>
+            <i data-lucide="chevron-right" class="nav-chevron"></i>
+          </a>
+          <div class="nav-subitems">
+            <a class="nav-subitem">
+              <i data-lucide="folder-tree" style="width: 14px; height: 14px;"></i>
+              Thèmes
+              <span class="nav-subitem-count">12</span>
+            </a>
+            <a class="nav-subitem active">
+              <i data-lucide="circle-help" style="width: 14px; height: 14px;"></i>
+              Questions
+              <span class="nav-subitem-count">147</span>
+            </a>
+            <a class="nav-subitem">
+              <i data-lucide="book-open" style="width: 14px; height: 14px;"></i>
+              Quiz
+              <span class="nav-subitem-count">8</span>
+            </a>
+            <a class="nav-subitem">
+              <i data-lucide="music-2" style="width: 14px; height: 14px;"></i>
+              Jingles
+              <span class="nav-subitem-count">23</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Parties</div>
+        <div class="nav-group">
+          <a class="nav-item">
+            <i data-lucide="trophy" class="nav-item-icon"></i>
+            <span class="nav-item-label">Toutes les parties</span>
+          </a>
+          <a class="nav-item">
+            <i data-lucide="plus-circle" class="nav-item-icon"></i>
+            <span class="nav-item-label">Nouvelle partie</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">A</div>
+        <div>
+          <div class="user-name">admin</div>
+          <div class="user-role">Maître de jeu</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════ MAIN ═══════ -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">
+        <span class="topbar-breadcrumb-item link">Accueil</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item link">Contenu</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item link">Questions</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item current">Édition · Qui a peint la Joconde ?</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="connection-status">
+          <span class="dot"></span>
+          <span>Connecté</span>
+          <span class="server">· 192.168.1.10:3000</span>
+        </div>
+        <button class="topbar-icon-btn" title="Notifications"><i data-lucide="bell"></i></button>
+        <button class="topbar-icon-btn" title="Paramètres"><i data-lucide="settings"></i></button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div class="page-header-edit">
+        <div class="left">
+          <div class="page-eyebrow">
+            <i data-lucide="zap"></i>
+            Édition d'une question SPEED
+          </div>
+          <h1 class="page-title-edit">Qui a peint la Joconde ?</h1>
+          <p class="page-subtitle-edit">Réponse libre, premier qui buzze a la main. L'aperçu à droite simule le moment où un joueur a buzzé.</p>
+        </div>
+        <span class="save-status">
+          <span class="dot"></span>
+          Enregistré il y a 1 min
+        </span>
+      </div>
+
+      <div class="edit-layout">
+
+        <!-- ═══════ COLONNE FORMULAIRE ═══════ -->
+        <div class="form-column">
+
+          <!-- Section : Type -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-title">
+                <span class="section-title-icon"><i data-lucide="layers"></i></span>
+                Type de question
+              </div>
+              <span class="section-hint">Étape 1</span>
+            </div>
+
+            <div class="type-toggle">
+              <div class="type-card">
+                <div class="type-card-header">
+                  <div class="type-card-icon-wrap"><i data-lucide="list"></i></div>
+                  <div class="type-card-radio"></div>
+                </div>
+                <div class="type-card-name">MCQ</div>
+                <div class="type-card-desc">2 à 6 propositions, le maître de jeu valide la bonne réponse après le vote des joueurs.</div>
+              </div>
+
+              <div class="type-card speed selected">
+                <div class="type-card-header">
+                  <div class="type-card-icon-wrap"><i data-lucide="zap"></i></div>
+                  <div class="type-card-radio"></div>
+                </div>
+                <div class="type-card-name">SPEED</div>
+                <div class="type-card-desc">Le premier joueur qui buzze a la main pour répondre oralement.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section : Informations principales -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-title">
+                <span class="section-title-icon"><i data-lucide="file-text"></i></span>
+                Informations principales
+              </div>
+              <span class="section-hint">Étape 2</span>
+            </div>
+
+            <div class="field">
+              <label class="field-label">
+                Titre de la question <span class="required">*</span>
+                <span class="field-label-hint">23 / 200 caractères</span>
+              </label>
+              <textarea class="field-textarea" placeholder="Saisissez l'énoncé de la question...">Qui a peint la Joconde ?</textarea>
+            </div>
+
+            <div class="field-row cols-mixed">
+              <div class="field">
+                <label class="field-label">Thème <span class="required">*</span></label>
+                <select class="field-select">
+                  <option>Cinéma</option>
+                  <option selected>Culture G</option>
+                  <option>Histoire</option>
+                  <option>Littérature</option>
+                  <option>Sport</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label">Durée</label>
+                <div class="field-input-group">
+                  <input type="number" class="field-input" value="15" min="5" max="60">
+                  <span class="field-input-suffix">sec</span>
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label">Points</label>
+                <div class="field-input-group">
+                  <input type="number" class="field-input" value="300" min="50" max="500" step="50">
+                  <span class="field-input-suffix">pts</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field-label">
+                Niveau de difficulté
+                <span class="field-label-hint">Influence l'estimation de durée et le scoring</span>
+              </label>
+              <div class="level-picker">
+                <div class="level-picker-dots">
+                  <span class="level-picker-dot filled"></span>
+                  <span class="level-picker-dot filled"></span>
+                  <span class="level-picker-dot"></span>
+                  <span class="level-picker-dot"></span>
+                  <span class="level-picker-dot"></span>
+                </div>
+                <span class="level-picker-label">Niveau 2 / 5</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section : Réponse attendue -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-title">
+                <span class="section-title-icon"><i data-lucide="target"></i></span>
+                Réponse attendue
+              </div>
+              <span class="section-hint">Étape 3 · SPEED</span>
+            </div>
+
+            <!-- Réponse principale (mise en valeur) -->
+            <div class="field">
+              <div class="main-answer-block">
+                <span class="main-answer-label">
+                  <i data-lucide="check-circle"></i>
+                  Réponse principale
+                </span>
+                <input type="text" class="main-answer-input" value="Léonard de Vinci" placeholder="La réponse canonique...">
+              </div>
+            </div>
+
+            <!-- Formulations équivalentes -->
+            <div class="field">
+              <label class="field-label">
+                Formulations équivalentes
+                <span class="field-label-hint">Aide-mémoire affiché en pilotage. Tapez et appuyez sur Entrée.</span>
+              </label>
+              <div class="variants-input-wrap">
+                <span class="variant-chip">
+                  Leonardo da Vinci
+                  <button class="variant-chip-remove"><i data-lucide="x"></i></button>
+                </span>
+                <span class="variant-chip">
+                  Léonardo da Vinci
+                  <button class="variant-chip-remove"><i data-lucide="x"></i></button>
+                </span>
+                <span class="variant-chip">
+                  Da Vinci
+                  <button class="variant-chip-remove"><i data-lucide="x"></i></button>
+                </span>
+                <span class="variant-chip">
+                  De Vinci
+                  <button class="variant-chip-remove"><i data-lucide="x"></i></button>
+                </span>
+                <span class="variant-chip">
+                  Vinci
+                  <button class="variant-chip-remove"><i data-lucide="x"></i></button>
+                </span>
+                <input type="text" class="variants-input" placeholder="Ajouter une variante...">
+              </div>
+              <div class="variants-info">
+                <i data-lucide="info"></i>
+                <span>Le candidat répond <b>oralement</b>. Ces formulations vous aideront à valider rapidement sans hésiter.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section : Médias -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-title">
+                <span class="section-title-icon"><i data-lucide="image"></i></span>
+                Médias optionnels
+              </div>
+              <span class="section-hint">Étape 4 · Optionnel</span>
+            </div>
+
+            <div class="media-grid">
+
+              <!-- Image dropzone vide -->
+              <div class="media-dropzone">
+                <div class="media-dropzone-icon"><i data-lucide="image"></i></div>
+                <div class="media-dropzone-title">Glisser une image</div>
+                <div class="media-dropzone-hint">JPG, PNG, WebP · Max 2 Mo</div>
+              </div>
+
+              <!-- Audio uploadé -->
+              <div class="media-preview">
+                <div class="media-preview-thumb audio">
+                  <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                    <rect x="2" y="13" width="2" height="4" rx="1" fill="currentColor"/>
+                    <rect x="6" y="10" width="2" height="10" rx="1" fill="currentColor"/>
+                    <rect x="10" y="6" width="2" height="18" rx="1" fill="currentColor"/>
+                    <rect x="14" y="2" width="2" height="26" rx="1" fill="currentColor"/>
+                    <rect x="18" y="8" width="2" height="14" rx="1" fill="currentColor"/>
+                    <rect x="22" y="4" width="2" height="22" rx="1" fill="currentColor"/>
+                    <rect x="26" y="10" width="2" height="10" rx="1" fill="currentColor"/>
+                    <rect x="30" y="6" width="2" height="18" rx="1" fill="currentColor"/>
+                    <rect x="34" y="2" width="2" height="26" rx="1" fill="currentColor"/>
+                    <rect x="38" y="9" width="2" height="12" rx="1" fill="currentColor"/>
+                    <rect x="42" y="12" width="2" height="6" rx="1" fill="currentColor"/>
+                    <rect x="46" y="13" width="2" height="4" rx="1" fill="currentColor"/>
+                    <rect x="50" y="14" width="2" height="2" rx="1" fill="currentColor"/>
+                  </svg>
+                </div>
+                <div class="media-preview-info">
+                  <div class="media-preview-name">monalisa-extract.mp3</div>
+                  <div class="media-preview-meta">0:08 · 142 Ko</div>
+                </div>
+                <div class="media-preview-actions">
+                  <button class="media-preview-action" title="Lire"><i data-lucide="play"></i></button>
+                  <button class="media-preview-action danger" title="Retirer"><i data-lucide="trash-2"></i></button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+        <!-- /COLONNE FORMULAIRE -->
+
+        <!-- ═══════ COLONNE APERÇU SPEED ═══════ -->
+        <div class="preview-column">
+
+          <div class="preview-header">
+            <div class="preview-title">
+              <i data-lucide="eye"></i>
+              Aperçu pilotage SPEED
+            </div>
+            <div class="preview-mode-toggle">
+              <button>Avant buzz</button>
+              <button class="active">Après buzz</button>
+            </div>
+          </div>
+
+          <div class="preview-frame">
+            <div class="preview-screen">
+
+              <!-- Mock topbar -->
+              <div class="preview-mock-topbar">
+                <div class="preview-mock-topbar-left">
+                  <span class="preview-mock-tag">PILOTAGE</span>
+                  <span>Question 7 / 12</span>
+                </div>
+                <div class="preview-mock-topbar-right">
+                  <span>SPEED · BUZZED</span>
+                </div>
+              </div>
+
+              <!-- Header question -->
+              <div class="preview-q-header">
+                <div class="preview-q-meta">
+                  <span class="preview-q-tag type">SPEED</span>
+                  <span class="preview-q-tag theme">Culture G</span>
+                </div>
+                <span class="preview-q-points">300</span>
+              </div>
+
+              <!-- Question -->
+              <div class="preview-question">
+                Qui a peint la Joconde ?
+              </div>
+
+              <!-- Spotlight du joueur qui a buzzé -->
+              <div class="preview-spotlight">
+                <span class="preview-spotlight-eyebrow">A buzzé en premier</span>
+                <span class="preview-spotlight-name">Charlie</span>
+                <span class="preview-spotlight-time">Buzz à <b>1.34s</b> · 2 / 4 verrouillés</span>
+              </div>
+
+              <!-- Aide à la décision (réponse + variantes) -->
+              <div class="preview-answer-helper">
+                <span class="preview-answer-helper-label">
+                  <i data-lucide="target"></i>
+                  Formulations à accepter
+                </span>
+                <div class="preview-answer-helper-main">Léonard de Vinci</div>
+                <div class="preview-answer-helper-variants">
+                  <span class="preview-variant-chip">Leonardo da Vinci</span>
+                  <span class="preview-variant-chip">Léonardo da Vinci</span>
+                  <span class="preview-variant-chip">Da Vinci</span>
+                  <span class="preview-variant-chip">De Vinci</span>
+                  <span class="preview-variant-chip">Vinci</span>
+                </div>
+              </div>
+
+              <!-- Boutons décision (mock visuel) -->
+              <div class="preview-decision">
+                <div class="preview-decision-btn ko">
+                  <i data-lucide="x" style="width:11px;height:11px;display:inline;vertical-align:-1px"></i>
+                  Invalider
+                </div>
+                <div class="preview-decision-btn ok">
+                  <i data-lucide="check" style="width:11px;height:11px;display:inline;vertical-align:-1px"></i>
+                  Valider
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="preview-info-banner">
+            <i data-lucide="info"></i>
+            En SPEED, votre rôle est de juger oralement. Les variantes que vous saisissez vous aident à décider rapidement.
+          </div>
+
+        </div>
+        <!-- /COLONNE APERÇU -->
+
+      </div>
+
+    </div>
+
+    <!-- Footer fixe -->
+    <div class="form-footer">
+      <div class="form-footer-left">
+        <i data-lucide="info" style="width: 12px; height: 12px;"></i>
+        Dernière modification il y a 1 min · Aucune modification non sauvegardée
+      </div>
+      <div class="form-footer-actions">
+        <button class="btn btn-ghost">Annuler</button>
+        <button class="btn btn-secondary">
+          <i data-lucide="save"></i>
+          Enregistrer brouillon
+        </button>
+        <button class="btn btn-primary">
+          <i data-lucide="check"></i>
+          Enregistrer & fermer
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<script>
+  lucide.createIcons();
+</script>
+
+</body>
+</html>

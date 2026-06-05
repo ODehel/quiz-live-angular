@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Buzzer — Lobby (10 joueurs)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --bg-base: #0b0a10;
+  --bg-surface: #141221;
+  --bg-surface-2: #1c192e;
+  --bg-surface-3: #252238;
+
+  --text-primary: #f4f3f8;
+  --text-secondary: #a8a3bd;
+  --text-muted: #6b6680;
+
+  --border-subtle: #2a2740;
+  --border-default: #3a3654;
+  --border-strong: #4f4a70;
+
+  --accent-primary: #9d6bff;
+  --accent-primary-hover: #8a52ff;
+  --accent-primary-soft: rgba(157, 107, 255, 0.12);
+  --accent-primary-glow: rgba(157, 107, 255, 0.35);
+
+  --accent-secondary: #4dd4e8;
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+
+  --accent-vivid: #ff4d8f;
+  --accent-vivid-soft: rgba(255, 77, 143, 0.15);
+
+  --semantic-success: #4ade80;
+  --semantic-warning: #fbbf24;
+  --semantic-danger: #f87171;
+  --semantic-success-soft: rgba(74, 222, 128, 0.12);
+  --semantic-warning-soft: rgba(251, 191, 36, 0.12);
+  --semantic-danger-soft: rgba(248, 113, 113, 0.12);
+
+  /* ═══ Palette des 10 buzzers ═══ */
+  --buzzer-1: #4dd4e8;        /* Cyan       */
+  --buzzer-2: #5b8def;        /* Bleu       */
+  --buzzer-3: #9d6bff;        /* Violet     */
+  --buzzer-4: #ff4d8f;        /* Magenta    */
+  --buzzer-5: #ff7a59;        /* Corail     */
+  --buzzer-6: #fbbf24;        /* Ambre      */
+  --buzzer-7: #a3e635;        /* Lime       */
+  --buzzer-8: #4ade80;        /* Vert       */
+  --buzzer-9: #34d399;        /* Turquoise  */
+  --buzzer-10: #7c5cf5;       /* Indigo     */
+
+  --font-ui: "Geist", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", sans-serif;
+  --font-mono: "Geist Mono", "Menlo", monospace;
+
+  --sidebar-width: 252px;
+  --topbar-height: 52px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══════ ANIMATIONS ═══════ */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes nfc-wave {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* ═══════ SHELL ═══════ */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 50% 0%, var(--accent-primary-soft), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, var(--accent-secondary-soft), transparent 60%);
+  background-attachment: fixed;
+}
+
+.sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px 16px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sidebar-logo {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-vivid) 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--accent-primary-glow);
+}
+
+.sidebar-logo svg { width: 20px; height: 20px; color: white; }
+
+.sidebar-brand-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.sidebar-brand-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nav-group-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  padding: 0 12px;
+  margin-bottom: 4px;
+}
+
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.nav-item:hover { background: var(--bg-surface-2); color: var(--text-primary); }
+
+.nav-item.active {
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+}
+
+.nav-item.active::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background: var(--accent-primary);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-item-icon { width: 18px; height: 18px; flex-shrink: 0; }
+.nav-item-label { flex: 1; }
+.nav-item-chevron { width: 14px; height: 14px; color: var(--text-muted); }
+
+/* Carte "partie active" en haut */
+.active-game-card {
+  margin: 8px;
+  background: linear-gradient(135deg, var(--accent-primary-soft), var(--accent-vivid-soft));
+  border: 1px solid var(--accent-primary);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.active-game-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-vivid));
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.active-game-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.active-game-label svg { width: 11px; height: 11px; }
+
+.active-game-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.active-game-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.sidebar-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 12px;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.user-card:hover { background: var(--bg-surface-2); }
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.user-name { font-size: 13px; font-weight: 600; }
+.user-role {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ═══════ MAIN ═══════ */
+.main { display: flex; flex-direction: column; min-width: 0; }
+
+.topbar {
+  height: var(--topbar-height);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  flex: 1;
+}
+
+.topbar-breadcrumb-item { color: var(--text-muted); white-space: nowrap; }
+.topbar-breadcrumb-item.link { cursor: pointer; transition: color 0.15s ease; }
+.topbar-breadcrumb-item.link:hover { color: var(--text-secondary); }
+.topbar-breadcrumb-item.current { color: var(--text-primary); font-weight: 500; }
+.topbar-breadcrumb-sep { color: var(--text-muted); opacity: 0.4; }
+
+.topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.connection-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--semantic-success);
+  box-shadow: 0 0 6px var(--semantic-success);
+}
+
+.connection-status .server { color: var(--text-muted); }
+
+.topbar-icon-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.topbar-icon-btn:hover { background: var(--bg-surface-2); color: var(--text-primary); border-color: var(--border-default); }
+.topbar-icon-btn svg { width: 16px; height: 16px; }
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* CONTENT - Lobby                                                  */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.content {
+  padding: 24px 32px 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Stepper */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  width: fit-content;
+}
+
+.stepper-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.stepper-item.completed { color: var(--text-secondary); }
+.stepper-item.active { color: var(--text-primary); font-weight: 500; }
+.stepper-item.future { opacity: 0.5; }
+
+.stepper-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.stepper-item.completed .stepper-num {
+  background: var(--bg-surface-3);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.stepper-item.completed .stepper-num svg { width: 10px; height: 10px; }
+
+.stepper-item.active .stepper-num {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+  box-shadow: 0 0 12px var(--accent-primary-glow);
+}
+
+.stepper-arrow svg { width: 12px; height: 12px; color: var(--text-muted); opacity: 0.5; }
+
+/* ═══════ HEADER LOBBY ═══════ */
+.lobby-header {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 22px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.lobby-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--buzzer-1), var(--buzzer-3), var(--buzzer-4), var(--buzzer-6), var(--buzzer-8));
+}
+
+.lobby-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.lobby-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lobby-eyebrow svg { width: 12px; height: 12px; }
+
+.lobby-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.lobby-quiz-info {
+  display: flex;
+  gap: 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.lobby-quiz-info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lobby-quiz-info-item svg { width: 12px; height: 12px; }
+.lobby-quiz-info-item b { color: var(--text-secondary); font-weight: 600; }
+
+/* Compteur big */
+.lobby-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.lobby-counter-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lobby-counter-status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: 0 0 8px var(--accent-primary-glow);
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.lobby-counter-numbers {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.lobby-counter-current {
+  font-size: 48px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+
+.lobby-counter-divider {
+  font-size: 32px;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.lobby-counter-max {
+  font-size: 32px;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+.lobby-counter-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+/* Progress bar visualisant la progression */
+.lobby-progress {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  width: 200px;
+}
+
+.lobby-progress-cell {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+}
+
+.lobby-progress-cell.filled[data-buzzer="1"] { background: var(--buzzer-1); border-color: var(--buzzer-1); }
+.lobby-progress-cell.filled[data-buzzer="2"] { background: var(--buzzer-2); border-color: var(--buzzer-2); }
+.lobby-progress-cell.filled[data-buzzer="3"] { background: var(--buzzer-3); border-color: var(--buzzer-3); }
+.lobby-progress-cell.filled[data-buzzer="4"] { background: var(--buzzer-4); border-color: var(--buzzer-4); }
+.lobby-progress-cell.filled[data-buzzer="5"] { background: var(--buzzer-5); border-color: var(--buzzer-5); }
+.lobby-progress-cell.filled[data-buzzer="6"] { background: var(--buzzer-6); border-color: var(--buzzer-6); }
+.lobby-progress-cell.filled[data-buzzer="7"] { background: var(--buzzer-7); border-color: var(--buzzer-7); }
+.lobby-progress-cell.filled[data-buzzer="8"] { background: var(--buzzer-8); border-color: var(--buzzer-8); }
+.lobby-progress-cell.filled[data-buzzer="9"] { background: var(--buzzer-9); border-color: var(--buzzer-9); }
+.lobby-progress-cell.filled[data-buzzer="10"] { background: var(--buzzer-10); border-color: var(--buzzer-10); }
+
+/* ═══════ INSTRUCTIONS NFC ═══════ */
+.nfc-instructions {
+  background: linear-gradient(135deg, var(--accent-secondary-soft), transparent);
+  border: 1px solid rgba(77, 212, 232, 0.25);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.nfc-icon-large {
+  width: 40px;
+  height: 40px;
+  background: var(--accent-secondary-soft);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-secondary);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.nfc-icon-large svg { width: 18px; height: 18px; z-index: 1; }
+
+.nfc-icon-large::before,
+.nfc-icon-large::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid var(--accent-secondary);
+  border-radius: 10px;
+  opacity: 0.6;
+}
+
+.nfc-icon-large::before { animation: nfc-wave 2s infinite; }
+.nfc-icon-large::after { animation: nfc-wave 2s 1s infinite; }
+
+.nfc-instructions-title {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.nfc-instructions-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ═══════ GRILLE 5×2 DE SLOTS ═══════ */
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+/* ═══════ SLOT ═══════ */
+.slot {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  min-height: 200px;
+}
+
+.slot::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--buzzer-color, var(--border-default));
+  opacity: 0.7;
+}
+
+.slot[data-buzzer="1"]  { --buzzer-color: var(--buzzer-1);  --buzzer-glow: rgba(77, 212, 232, 0.4); }
+.slot[data-buzzer="2"]  { --buzzer-color: var(--buzzer-2);  --buzzer-glow: rgba(91, 141, 239, 0.4); }
+.slot[data-buzzer="3"]  { --buzzer-color: var(--buzzer-3);  --buzzer-glow: rgba(157, 107, 255, 0.4); }
+.slot[data-buzzer="4"]  { --buzzer-color: var(--buzzer-4);  --buzzer-glow: rgba(255, 77, 143, 0.4); }
+.slot[data-buzzer="5"]  { --buzzer-color: var(--buzzer-5);  --buzzer-glow: rgba(255, 122, 89, 0.4); }
+.slot[data-buzzer="6"]  { --buzzer-color: var(--buzzer-6);  --buzzer-glow: rgba(251, 191, 36, 0.4); }
+.slot[data-buzzer="7"]  { --buzzer-color: var(--buzzer-7);  --buzzer-glow: rgba(163, 230, 53, 0.4); }
+.slot[data-buzzer="8"]  { --buzzer-color: var(--buzzer-8);  --buzzer-glow: rgba(74, 222, 128, 0.4); }
+.slot[data-buzzer="9"]  { --buzzer-color: var(--buzzer-9);  --buzzer-glow: rgba(52, 211, 153, 0.4); }
+.slot[data-buzzer="10"] { --buzzer-color: var(--buzzer-10); --buzzer-glow: rgba(124, 92, 245, 0.4); }
+
+/* Slot CONNECTÉ */
+.slot.connected::before { opacity: 1; }
+
+.slot.connected:hover {
+  border-color: var(--buzzer-color);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -8px rgba(0,0,0,0.4);
+}
+
+.slot.connected:hover .slot-actions { opacity: 1; }
+
+/* Header du slot */
+.slot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.buzzer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background: var(--bg-base);
+  border: 1px solid var(--buzzer-color);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--buzzer-color);
+}
+
+.buzzer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--buzzer-color);
+  box-shadow: 0 0 5px var(--buzzer-glow);
+}
+
+.slot-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.slot-action {
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.slot-action:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.slot-action.danger:hover {
+  background: var(--semantic-danger-soft);
+  color: var(--semantic-danger);
+  border-color: var(--semantic-danger);
+}
+
+.slot-action svg { width: 11px; height: 11px; }
+
+/* Avatar */
+.player-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.02em;
+  margin: 4px auto 0;
+  position: relative;
+}
+
+.player-avatar.b1  { background: linear-gradient(135deg, var(--buzzer-1),  #2da6ba); box-shadow: 0 0 0 2px rgba(77, 212, 232, 0.18), 0 6px 16px -6px rgba(77, 212, 232, 0.4); }
+.player-avatar.b2  { background: linear-gradient(135deg, var(--buzzer-2),  #3a6acc); box-shadow: 0 0 0 2px rgba(91, 141, 239, 0.18), 0 6px 16px -6px rgba(91, 141, 239, 0.4); }
+.player-avatar.b3  { background: linear-gradient(135deg, var(--buzzer-3),  #6e3fcc); box-shadow: 0 0 0 2px rgba(157, 107, 255, 0.18), 0 6px 16px -6px rgba(157, 107, 255, 0.4); }
+.player-avatar.b4  { background: linear-gradient(135deg, var(--buzzer-4),  #cc2c66); box-shadow: 0 0 0 2px rgba(255, 77, 143, 0.18), 0 6px 16px -6px rgba(255, 77, 143, 0.4); }
+.player-avatar.b5  { background: linear-gradient(135deg, var(--buzzer-5),  #cc5436); box-shadow: 0 0 0 2px rgba(255, 122, 89, 0.18), 0 6px 16px -6px rgba(255, 122, 89, 0.4); }
+.player-avatar.b6  { background: linear-gradient(135deg, var(--buzzer-6),  #d49b08); box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.18), 0 6px 16px -6px rgba(251, 191, 36, 0.4); }
+.player-avatar.b7  { background: linear-gradient(135deg, var(--buzzer-7),  #7eb91f); box-shadow: 0 0 0 2px rgba(163, 230, 53, 0.18), 0 6px 16px -6px rgba(163, 230, 53, 0.4); }
+.player-avatar.b8  { background: linear-gradient(135deg, var(--buzzer-8),  #2ba558); box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.18), 0 6px 16px -6px rgba(74, 222, 128, 0.4); }
+.player-avatar.b9  { background: linear-gradient(135deg, var(--buzzer-9),  #1ea876); box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.18), 0 6px 16px -6px rgba(52, 211, 153, 0.4); }
+.player-avatar.b10 { background: linear-gradient(135deg, var(--buzzer-10), #5a3fcc); box-shadow: 0 0 0 2px rgba(124, 92, 245, 0.18), 0 6px 16px -6px rgba(124, 92, 245, 0.4); }
+
+/* Nom du joueur */
+.player-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  letter-spacing: -0.01em;
+  background: transparent;
+  border: 1px solid transparent;
+  outline: none;
+  padding: 3px 6px;
+  border-radius: 5px;
+  width: 100%;
+  transition: all 0.15s ease;
+}
+
+.player-name:hover { background: var(--bg-base); border-color: var(--border-subtle); }
+.player-name:focus { background: var(--bg-base); border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--accent-primary-soft); }
+
+/* Footer compact */
+.slot-footer {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.slot-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.slot-footer-row svg { width: 10px; height: 10px; flex-shrink: 0; }
+.slot-footer-row .nfc-id {
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slot-footer-row .status-ok {
+  color: var(--semantic-success);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ═══════ SLOT EN ATTENTE ═══════ */
+.slot.waiting {
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-default);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 20px 14px;
+}
+
+.slot.waiting::before { background: var(--text-muted); opacity: 0.3; }
+
+.nfc-waiting-indicator {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--bg-base);
+  border: 2px solid var(--buzzer-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.nfc-waiting-indicator svg {
+  width: 24px;
+  height: 24px;
+  color: var(--buzzer-color);
+  z-index: 2;
+}
+
+.nfc-waiting-indicator::before,
+.nfc-waiting-indicator::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 2px solid var(--buzzer-color);
+  border-radius: 50%;
+  opacity: 0.4;
+}
+
+.nfc-waiting-indicator::before { animation: nfc-wave 2s infinite; }
+.nfc-waiting-indicator::after { animation: nfc-wave 2s 1s infinite; }
+
+.slot-waiting-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: -0.01em;
+}
+
+.slot-waiting-desc {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.slot-waiting-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ═══════ FOOTER FIXE ═══════ */
+.composer-footer {
+  position: fixed;
+  bottom: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-default);
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 60;
+  box-shadow: 0 -4px 20px -4px rgba(0,0,0,0.5);
+}
+
+.composer-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.composer-footer-left svg { width: 12px; height: 12px; }
+
+.composer-footer-actions { display: flex; gap: 8px; }
+
+.btn {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn svg { width: 16px; height: 16px; }
+.btn-primary { background: var(--accent-primary); color: white; }
+.btn-primary:hover { background: var(--accent-primary-hover); box-shadow: 0 0 24px var(--accent-primary-glow); }
+
+.btn-primary.cta {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  font-weight: 600;
+  padding: 10px 22px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary.cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent, rgba(255,255,255,0.15), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.btn-primary.cta:hover::before { transform: translateX(100%); }
+
+.btn-primary.cta:hover {
+  box-shadow: 0 0 32px var(--accent-primary-glow);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+.btn-secondary:hover { background: var(--bg-surface-3); border-color: var(--border-strong); }
+
+.btn-danger-ghost {
+  background: transparent;
+  color: var(--semantic-danger);
+  border-color: transparent;
+}
+.btn-danger-ghost:hover {
+  background: var(--semantic-danger-soft);
+  border-color: var(--semantic-danger);
+}
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══════ SIDEBAR ═══════ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><i data-lucide="zap"></i></div>
+      <div>
+        <div class="sidebar-brand-name">Quiz Buzzer</div>
+        <div class="sidebar-brand-tag">Hub de pilotage</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="active-game-card">
+        <div class="active-game-label">
+          <i data-lucide="trophy"></i>
+          Partie en préparation
+        </div>
+        <div class="active-game-name">Soirée découverte du monde</div>
+        <div class="active-game-status">Lobby ouvert · 6 / 10 joueurs</div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Général</div>
+        <div class="nav-group">
+          <a class="nav-item">
+            <i data-lucide="layout-dashboard" class="nav-item-icon"></i>
+            <span class="nav-item-label">Tableau de bord</span>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Contenu</div>
+        <div class="nav-group">
+          <a class="nav-item">
+            <i data-lucide="folder-open" class="nav-item-icon"></i>
+            <span class="nav-item-label">Contenu</span>
+            <i data-lucide="chevron-right" class="nav-item-chevron"></i>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Parties</div>
+        <div class="nav-group">
+          <a class="nav-item">
+            <i data-lucide="trophy" class="nav-item-icon"></i>
+            <span class="nav-item-label">Toutes les parties</span>
+          </a>
+          <a class="nav-item active">
+            <i data-lucide="plus-circle" class="nav-item-icon"></i>
+            <span class="nav-item-label">Nouvelle partie</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">A</div>
+        <div>
+          <div class="user-name">admin</div>
+          <div class="user-role">Maître de jeu</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════ MAIN ═══════ -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">
+        <span class="topbar-breadcrumb-item link">Accueil</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item link">Parties</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item link">Soirée découverte du monde</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item current">Lobby</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="connection-status">
+          <span class="dot"></span>
+          <span>Connecté</span>
+          <span class="server">· 192.168.1.10:3000</span>
+        </div>
+        <button class="topbar-icon-btn" title="Notifications"><i data-lucide="bell"></i></button>
+        <button class="topbar-icon-btn" title="Paramètres"><i data-lucide="settings"></i></button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Stepper -->
+      <div class="stepper">
+        <div class="stepper-item completed">
+          <span class="stepper-num"><i data-lucide="check"></i></span>
+          <span>Setup</span>
+        </div>
+        <span class="stepper-arrow"><i data-lucide="chevron-right"></i></span>
+        <div class="stepper-item active">
+          <span class="stepper-num">2</span>
+          <span>Lobby & joueurs</span>
+        </div>
+        <span class="stepper-arrow"><i data-lucide="chevron-right"></i></span>
+        <div class="stepper-item future">
+          <span class="stepper-num">3</span>
+          <span>Pilotage</span>
+        </div>
+      </div>
+
+      <!-- Header lobby -->
+      <div class="lobby-header">
+        <div class="lobby-header-left">
+          <div class="lobby-eyebrow">
+            <i data-lucide="door-open"></i>
+            Lobby ouvert
+          </div>
+          <h1 class="lobby-title">Soirée découverte du monde</h1>
+          <div class="lobby-quiz-info">
+            <span class="lobby-quiz-info-item">
+              <i data-lucide="circle-help"></i>
+              <b>12</b> questions
+            </span>
+            <span class="lobby-quiz-info-item">
+              <i data-lucide="clock"></i>
+              <b>~8'30</b> de partie
+            </span>
+            <span class="lobby-quiz-info-item">
+              <i data-lucide="trophy"></i>
+              <b>2 800</b> points max
+            </span>
+          </div>
+        </div>
+
+        <div class="lobby-counter">
+          <span class="lobby-counter-status">En attente</span>
+          <div class="lobby-counter-numbers">
+            <span class="lobby-counter-current">6</span>
+            <span class="lobby-counter-divider">/</span>
+            <span class="lobby-counter-max">10</span>
+          </div>
+          <span class="lobby-counter-label">Joueurs connectés</span>
+          <div class="lobby-progress">
+            <div class="lobby-progress-cell filled" data-buzzer="1"></div>
+            <div class="lobby-progress-cell filled" data-buzzer="2"></div>
+            <div class="lobby-progress-cell filled" data-buzzer="3"></div>
+            <div class="lobby-progress-cell filled" data-buzzer="4"></div>
+            <div class="lobby-progress-cell filled" data-buzzer="5"></div>
+            <div class="lobby-progress-cell filled" data-buzzer="6"></div>
+            <div class="lobby-progress-cell"></div>
+            <div class="lobby-progress-cell"></div>
+            <div class="lobby-progress-cell"></div>
+            <div class="lobby-progress-cell"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructions NFC -->
+      <div class="nfc-instructions">
+        <div class="nfc-icon-large"><i data-lucide="nfc"></i></div>
+        <div>
+          <div class="nfc-instructions-title">Les joueurs scannent leur badge sur leur buzzer</div>
+          <div class="nfc-instructions-desc">Chaque joueur approche son badge NFC du buzzer correspondant à sa couleur. Renommez un joueur en cliquant sur son nom, ou excluez-le avec le bouton dédié.</div>
+        </div>
+      </div>
+
+      <!-- ═══════ GRILLE 5 × 2 ═══════ -->
+      <div class="slots-grid">
+
+        <!-- Buzzer 1 — Charlie (cyan) -->
+        <div class="slot connected" data-buzzer="1">
+          <div class="slot-header">
+            <span class="buzzer-badge">
+              <span class="buzzer-dot"></span>
+              Buzzer 1
+            </span>
+            <div class="slot-actions">
+              <button class="slot-action" title="Renommer"><i data-lucide="pencil"></i></button>
+              <button class="slot-action danger" title="Exclure"><i data-lucide="user-x"></i></button>
+            </div>
+          </div>
+          <div class="player-avatar b1">C</div>
+          <input class="player-name" value="Charlie" />
+          <div class="slot-footer">
+            <div class="slot-footer-row">
+              <span class="status-ok"><i data-lucide="check-circle"></i> Connecté</span>
+              <span>23s</span>
+            </div>
+            <div class="slot-footer-row">
+              <span class="nfc-id">BUZ-A3F2</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buzzer 2 — Théo (bleu) -->
+        <div class="slot connected" data-buzzer="2">
+          <div class="slot-header">
+            <span class="buzzer-badge">
+              <span class="buzzer-dot"></span>
+              Buzzer 2
+            </span>
+            <div class="slot-actions">
+              <button class="slot-action" title="Renommer"><i data-lucide="pencil"></i></button>
+              <button class="slot-action danger" title="Exclure"><i data-lucide="user-x"></i></button>
+            </div>
+          </div>
+          <div class="player-avatar b2">T</div>
+          <input class="player-name" value="Théo" />
+          <div class="slot-footer">
+            <div class="slot-footer-row">
+              <span class="status-ok"><i data-lucide="check-circle"></i> Connecté</span>
+              <span>18s</span>
+            </div>
+            <div class="slot-footer-row">
+              <span class="nfc-id">BUZ-9D14</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buzzer 3 — Nina (violet) -->
+        <div class="slot connected" data-buzzer="3">
+          <div class="slot-header">
+            <span class="buzzer-badge">
+              <span class="buzzer-dot"></span>
+              Buzzer 3
+            </span>
+            <div class="slot-actions">
+              <button class="slot-action" title="Renommer"><i data-lucide="pencil"></i></button>
+              <button class="slot-action danger" title="Exclure"><i data-lucide="user-x"></i></button>
+            </div>
+          </div>
+          <div class="player-avatar b3">N</div>
+          <input class="player-name" value="Nina" />
+          <div class="slot-footer">
+            <div class="slot-footer-row">
+              <span class="status-ok"><i data-lucide="check-circle"></i> Connectée</span>
+              <span>14s</span>
+            </div>
+            <div class="slot-footer-row">
+              <span class="nfc-id">BUZ-7C81</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buzzer 4 — Maya (magenta) -->
+        <div class="slot connected" data-buzzer="4">
+          <div class="slot-header">
+            <span class="buzzer-badge">
+              <span class="buzzer-dot"></span>
+              Buzzer 4
+            </span>
+            <div class="slot-actions">
+              <button class="slot-action" title="Renommer"><i data-lucide="pencil"></i></button>
+              <button class="slot-action danger" title="Exclure"><i data-lucide="user-x"></i></button>
+            </div>
+          </div>
+          <div class="player-avatar b4">M</div>
+          <input class="player-name" value="Maya" />
+          <div class="slot-footer">
+            <div class="slot-footer-row">
+              <span class="status-ok"><i data-lucide="check-circle"></i> Connectée</span>
+              <span>10s</span>
+            </div>
+            <div class="slot-footer-row">
+              <span class="nfc-id">BUZ-5E62</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buzzer 5 — Léo (corail) -->
+        <div class="slot connected" data-buzzer="5">
+          <div class="slot-header">
+            <span class="buzzer-badge">
+              <span class="buzzer-dot"></span>
+              Buzzer 5
+            </span>
+            <div class="slot-actions">
+              <button class="slot-action" title="Renommer"><i data-lucide="pencil"></i></button>
+              <button class="slot-action danger" title="Exclure"><i data-lucide="user-x"></i></button>
+            </div>
+          </div>
+          <div class="player-avatar b5">L</div>
+          <input class="player-name" value="Léo" />
+          <div class="slot-footer">
+            <div class="slot-footer-row">
+              <span class="status-ok"><i data-lucide="check-circle"></i> Connecté</span>
+              <span>7s</span>
+            </div>
+            <div class="slot-footer-row">
+              <span class="nfc-id">BUZ-3B40</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buzzer 6 — Sam (ambre) -->
+        <div class="slot connected" data-buzzer="6">
+          <div class="slot-header">
+            <span class="buzzer-badge">
+              <span class="buzzer-dot"></span>
+              Buzzer 6
+            </span>
+            <div class="slot-actions">
+              <button class="slot-action" title="Renommer"><i data-lucide="pencil"></i></button>
+              <button class="slot-action danger" title="Exclure"><i data-lucide="user-x"></i></button>
+            </div>
+          </div>
+          <div class="player-avatar b6">S</div>
+          <input class="player-name" value="Sam" />
+          <div class="slot-footer">
+            <div class="slot-footer-row">
+              <span class="status-ok"><i data-lucide="check-circle"></i> Connecté</span>
+              <span>3s</span>
+            </div>
+            <div class="slot-footer-row">
+              <span class="nfc-id">BUZ-1A29</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buzzer 7 — En attente (lime) -->
+        <div class="slot waiting" data-buzzer="7">
+          <div class="nfc-waiting-indicator">
+            <i data-lucide="nfc"></i>
+          </div>
+          <div class="slot-waiting-title">En attente</div>
+          <div class="slot-waiting-desc">Approchez un badge<br>du buzzer 7</div>
+          <div class="slot-waiting-meta">
+            <span class="buzzer-dot"></span>
+            Lime
+          </div>
+        </div>
+
+        <!-- Buzzer 8 — En attente (vert) -->
+        <div class="slot waiting" data-buzzer="8">
+          <div class="nfc-waiting-indicator">
+            <i data-lucide="nfc"></i>
+          </div>
+          <div class="slot-waiting-title">En attente</div>
+          <div class="slot-waiting-desc">Approchez un badge<br>du buzzer 8</div>
+          <div class="slot-waiting-meta">
+            <span class="buzzer-dot"></span>
+            Vert
+          </div>
+        </div>
+
+        <!-- Buzzer 9 — En attente (turquoise) -->
+        <div class="slot waiting" data-buzzer="9">
+          <div class="nfc-waiting-indicator">
+            <i data-lucide="nfc"></i>
+          </div>
+          <div class="slot-waiting-title">En attente</div>
+          <div class="slot-waiting-desc">Approchez un badge<br>du buzzer 9</div>
+          <div class="slot-waiting-meta">
+            <span class="buzzer-dot"></span>
+            Turquoise
+          </div>
+        </div>
+
+        <!-- Buzzer 10 — En attente (indigo) -->
+        <div class="slot waiting" data-buzzer="10">
+          <div class="nfc-waiting-indicator">
+            <i data-lucide="nfc"></i>
+          </div>
+          <div class="slot-waiting-title">En attente</div>
+          <div class="slot-waiting-desc">Approchez un badge<br>du buzzer 10</div>
+          <div class="slot-waiting-meta">
+            <span class="buzzer-dot"></span>
+            Indigo
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="composer-footer">
+      <div class="composer-footer-left">
+        <i data-lucide="info"></i>
+        Minimum atteint · Vous pouvez démarrer ou attendre les 4 derniers
+      </div>
+      <div class="composer-footer-actions">
+        <button class="btn btn-danger-ghost">
+          <i data-lucide="x-circle"></i>
+          Annuler la partie
+        </button>
+        <button class="btn btn-secondary">
+          <i data-lucide="arrow-left"></i>
+          Retour au setup
+        </button>
+        <button class="btn btn-primary cta">
+          <i data-lucide="play"></i>
+          Démarrer la partie
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<script>
+  lucide.createIcons();
+</script>
+
+</body>
+</html>

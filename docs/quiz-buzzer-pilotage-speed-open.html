@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Buzzer — Pilotage SPEED · En attente de buzz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --bg-base: #0b0a10;
+  --bg-surface: #141221;
+  --bg-surface-2: #1c192e;
+  --bg-surface-3: #252238;
+
+  --text-primary: #f4f3f8;
+  --text-secondary: #a8a3bd;
+  --text-muted: #6b6680;
+
+  --border-subtle: #2a2740;
+  --border-default: #3a3654;
+  --border-strong: #4f4a70;
+
+  --accent-primary: #9d6bff;
+  --accent-primary-hover: #8a52ff;
+  --accent-primary-soft: rgba(157, 107, 255, 0.12);
+  --accent-primary-glow: rgba(157, 107, 255, 0.35);
+
+  --accent-secondary: #4dd4e8;
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+
+  --accent-vivid: #ff4d8f;
+  --accent-vivid-soft: rgba(255, 77, 143, 0.15);
+  --accent-vivid-glow: rgba(255, 77, 143, 0.35);
+
+  --semantic-success: #4ade80;
+  --semantic-warning: #fbbf24;
+  --semantic-danger: #f87171;
+  --semantic-success-soft: rgba(74, 222, 128, 0.12);
+  --semantic-warning-soft: rgba(251, 191, 36, 0.12);
+  --semantic-danger-soft: rgba(248, 113, 113, 0.12);
+
+  /* 10 buzzers */
+  --buzzer-1: #4dd4e8;
+  --buzzer-2: #5b8def;
+  --buzzer-3: #9d6bff;
+  --buzzer-4: #ff4d8f;
+  --buzzer-5: #ff7a59;
+  --buzzer-6: #fbbf24;
+  --buzzer-7: #a3e635;
+  --buzzer-8: #4ade80;
+  --buzzer-9: #34d399;
+  --buzzer-10: #7c5cf5;
+
+  --font-ui: "Geist", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", sans-serif;
+  --font-mono: "Geist Mono", "Menlo", monospace;
+
+  --sidebar-width: 252px;
+  --topbar-height: 52px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══════ ANIMATIONS ═══════ */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes ready-breath {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
+  50% { transform: scale(1.02); box-shadow: 0 0 16px var(--player-glow, transparent); }
+}
+
+@keyframes chrono-pulse {
+  0%, 100% { box-shadow: inset 0 0 0 0 transparent; }
+  50% { box-shadow: inset 0 0 12px var(--accent-vivid-soft); }
+}
+
+@keyframes shake-soft {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-1px); }
+  75% { transform: translateX(1px); }
+}
+
+/* ═══════ SHELL ═══════ */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 70% 50% at 50% 0%, var(--accent-vivid-soft), transparent 70%),
+    radial-gradient(ellipse 50% 30% at 80% 100%, var(--accent-primary-soft), transparent 60%);
+  background-attachment: fixed;
+}
+
+.sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px 16px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sidebar-logo {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-vivid) 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--accent-primary-glow);
+}
+
+.sidebar-logo svg { width: 20px; height: 20px; color: white; }
+
+.sidebar-brand-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.sidebar-brand-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nav-group-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  padding: 0 12px;
+  margin-bottom: 4px;
+}
+
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.nav-item:hover { background: var(--bg-surface-2); color: var(--text-primary); }
+
+.nav-item.active {
+  background: var(--accent-vivid-soft);
+  color: var(--accent-vivid);
+}
+
+.nav-item.active::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background: var(--accent-vivid);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-item-icon { width: 18px; height: 18px; flex-shrink: 0; }
+.nav-item-label { flex: 1; }
+.nav-item-chevron { width: 14px; height: 14px; color: var(--text-muted); }
+
+/* Carte partie active */
+.active-game-card {
+  margin: 8px;
+  background: linear-gradient(135deg, var(--accent-vivid-soft), var(--accent-primary-soft));
+  border: 1px solid var(--accent-vivid);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.active-game-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-vivid), var(--accent-primary));
+  animation: pulse-soft 1.5s ease-in-out infinite;
+}
+
+.active-game-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-vivid);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.active-game-label svg { width: 11px; height: 11px; }
+
+.active-game-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.active-game-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.sidebar-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 12px;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.user-card:hover { background: var(--bg-surface-2); }
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.user-name { font-size: 13px; font-weight: 600; }
+.user-role {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ═══════ MAIN ═══════ */
+.main { display: flex; flex-direction: column; min-width: 0; }
+
+.topbar {
+  height: var(--topbar-height);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  flex: 1;
+}
+
+.topbar-breadcrumb-item { color: var(--text-muted); white-space: nowrap; }
+.topbar-breadcrumb-item.link { cursor: pointer; }
+.topbar-breadcrumb-item.link:hover { color: var(--text-secondary); }
+.topbar-breadcrumb-item.current { color: var(--text-primary); font-weight: 500; }
+.topbar-breadcrumb-sep { color: var(--text-muted); opacity: 0.4; }
+
+.topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.connection-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--semantic-success);
+  box-shadow: 0 0 6px var(--semantic-success);
+}
+
+.connection-status .server { color: var(--text-muted); }
+
+.topbar-icon-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.topbar-icon-btn:hover { background: var(--bg-surface-2); color: var(--text-primary); border-color: var(--border-default); }
+.topbar-icon-btn svg { width: 16px; height: 16px; }
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* CONTENT - Pilotage SPEED open                                    */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.content {
+  padding: 20px 28px 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ═══════ HEADER PILOTAGE ═══════ */
+.pilotage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pilotage-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-vivid);
+}
+
+.pilotage-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tag-pilotage {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 5px;
+}
+
+.tag-pilotage.speed {
+  background: var(--accent-vivid);
+  color: white;
+  box-shadow: 0 0 12px var(--accent-vivid-glow);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tag-pilotage.speed svg { width: 11px; height: 11px; }
+
+.tag-pilotage.theme {
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+
+.question-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.question-progress b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.question-progress-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.question-progress-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bg-surface-3);
+}
+
+.question-progress-dot.completed { background: var(--accent-primary); }
+.question-progress-dot.current {
+  background: var(--accent-vivid);
+  box-shadow: 0 0 6px var(--accent-vivid-glow);
+}
+
+.pilotage-points {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-vivid), var(--accent-primary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
+}
+
+.pilotage-points::before { content: "+"; }
+
+/* ═══════ CHRONO ═══════ */
+.chrono-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chrono-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chrono-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chrono-label svg {
+  width: 13px;
+  height: 13px;
+  color: var(--accent-vivid);
+}
+
+.chrono-value {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-vivid), var(--accent-primary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.chrono-value-max {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.chrono-bar {
+  height: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  animation: chrono-pulse 2s ease-in-out infinite;
+}
+
+.chrono-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-vivid), var(--accent-primary));
+  border-radius: 4px;
+  width: 60%;
+  position: relative;
+  transition: width 1s linear;
+}
+
+.chrono-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4));
+}
+
+/* ═══════ SCÈNE QUESTION ═══════ */
+.question-stage {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+  background-image:
+    radial-gradient(ellipse 60% 40% at 50% 0%, var(--accent-vivid-soft), transparent 70%);
+}
+
+.question-stage::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-vivid), transparent);
+  opacity: 0.6;
+}
+
+.question-text {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--text-primary);
+  max-width: 800px;
+}
+
+.question-image {
+  width: 320px;
+  height: 200px;
+  border-radius: 12px;
+  background-image: linear-gradient(135deg, rgba(255,77,143,0.2), rgba(157,107,255,0.2)),
+                    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='250' viewBox='0 0 400 250'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2334415e'/%3E%3Cstop offset='1' stop-color='%231a2438'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='250' fill='url(%23g)'/%3E%3Cpath d='M0,180 Q100,120 200,150 T400,140 L400,250 L0,250 Z' fill='%2316a085' opacity='.5'/%3E%3Cpath d='M0,200 Q120,160 240,180 T400,170 L400,250 L0,250 Z' fill='%2316a085' opacity='.7'/%3E%3Ccircle cx='320' cy='60' r='28' fill='%23ffd34e'/%3E%3Cpath d='M150,180 L160,140 L165,150 L175,130 L185,160 L195,140 L200,180 Z' fill='%23232844'/%3E%3C/svg%3E");
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--border-default);
+  box-shadow: 0 8px 32px -8px rgba(0,0,0,0.5);
+}
+
+.question-status-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--accent-vivid-soft);
+  border: 1px solid rgba(255, 77, 143, 0.3);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  color: var(--accent-vivid);
+}
+
+.question-status-banner::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-vivid);
+  box-shadow: 0 0 8px var(--accent-vivid-glow);
+  animation: pulse-soft 1.2s ease-in-out infinite;
+}
+
+/* ═══════ BANDEAU JOUEURS ═══════ */
+.players-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.players-stage-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.players-stage-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.players-stage-title svg { width: 13px; height: 13px; color: var(--accent-primary); }
+
+.players-stage-counter {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.players-stage-counter b {
+  color: var(--accent-vivid);
+  font-weight: 600;
+}
+
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+/* Card joueur */
+.player-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.player-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--player-color, var(--border-default));
+}
+
+.player-card[data-buzzer="1"]  { --player-color: var(--buzzer-1);  --player-glow: rgba(77, 212, 232, 0.4); }
+.player-card[data-buzzer="2"]  { --player-color: var(--buzzer-2);  --player-glow: rgba(91, 141, 239, 0.4); }
+.player-card[data-buzzer="3"]  { --player-color: var(--buzzer-3);  --player-glow: rgba(157, 107, 255, 0.4); }
+.player-card[data-buzzer="4"]  { --player-color: var(--buzzer-4);  --player-glow: rgba(255, 77, 143, 0.4); }
+.player-card[data-buzzer="5"]  { --player-color: var(--buzzer-5);  --player-glow: rgba(255, 122, 89, 0.4); }
+.player-card[data-buzzer="6"]  { --player-color: var(--buzzer-6);  --player-glow: rgba(251, 191, 36, 0.4); }
+.player-card[data-buzzer="7"]  { --player-color: var(--buzzer-7);  --player-glow: rgba(163, 230, 53, 0.4); }
+.player-card[data-buzzer="8"]  { --player-color: var(--buzzer-8);  --player-glow: rgba(74, 222, 128, 0.4); }
+.player-card[data-buzzer="9"]  { --player-color: var(--buzzer-9);  --player-glow: rgba(52, 211, 153, 0.4); }
+.player-card[data-buzzer="10"] { --player-color: var(--buzzer-10); --player-glow: rgba(124, 92, 245, 0.4); }
+
+.player-card.ready {
+  border-color: var(--player-color);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), var(--bg-surface));
+  animation: ready-breath 2.5s ease-in-out infinite;
+}
+
+/* Status pill */
+.player-status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--player-color);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.player-status::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 0 4px white;
+}
+
+/* Avatar */
+.player-card-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.02em;
+  margin-top: 18px;
+  position: relative;
+}
+
+.player-card-avatar.b1  { background: linear-gradient(135deg, var(--buzzer-1),  #2da6ba); box-shadow: 0 0 0 2px rgba(77, 212, 232, 0.2),  0 4px 12px -4px rgba(77, 212, 232, 0.5); }
+.player-card-avatar.b2  { background: linear-gradient(135deg, var(--buzzer-2),  #3a6acc); box-shadow: 0 0 0 2px rgba(91, 141, 239, 0.2),  0 4px 12px -4px rgba(91, 141, 239, 0.5); }
+.player-card-avatar.b3  { background: linear-gradient(135deg, var(--buzzer-3),  #6e3fcc); box-shadow: 0 0 0 2px rgba(157, 107, 255, 0.2), 0 4px 12px -4px rgba(157, 107, 255, 0.5); }
+.player-card-avatar.b4  { background: linear-gradient(135deg, var(--buzzer-4),  #cc2c66); box-shadow: 0 0 0 2px rgba(255, 77, 143, 0.2),  0 4px 12px -4px rgba(255, 77, 143, 0.5); }
+.player-card-avatar.b5  { background: linear-gradient(135deg, var(--buzzer-5),  #cc5436); box-shadow: 0 0 0 2px rgba(255, 122, 89, 0.2),  0 4px 12px -4px rgba(255, 122, 89, 0.5); }
+.player-card-avatar.b6  { background: linear-gradient(135deg, var(--buzzer-6),  #d49b08); box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2),  0 4px 12px -4px rgba(251, 191, 36, 0.5); }
+.player-card-avatar.b7  { background: linear-gradient(135deg, var(--buzzer-7),  #7eb91f); box-shadow: 0 0 0 2px rgba(163, 230, 53, 0.2),  0 4px 12px -4px rgba(163, 230, 53, 0.5); }
+.player-card-avatar.b8  { background: linear-gradient(135deg, var(--buzzer-8),  #2ba558); box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.2),  0 4px 12px -4px rgba(74, 222, 128, 0.5); }
+.player-card-avatar.b9  { background: linear-gradient(135deg, var(--buzzer-9),  #1ea876); box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.2),  0 4px 12px -4px rgba(52, 211, 153, 0.5); }
+.player-card-avatar.b10 { background: linear-gradient(135deg, var(--buzzer-10), #5a3fcc); box-shadow: 0 0 0 2px rgba(124, 92, 245, 0.2),  0 4px 12px -4px rgba(124, 92, 245, 0.5); }
+
+.player-card-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+/* Score */
+.player-card-score {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.player-card-score svg {
+  width: 11px;
+  height: 11px;
+  color: var(--text-muted);
+}
+
+.player-card-score b {
+  color: var(--accent-primary);
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+/* Rang */
+.player-card-rank {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  background: var(--bg-base);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+}
+
+.player-card-rank.leader {
+  color: var(--accent-vivid);
+  border-color: var(--accent-vivid);
+  background: var(--accent-vivid-soft);
+}
+
+/* ═══════ FOOTER FIXE ═══════ */
+.composer-footer {
+  position: fixed;
+  bottom: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-default);
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 60;
+  box-shadow: 0 -4px 20px -4px rgba(0,0,0,0.5);
+}
+
+.composer-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.composer-footer-left svg { width: 12px; height: 12px; color: var(--accent-vivid); }
+.composer-footer-left b { color: var(--text-secondary); font-weight: 600; }
+
+.composer-footer-actions { display: flex; gap: 8px; }
+
+.btn {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn svg { width: 14px; height: 14px; }
+
+.btn-secondary {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+.btn-secondary:hover { background: var(--bg-surface-3); border-color: var(--border-strong); }
+
+.btn-warning {
+  background: var(--semantic-warning-soft);
+  color: var(--semantic-warning);
+  border-color: var(--semantic-warning);
+}
+.btn-warning:hover { background: rgba(251, 191, 36, 0.2); }
+
+.btn-primary { background: var(--accent-primary); color: white; }
+.btn-primary:hover { background: var(--accent-primary-hover); box-shadow: 0 0 24px var(--accent-primary-glow); }
+
+.btn-vivid {
+  background: var(--accent-vivid);
+  color: white;
+}
+.btn-vivid:hover {
+  background: #e63a7d;
+  box-shadow: 0 0 24px var(--accent-vivid-glow);
+}
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══════ SIDEBAR ═══════ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><i data-lucide="zap"></i></div>
+      <div>
+        <div class="sidebar-brand-name">Quiz Buzzer</div>
+        <div class="sidebar-brand-tag">Hub de pilotage</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="active-game-card">
+        <div class="active-game-label">
+          <i data-lucide="zap"></i>
+          Partie en cours
+        </div>
+        <div class="active-game-name">Soirée découverte du monde</div>
+        <div class="active-game-status">Question 7 / 12 · SPEED</div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Général</div>
+        <div class="nav-group">
+          <a class="nav-item">
+            <i data-lucide="layout-dashboard" class="nav-item-icon"></i>
+            <span class="nav-item-label">Tableau de bord</span>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Contenu</div>
+        <div class="nav-group">
+          <a class="nav-item">
+            <i data-lucide="folder-open" class="nav-item-icon"></i>
+            <span class="nav-item-label">Contenu</span>
+            <i data-lucide="chevron-right" class="nav-item-chevron"></i>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Parties</div>
+        <div class="nav-group">
+          <a class="nav-item active">
+            <i data-lucide="play-circle" class="nav-item-icon"></i>
+            <span class="nav-item-label">Pilotage</span>
+          </a>
+          <a class="nav-item">
+            <i data-lucide="trophy" class="nav-item-icon"></i>
+            <span class="nav-item-label">Toutes les parties</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">A</div>
+        <div>
+          <div class="user-name">admin</div>
+          <div class="user-role">Maître de jeu</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════ MAIN ═══════ -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">
+        <span class="topbar-breadcrumb-item link">Accueil</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item link">Parties</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item link">Soirée découverte du monde</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item current">Pilotage</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="connection-status">
+          <span class="dot"></span>
+          <span>10 buzzers connectés</span>
+        </div>
+        <button class="topbar-icon-btn" title="Plein écran"><i data-lucide="maximize-2"></i></button>
+        <button class="topbar-icon-btn" title="Paramètres"><i data-lucide="settings"></i></button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Header pilotage -->
+      <div class="pilotage-header">
+        <div class="pilotage-header-left">
+          <span class="tag-pilotage speed">
+            <i data-lucide="zap"></i>
+            SPEED
+          </span>
+          <span class="tag-pilotage theme">Cinéma</span>
+          <span class="question-progress">
+            Question <b>7</b> / 12
+            <span class="question-progress-dots">
+              <span class="question-progress-dot completed"></span>
+              <span class="question-progress-dot completed"></span>
+              <span class="question-progress-dot completed"></span>
+              <span class="question-progress-dot completed"></span>
+              <span class="question-progress-dot completed"></span>
+              <span class="question-progress-dot completed"></span>
+              <span class="question-progress-dot current"></span>
+              <span class="question-progress-dot"></span>
+              <span class="question-progress-dot"></span>
+              <span class="question-progress-dot"></span>
+              <span class="question-progress-dot"></span>
+              <span class="question-progress-dot"></span>
+            </span>
+          </span>
+        </div>
+        <span class="pilotage-points">450</span>
+      </div>
+
+      <!-- Chrono -->
+      <div class="chrono-section">
+        <div class="chrono-row">
+          <span class="chrono-label">
+            <i data-lucide="timer"></i>
+            Temps restant avant fin de question
+          </span>
+          <span>
+            <span class="chrono-value">18s</span>
+            <span class="chrono-value-max">/ 30s</span>
+          </span>
+        </div>
+        <div class="chrono-bar">
+          <div class="chrono-fill"></div>
+        </div>
+      </div>
+
+      <!-- Scène question -->
+      <div class="question-stage">
+        <span class="question-status-banner">En attente du premier buzz</span>
+        <h2 class="question-text">Quel est ce film d'auteur sorti en 1995 ?</h2>
+        <div class="question-image"></div>
+      </div>
+
+      <!-- Bandeau joueurs -->
+      <div class="players-stage">
+        <div class="players-stage-header">
+          <span class="players-stage-title">
+            <i data-lucide="users"></i>
+            Joueurs prêts à buzzer
+          </span>
+          <span class="players-stage-counter">
+            <b>10 / 10</b> armés
+          </span>
+        </div>
+
+        <div class="players-grid">
+
+          <!-- Buzzer 1 — Charlie -->
+          <div class="player-card ready" data-buzzer="1">
+            <span class="player-status">Prêt</span>
+            <div class="player-card-avatar b1">C</div>
+            <div class="player-card-name">Charlie</div>
+            <div class="player-card-score">
+              <i data-lucide="trophy"></i>
+              <b>800</b> pts
+            </div>
+            <span class="player-card-rank">#4</span>
+          </div>
+
+          <!-- Buzzer 2 — Théo -->
+          <div class="player-card ready" data-buzzer="2">
+            <span class="player-status">Prêt</span>
+            <div class="player-card-avatar b2">T</div>
+            <div class="player-card-name">Théo</div>
+            <div class="player-card-score">
+              <i data-lucide="trophy"></i>
+              <b>450</b> pts
+            </div>
+            <span class="player-card-rank">#8</span>
+          </div>
+
+          <!-- Buzzer 3 — Nina (leader) -->
+          <div class="player-card ready" data-buzzer="3">
+            <span class="player-status">Prêt</span>
+            <div class="player-card-avatar b3">N</div>
+            <div class="player-card-name">Nina</div>
+            <div class="player-card-score">
+              <i data-lucide="trophy"></i>
+              <b>1 200</b> pts
+            </div>
+            <span class="player-card-rank leader">#1</span>
+          </div>
+
+          <!-- Buzzer 4 — Maya -->
+          <div class="player-card ready" data-buzzer="4">
+            <span class="player-status">Prêt</span>
+            <div class="player-card-avatar b4">M</div>
+            <div class="player-card-name">Maya</div>
+            <div class="player-card-score">
+              <i data-lucide="trophy"></i>
+              <b>950</b> pts
+            </div>
+            <span class="player-card-rank">#3</span>
+          </div>
+
+          <!-- Buzzer 5 — Léo -->
+          <div class="player-card ready" data-buzzer="5">
+            <span class="player-status">Prêt</span>
+            <div class="player-card-avatar b5">L</div>
+            <div class="player-card-name">Léo</div>
+            <div class="player-card-score">
+              <i data-lucide="trophy"></i>
+              <b>1 050</b> pts
+            </div>
+            <span class="player-card-rank">#2</span>
+          </div>
+
+          <!-- Buzzer 6 — Sam -->
+          <div class="player-card ready" data-buzzer="6">
+            <span class="player-status">Prêt</span>
+            <div class="player-card-avatar b6">S</div>
+            <div class="player-card-name">Sam</div>
+            <div class="player-card-score">
+              <i data-lucide="trophy"></i>
+              <b>650</b> pts
+            </div>
+            <span class="player-card-rank">#5</span>
+          </div>
+
+          <!-- Buzzer 7 — Emma -->
+          <div class="player-card ready" data-buzzer="7">
+            <span class="player-status">Prêt</span>
+            <div class="player-card-avatar b7">E</div>
+            <div class="player-card-name">Emma</div>
+            <div class="player-card-score">
+              <i data-lucide="trophy"></i>
+              <b>550</b> pts
+            </div>
+            <span class="player-card-rank">#6</span>
+          </div>
+
+          <!-- Buzzer 8 — Hugo -->
+          <div class="player-card ready" data-buzzer="8">
+            <span class="player-status">Prêt</span>
+            <div class="player-card-avatar b8">H</div>
+            <div class="player-card-name">Hugo</div>
+            <div class="player-card-score">
+              <i data-lucide="trophy"></i>
+              <b>500</b> pts
+            </div>
+            <span class="player-card-rank">#7</span>
+          </div>
+
+          <!-- Buzzer 9 — Zoé -->
+          <div class="player-card ready" data-buzzer="9">
+            <span class="player-status">Prêt</span>
+            <div class="player-card-avatar b9">Z</div>
+            <div class="player-card-name">Zoé</div>
+            <div class="player-card-score">
+              <i data-lucide="trophy"></i>
+              <b>350</b> pts
+            </div>
+            <span class="player-card-rank">#9</span>
+          </div>
+
+          <!-- Buzzer 10 — Ali -->
+          <div class="player-card ready" data-buzzer="10">
+            <span class="player-status">Prêt</span>
+            <div class="player-card-avatar b10">A</div>
+            <div class="player-card-name">Ali</div>
+            <div class="player-card-score">
+              <i data-lucide="trophy"></i>
+              <b>200</b> pts
+            </div>
+            <span class="player-card-rank">#10</span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="composer-footer">
+      <div class="composer-footer-left">
+        <i data-lucide="zap"></i>
+        Tous les buzzers sont armés · Prêts à recevoir <b>10 buzz simultanés</b>
+      </div>
+      <div class="composer-footer-actions">
+        <button class="btn btn-secondary">
+          <i data-lucide="pause"></i>
+          Pause
+        </button>
+        <button class="btn btn-warning">
+          <i data-lucide="skip-forward"></i>
+          Passer la question
+        </button>
+        <button class="btn btn-vivid">
+          <i data-lucide="check-circle"></i>
+          Forcer la correction
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<script>
+  lucide.createIcons();
+</script>
+
+</body>
+</html>

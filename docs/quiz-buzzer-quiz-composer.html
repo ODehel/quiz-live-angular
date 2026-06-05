@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Buzzer — Composition d'un quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --bg-base: #0b0a10;
+  --bg-surface: #141221;
+  --bg-surface-2: #1c192e;
+  --bg-surface-3: #252238;
+
+  --text-primary: #f4f3f8;
+  --text-secondary: #a8a3bd;
+  --text-muted: #6b6680;
+
+  --border-subtle: #2a2740;
+  --border-default: #3a3654;
+  --border-strong: #4f4a70;
+
+  --accent-primary: #9d6bff;
+  --accent-primary-hover: #8a52ff;
+  --accent-primary-soft: rgba(157, 107, 255, 0.12);
+  --accent-primary-glow: rgba(157, 107, 255, 0.35);
+
+  --accent-secondary: #4dd4e8;
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+
+  --accent-vivid: #ff4d8f;
+  --accent-vivid-soft: rgba(255, 77, 143, 0.15);
+
+  --semantic-success: #4ade80;
+  --semantic-warning: #fbbf24;
+  --semantic-danger: #f87171;
+  --semantic-success-soft: rgba(74, 222, 128, 0.12);
+  --semantic-warning-soft: rgba(251, 191, 36, 0.12);
+  --semantic-danger-soft: rgba(248, 113, 113, 0.12);
+
+  --level-1: #4dd4e8;
+  --level-2: #6ba6f0;
+  --level-3: #9d6bff;
+  --level-4: #d946ef;
+  --level-5: #ff4d8f;
+
+  --font-ui: "Geist", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", sans-serif;
+  --font-mono: "Geist Mono", "Menlo", monospace;
+
+  --sidebar-width: 252px;
+  --topbar-height: 52px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══════ SHELL ═══════ */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, var(--accent-primary-soft), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, var(--accent-secondary-soft), transparent 60%);
+  background-attachment: fixed;
+}
+
+.sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px 16px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sidebar-logo {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-vivid) 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--accent-primary-glow);
+}
+
+.sidebar-logo svg { width: 20px; height: 20px; color: white; }
+
+.sidebar-brand-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.sidebar-brand-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nav-group-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  padding: 0 12px;
+  margin-bottom: 4px;
+}
+
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.nav-item:hover { background: var(--bg-surface-2); color: var(--text-primary); }
+.nav-item.expanded { background: var(--bg-surface-2); color: var(--text-primary); }
+.nav-item.expanded > .nav-chevron { transform: rotate(90deg); }
+.nav-item-icon { width: 18px; height: 18px; flex-shrink: 0; }
+.nav-item-label { flex: 1; }
+.nav-chevron { width: 14px; height: 14px; color: var(--text-muted); transition: transform 0.2s ease; }
+
+.nav-subitems {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 0 4px 28px;
+  margin-top: 2px;
+  position: relative;
+}
+
+.nav-subitems::before {
+  content: "";
+  position: absolute;
+  left: 19px;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: var(--border-default);
+}
+
+.nav-subitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.nav-subitem::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  width: 6px;
+  height: 1px;
+  background: var(--border-default);
+}
+
+.nav-subitem:hover { background: var(--bg-surface-3); color: var(--text-primary); }
+
+.nav-subitem.active {
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+  font-weight: 500;
+}
+
+.nav-subitem.active::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background: var(--accent-primary);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-subitem-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.nav-subitem.active .nav-subitem-count { color: var(--accent-primary); }
+
+.sidebar-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 12px;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.user-card:hover { background: var(--bg-surface-2); }
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.user-name { font-size: 13px; font-weight: 600; }
+.user-role {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ═══════ MAIN ═══════ */
+.main { display: flex; flex-direction: column; min-width: 0; }
+
+.topbar {
+  height: var(--topbar-height);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar-breadcrumb-item { color: var(--text-muted); white-space: nowrap; }
+.topbar-breadcrumb-item.link { cursor: pointer; transition: color 0.15s ease; }
+.topbar-breadcrumb-item.link:hover { color: var(--text-secondary); }
+.topbar-breadcrumb-item.current { color: var(--text-primary); font-weight: 500; }
+.topbar-breadcrumb-sep { color: var(--text-muted); opacity: 0.4; }
+
+.topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.connection-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--semantic-success);
+  box-shadow: 0 0 6px var(--semantic-success);
+}
+
+.connection-status .server { color: var(--text-muted); }
+
+.topbar-icon-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.topbar-icon-btn:hover { background: var(--bg-surface-2); color: var(--text-primary); border-color: var(--border-default); }
+.topbar-icon-btn svg { width: 16px; height: 16px; }
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* CONTENT - Quiz composer                                          */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.content {
+  padding: 20px 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100vh;
+}
+
+/* En-tête */
+.composer-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.composer-header .left { flex: 1; min-width: 0; }
+
+.page-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent-primary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-eyebrow svg { width: 13px; height: 13px; }
+
+.composer-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.composer-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid transparent;
+  outline: none;
+  padding: 4px 8px;
+  margin-left: -8px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  width: 100%;
+  max-width: 480px;
+}
+
+.composer-title:hover { background: var(--bg-surface); border-color: var(--border-subtle); }
+.composer-title:focus { background: var(--bg-surface); border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--accent-primary-soft); }
+
+.status-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-pill.draft { background: var(--semantic-warning-soft); color: var(--semantic-warning); }
+.status-pill.draft::before { background: var(--semantic-warning); }
+
+.composer-actions { display: flex; gap: 8px; }
+
+.btn {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn svg { width: 15px; height: 15px; }
+.btn-primary { background: var(--accent-primary); color: white; }
+.btn-primary:hover { background: var(--accent-primary-hover); box-shadow: 0 0 24px var(--accent-primary-glow); }
+
+.btn-secondary {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+.btn-secondary:hover { background: var(--bg-surface-3); border-color: var(--border-strong); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+}
+.btn-ghost:hover { background: var(--bg-surface-2); color: var(--text-primary); }
+
+/* ═══════ BARRE DE STATS STICKY ═══════ */
+.stats-bar {
+  position: sticky;
+  top: var(--topbar-height);
+  z-index: 40;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,0.3);
+}
+
+.stats-bar-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stats-bar-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.stats-bar-value {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.stats-bar-value.accent { color: var(--accent-primary); }
+
+.stats-bar-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--border-subtle);
+}
+
+/* Barre de niveaux */
+.stats-bar-composition {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+
+.composition-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.composition-meta-right {
+  display: flex;
+  gap: 10px;
+}
+
+.composition-meta-right span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dot-mcq { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-primary); display: inline-block; }
+.dot-speed { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-vivid); display: inline-block; }
+
+.level-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+.level-bar > div { height: 100%; }
+.level-bar > div + div { margin-left: 1px; }
+.level-bar .lvl-1 { background: var(--level-1); }
+.level-bar .lvl-2 { background: var(--level-2); }
+.level-bar .lvl-3 { background: var(--level-3); }
+.level-bar .lvl-4 { background: var(--level-4); }
+.level-bar .lvl-5 { background: var(--level-5); }
+.level-bar > div.empty { background: var(--bg-base); opacity: 0.3; }
+
+/* Indication de cohérence */
+.balance-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--semantic-success-soft);
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--semantic-success);
+  white-space: nowrap;
+}
+
+.balance-indicator svg { width: 13px; height: 13px; }
+
+/* ═══════ DUAL PANE ═══════ */
+.dual-pane {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  flex: 1;
+  padding-bottom: 24px;
+  min-height: 0;
+}
+
+.pane {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 600px;
+  overflow: hidden;
+}
+
+.pane-header {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg-surface);
+}
+
+.pane-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pane-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pane-title-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pane-title-icon.bank { background: var(--bg-surface-2); color: var(--text-secondary); }
+.pane-title-icon.quiz { background: var(--accent-primary-soft); color: var(--accent-primary); }
+
+.pane-title-icon svg { width: 14px; height: 14px; }
+
+.pane-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-base);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.pane-count.accent {
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+/* Filtres compacts dans le panneau */
+.pane-filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input-mini {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 6px 10px;
+  flex: 1;
+  min-width: 160px;
+  transition: border-color 0.15s ease;
+}
+
+.search-input-mini:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-primary-soft);
+}
+
+.search-input-mini svg { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+.search-input-mini input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  width: 100%;
+}
+
+.search-input-mini input::placeholder { color: var(--text-muted); }
+
+.filter-toggle-mini {
+  display: flex;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.filter-toggle-mini button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-toggle-mini button.active { background: var(--accent-primary); color: white; }
+
+.filter-select-mini {
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-select-mini svg { width: 12px; height: 12px; opacity: 0.6; }
+
+/* Liste de cards dans pane */
+.pane-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+/* Custom scrollbar */
+.pane-body::-webkit-scrollbar { width: 6px; }
+.pane-body::-webkit-scrollbar-track { background: transparent; }
+.pane-body::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
+.pane-body::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* ═══════ CARDS DANS LA BANQUE ═══════ */
+.bank-card {
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.bank-card:hover { border-color: var(--border-default); }
+
+.bank-card.added {
+  opacity: 0.55;
+  background: var(--bg-surface-2);
+  border-style: dashed;
+}
+
+.bank-card-row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tags { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.tag svg { width: 9px; height: 9px; }
+
+.tag-mcq { background: var(--accent-primary-soft); color: var(--accent-primary); }
+.tag-speed { background: var(--accent-vivid-soft); color: var(--accent-vivid); }
+.tag-theme {
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.bank-card-points {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-vivid);
+  white-space: nowrap;
+}
+.bank-card-points::before { content: "+"; }
+
+/* Titre de la card banque */
+.bank-card-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.bank-card-row3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bank-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.bank-card-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.bank-card-meta-item svg { width: 10px; height: 10px; }
+.bank-card-meta-item.has-media { color: var(--accent-secondary); }
+
+.level-dots-mini {
+  display: flex;
+  gap: 2px;
+}
+
+.level-dot-mini {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+}
+
+.level-dot-mini.filled {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.bank-card.speed .level-dot-mini.filled {
+  background: var(--accent-vivid);
+  border-color: var(--accent-vivid);
+}
+
+/* Bouton ajout / déjà ajoutée */
+.bank-card-action {
+  width: 28px;
+  height: 28px;
+  background: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 7px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.bank-card-action:hover {
+  background: var(--accent-primary-hover);
+  box-shadow: 0 0 12px var(--accent-primary-glow);
+}
+
+.bank-card-action svg { width: 14px; height: 14px; }
+
+.bank-card.added .bank-card-action {
+  background: transparent;
+  color: var(--semantic-success);
+  border-color: var(--semantic-success);
+  cursor: default;
+}
+
+.bank-card.added .bank-card-action:hover {
+  box-shadow: none;
+}
+
+/* ═══════ CARDS DANS LE QUIZ ═══════ */
+.quiz-card {
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.quiz-card:hover { border-color: var(--border-default); }
+.quiz-card:hover .quiz-card-handle { opacity: 1; }
+.quiz-card:hover .quiz-card-remove { opacity: 1; }
+
+.quiz-card.dragging {
+  opacity: 0.6;
+  border-color: var(--accent-primary);
+  background: var(--accent-primary-soft);
+  transform: rotate(-1deg);
+  box-shadow: 0 12px 32px -8px rgba(0,0,0,0.6),
+              0 0 0 1px var(--accent-primary);
+  cursor: grabbing;
+}
+
+.quiz-card-handle {
+  width: 16px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: grab;
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.quiz-card-handle:active { cursor: grabbing; }
+.quiz-card-handle svg { width: 14px; height: 14px; }
+
+/* Numéro d'ordre */
+.quiz-card-order {
+  width: 32px;
+  height: 32px;
+  background: var(--bg-surface-3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.quiz-card.is-speed .quiz-card-order { color: var(--accent-vivid); }
+
+/* Corps de la card quiz */
+.quiz-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quiz-card-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.quiz-card-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quiz-card-info-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.quiz-card-info-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.quiz-card-info-item svg { width: 10px; height: 10px; }
+.quiz-card-info-item.has-media { color: var(--accent-secondary); }
+
+.quiz-card-points-mini {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-vivid);
+  margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Bouton retirer */
+.quiz-card-remove {
+  width: 26px;
+  height: 26px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+.quiz-card-remove:hover {
+  background: var(--semantic-danger-soft);
+  color: var(--semantic-danger);
+  border-color: var(--semantic-danger);
+  opacity: 1;
+}
+
+.quiz-card-remove svg { width: 12px; height: 12px; }
+
+/* Drop indicator (ligne d'insertion lors du drag) */
+.drop-indicator {
+  height: 3px;
+  background: var(--accent-primary);
+  border-radius: 2px;
+  margin: -5px 12px;
+  box-shadow: 0 0 8px var(--accent-primary-glow);
+  position: relative;
+}
+
+.drop-indicator::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 9px;
+  height: 9px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--accent-primary-glow);
+}
+
+/* Empty state du quiz */
+.quiz-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  gap: 12px;
+}
+
+.quiz-empty-icon {
+  width: 56px;
+  height: 56px;
+  background: var(--accent-primary-soft);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+  margin-bottom: 4px;
+}
+
+.quiz-empty-icon svg { width: 24px; height: 24px; }
+
+.quiz-empty-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.quiz-empty-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 260px;
+  line-height: 1.5;
+}
+
+/* Footer fixe */
+.composer-footer {
+  position: fixed;
+  bottom: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-default);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 60;
+  box-shadow: 0 -4px 20px -4px rgba(0,0,0,0.5);
+}
+
+.composer-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.composer-footer-actions { display: flex; gap: 8px; }
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══════ SIDEBAR ═══════ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><i data-lucide="zap"></i></div>
+      <div>
+        <div class="sidebar-brand-name">Quiz Buzzer</div>
+        <div class="sidebar-brand-tag">Hub de pilotage</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div>
+        <div class="nav-group-label">Général</div>
+        <div class="nav-group">
+          <a class="nav-item">
+            <i data-lucide="layout-dashboard" class="nav-item-icon"></i>
+            <span class="nav-item-label">Tableau de bord</span>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Contenu</div>
+        <div class="nav-group">
+          <a class="nav-item expanded">
+            <i data-lucide="folder-open" class="nav-item-icon"></i>
+            <span class="nav-item-label">Contenu</span>
+            <i data-lucide="chevron-right" class="nav-chevron"></i>
+          </a>
+          <div class="nav-subitems">
+            <a class="nav-subitem">
+              <i data-lucide="folder-tree" style="width: 14px; height: 14px;"></i>
+              Thèmes
+              <span class="nav-subitem-count">12</span>
+            </a>
+            <a class="nav-subitem">
+              <i data-lucide="circle-help" style="width: 14px; height: 14px;"></i>
+              Questions
+              <span class="nav-subitem-count">147</span>
+            </a>
+            <a class="nav-subitem active">
+              <i data-lucide="book-open" style="width: 14px; height: 14px;"></i>
+              Quiz
+              <span class="nav-subitem-count">8</span>
+            </a>
+            <a class="nav-subitem">
+              <i data-lucide="music-2" style="width: 14px; height: 14px;"></i>
+              Jingles
+              <span class="nav-subitem-count">23</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Parties</div>
+        <div class="nav-group">
+          <a class="nav-item">
+            <i data-lucide="trophy" class="nav-item-icon"></i>
+            <span class="nav-item-label">Toutes les parties</span>
+          </a>
+          <a class="nav-item">
+            <i data-lucide="plus-circle" class="nav-item-icon"></i>
+            <span class="nav-item-label">Nouvelle partie</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">A</div>
+        <div>
+          <div class="user-name">admin</div>
+          <div class="user-role">Maître de jeu</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════ MAIN ═══════ -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">
+        <span class="topbar-breadcrumb-item link">Accueil</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item link">Contenu</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item link">Quiz</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item current">Composition</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="connection-status">
+          <span class="dot"></span>
+          <span>Connecté</span>
+          <span class="server">· 192.168.1.10:3000</span>
+        </div>
+        <button class="topbar-icon-btn" title="Notifications"><i data-lucide="bell"></i></button>
+        <button class="topbar-icon-btn" title="Paramètres"><i data-lucide="settings"></i></button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- En-tête -->
+      <div class="composer-header">
+        <div class="left">
+          <div class="page-eyebrow">
+            <i data-lucide="layers"></i>
+            Composition d'un quiz
+          </div>
+          <div class="composer-title-row">
+            <input class="composer-title" value="Soirée découverte du monde" placeholder="Donnez un nom à votre quiz...">
+            <span class="status-pill draft">Brouillon</span>
+          </div>
+        </div>
+        <div class="composer-actions">
+          <button class="btn btn-secondary">
+            <i data-lucide="settings"></i>
+            Paramètres
+          </button>
+          <button class="btn btn-primary">
+            <i data-lucide="play"></i>
+            Lancer une partie
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══════ BARRE DE STATS STICKY ═══════ -->
+      <div class="stats-bar">
+        <div class="stats-bar-block">
+          <div class="stats-bar-label">Questions</div>
+          <div class="stats-bar-value accent">5</div>
+        </div>
+
+        <div class="stats-bar-divider"></div>
+
+        <div class="stats-bar-block">
+          <div class="stats-bar-label">Durée estimée</div>
+          <div class="stats-bar-value">2'05</div>
+        </div>
+
+        <div class="stats-bar-divider"></div>
+
+        <div class="stats-bar-block">
+          <div class="stats-bar-label">Points totaux</div>
+          <div class="stats-bar-value">1 300</div>
+        </div>
+
+        <div class="stats-bar-divider"></div>
+
+        <div class="stats-bar-composition">
+          <div class="composition-meta">
+            <span>Composition par niveau</span>
+            <div class="composition-meta-right">
+              <span><i class="dot-mcq"></i> 3 MCQ</span>
+              <span><i class="dot-speed"></i> 2 SPEED</span>
+            </div>
+          </div>
+          <div class="level-bar">
+            <div class="lvl-1" style="flex: 1;"></div>
+            <div class="lvl-2" style="flex: 2;"></div>
+            <div class="lvl-3" style="flex: 1;"></div>
+            <div class="lvl-4" style="flex: 1;"></div>
+            <div class="empty" style="flex: 0.01;"></div>
+          </div>
+        </div>
+
+        <div class="stats-bar-divider"></div>
+
+        <div class="balance-indicator">
+          <i data-lucide="check-circle"></i>
+          Bon équilibre
+        </div>
+      </div>
+
+      <!-- ═══════ DUAL PANE ═══════ -->
+      <div class="dual-pane">
+
+        <!-- ─────────── PANNEAU GAUCHE : BANQUE ─────────── -->
+        <div class="pane">
+          <div class="pane-header">
+            <div class="pane-title-row">
+              <div class="pane-title">
+                <span class="pane-title-icon bank"><i data-lucide="library"></i></span>
+                Banque de questions
+              </div>
+              <span class="pane-count">147 disponibles</span>
+            </div>
+            <div class="pane-filters">
+              <div class="search-input-mini">
+                <i data-lucide="search"></i>
+                <input type="text" placeholder="Rechercher...">
+              </div>
+              <div class="filter-toggle-mini">
+                <button class="active">Tous</button>
+                <button>MCQ</button>
+                <button>SPEED</button>
+              </div>
+              <button class="filter-select-mini">
+                <i data-lucide="folder-tree"></i>
+                Thème
+                <i data-lucide="chevron-down"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="pane-body">
+
+            <!-- Card 1 -->
+            <div class="bank-card">
+              <div class="bank-card-row1">
+                <div class="tags">
+                  <span class="tag tag-mcq"><i data-lucide="list"></i> MCQ</span>
+                  <span class="tag tag-theme">Géographie</span>
+                </div>
+                <span class="bank-card-points">200</span>
+              </div>
+              <h4 class="bank-card-title">Quelle est la capitale de l'Australie ?</h4>
+              <div class="bank-card-row3">
+                <div class="bank-card-meta">
+                  <span class="bank-card-meta-item"><i data-lucide="clock"></i> 30s</span>
+                  <span class="bank-card-meta-item has-media"><i data-lucide="image"></i></span>
+                  <div class="level-dots-mini">
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini"></span>
+                    <span class="level-dot-mini"></span>
+                  </div>
+                </div>
+                <button class="bank-card-action" title="Ajouter au quiz"><i data-lucide="plus"></i></button>
+              </div>
+            </div>
+
+            <!-- Card 2 — déjà ajoutée -->
+            <div class="bank-card added speed">
+              <div class="bank-card-row1">
+                <div class="tags">
+                  <span class="tag tag-speed"><i data-lucide="zap"></i> SPEED</span>
+                  <span class="tag tag-theme">Musique</span>
+                </div>
+                <span class="bank-card-points">300</span>
+              </div>
+              <h4 class="bank-card-title">Reconnaissez ce morceau de musique classique</h4>
+              <div class="bank-card-row3">
+                <div class="bank-card-meta">
+                  <span class="bank-card-meta-item"><i data-lucide="clock"></i> 15s</span>
+                  <span class="bank-card-meta-item has-media"><i data-lucide="music"></i></span>
+                  <div class="level-dots-mini">
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini"></span>
+                  </div>
+                </div>
+                <button class="bank-card-action" title="Déjà ajoutée"><i data-lucide="check"></i></button>
+              </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="bank-card">
+              <div class="bank-card-row1">
+                <div class="tags">
+                  <span class="tag tag-mcq"><i data-lucide="list"></i> MCQ</span>
+                  <span class="tag tag-theme">Histoire</span>
+                </div>
+                <span class="bank-card-points">150</span>
+              </div>
+              <h4 class="bank-card-title">En quelle année eut lieu la chute du mur de Berlin ?</h4>
+              <div class="bank-card-row3">
+                <div class="bank-card-meta">
+                  <span class="bank-card-meta-item"><i data-lucide="clock"></i> 25s</span>
+                  <div class="level-dots-mini">
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini"></span>
+                    <span class="level-dot-mini"></span>
+                    <span class="level-dot-mini"></span>
+                  </div>
+                </div>
+                <button class="bank-card-action" title="Ajouter au quiz"><i data-lucide="plus"></i></button>
+              </div>
+            </div>
+
+            <!-- Card 4 — déjà ajoutée -->
+            <div class="bank-card added">
+              <div class="bank-card-row1">
+                <div class="tags">
+                  <span class="tag tag-mcq"><i data-lucide="list"></i> MCQ</span>
+                  <span class="tag tag-theme">Sciences</span>
+                </div>
+                <span class="bank-card-points">250</span>
+              </div>
+              <h4 class="bank-card-title">Quel est le plus petit os du corps humain ?</h4>
+              <div class="bank-card-row3">
+                <div class="bank-card-meta">
+                  <span class="bank-card-meta-item"><i data-lucide="clock"></i> 30s</span>
+                  <div class="level-dots-mini">
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini"></span>
+                    <span class="level-dot-mini"></span>
+                  </div>
+                </div>
+                <button class="bank-card-action" title="Déjà ajoutée"><i data-lucide="check"></i></button>
+              </div>
+            </div>
+
+            <!-- Card 5 -->
+            <div class="bank-card speed">
+              <div class="bank-card-row1">
+                <div class="tags">
+                  <span class="tag tag-speed"><i data-lucide="zap"></i> SPEED</span>
+                  <span class="tag tag-theme">Géographie</span>
+                </div>
+                <span class="bank-card-points">350</span>
+              </div>
+              <h4 class="bank-card-title">Quel pays a la forme géographique d'une botte ?</h4>
+              <div class="bank-card-row3">
+                <div class="bank-card-meta">
+                  <span class="bank-card-meta-item"><i data-lucide="clock"></i> 10s</span>
+                  <span class="bank-card-meta-item has-media"><i data-lucide="image"></i></span>
+                  <div class="level-dots-mini">
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini"></span>
+                    <span class="level-dot-mini"></span>
+                    <span class="level-dot-mini"></span>
+                  </div>
+                </div>
+                <button class="bank-card-action" title="Ajouter au quiz"><i data-lucide="plus"></i></button>
+              </div>
+            </div>
+
+            <!-- Card 6 -->
+            <div class="bank-card">
+              <div class="bank-card-row1">
+                <div class="tags">
+                  <span class="tag tag-mcq"><i data-lucide="list"></i> MCQ</span>
+                  <span class="tag tag-theme">Sport</span>
+                </div>
+                <span class="bank-card-points">200</span>
+              </div>
+              <h4 class="bank-card-title">Combien de joueurs composent une équipe de rugby à XV sur le terrain ?</h4>
+              <div class="bank-card-row3">
+                <div class="bank-card-meta">
+                  <span class="bank-card-meta-item"><i data-lucide="clock"></i> 20s</span>
+                  <div class="level-dots-mini">
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini"></span>
+                    <span class="level-dot-mini"></span>
+                    <span class="level-dot-mini"></span>
+                  </div>
+                </div>
+                <button class="bank-card-action" title="Ajouter au quiz"><i data-lucide="plus"></i></button>
+              </div>
+            </div>
+
+            <!-- Card 7 — déjà ajoutée -->
+            <div class="bank-card added">
+              <div class="bank-card-row1">
+                <div class="tags">
+                  <span class="tag tag-mcq"><i data-lucide="list"></i> MCQ</span>
+                  <span class="tag tag-theme">Littérature</span>
+                </div>
+                <span class="bank-card-points">300</span>
+              </div>
+              <h4 class="bank-card-title">Qui a écrit "Cent ans de solitude" ?</h4>
+              <div class="bank-card-row3">
+                <div class="bank-card-meta">
+                  <span class="bank-card-meta-item"><i data-lucide="clock"></i> 25s</span>
+                  <div class="level-dots-mini">
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini"></span>
+                  </div>
+                </div>
+                <button class="bank-card-action" title="Déjà ajoutée"><i data-lucide="check"></i></button>
+              </div>
+            </div>
+
+            <!-- Card 8 -->
+            <div class="bank-card speed">
+              <div class="bank-card-row1">
+                <div class="tags">
+                  <span class="tag tag-speed"><i data-lucide="zap"></i> SPEED</span>
+                  <span class="tag tag-theme">Cinéma</span>
+                </div>
+                <span class="bank-card-points">450</span>
+              </div>
+              <h4 class="bank-card-title">Quel est ce film d'auteur sorti en 1995 ?</h4>
+              <div class="bank-card-row3">
+                <div class="bank-card-meta">
+                  <span class="bank-card-meta-item"><i data-lucide="clock"></i> 20s</span>
+                  <span class="bank-card-meta-item has-media"><i data-lucide="image"></i></span>
+                  <span class="bank-card-meta-item has-media"><i data-lucide="music"></i></span>
+                  <div class="level-dots-mini">
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini filled"></span>
+                  </div>
+                </div>
+                <button class="bank-card-action" title="Ajouter au quiz"><i data-lucide="plus"></i></button>
+              </div>
+            </div>
+
+            <!-- Card 9 -->
+            <div class="bank-card">
+              <div class="bank-card-row1">
+                <div class="tags">
+                  <span class="tag tag-mcq"><i data-lucide="list"></i> MCQ</span>
+                  <span class="tag tag-theme">Géographie</span>
+                </div>
+                <span class="bank-card-points">100</span>
+              </div>
+              <h4 class="bank-card-title">Quelle mer borde la Croatie ?</h4>
+              <div class="bank-card-row3">
+                <div class="bank-card-meta">
+                  <span class="bank-card-meta-item"><i data-lucide="clock"></i> 30s</span>
+                  <div class="level-dots-mini">
+                    <span class="level-dot-mini filled"></span>
+                    <span class="level-dot-mini"></span>
+                    <span class="level-dot-mini"></span>
+                    <span class="level-dot-mini"></span>
+                    <span class="level-dot-mini"></span>
+                  </div>
+                </div>
+                <button class="bank-card-action" title="Ajouter au quiz"><i data-lucide="plus"></i></button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <!-- /BANQUE -->
+
+        <!-- ─────────── PANNEAU DROITE : QUIZ ─────────── -->
+        <div class="pane">
+          <div class="pane-header">
+            <div class="pane-title-row">
+              <div class="pane-title">
+                <span class="pane-title-icon quiz"><i data-lucide="list-ordered"></i></span>
+                Séquence du quiz
+              </div>
+              <span class="pane-count accent">5 questions</span>
+            </div>
+          </div>
+
+          <div class="pane-body">
+
+            <!-- Question 1 -->
+            <div class="quiz-card">
+              <span class="quiz-card-handle"><i data-lucide="grip-vertical"></i></span>
+              <div class="quiz-card-order">1</div>
+              <div class="quiz-card-body">
+                <div class="quiz-card-meta-row">
+                  <span class="tag tag-mcq"><i data-lucide="list"></i> MCQ</span>
+                  <span class="tag tag-theme">Géographie</span>
+                </div>
+                <div class="quiz-card-title">Quelle mer borde la Croatie ?</div>
+                <div class="quiz-card-info-row">
+                  <span class="quiz-card-info-item"><i data-lucide="clock"></i> 30s</span>
+                  <span class="quiz-card-info-item">N1</span>
+                </div>
+              </div>
+              <span class="quiz-card-points-mini">+100</span>
+              <button class="quiz-card-remove" title="Retirer du quiz"><i data-lucide="x"></i></button>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="quiz-card">
+              <span class="quiz-card-handle"><i data-lucide="grip-vertical"></i></span>
+              <div class="quiz-card-order">2</div>
+              <div class="quiz-card-body">
+                <div class="quiz-card-meta-row">
+                  <span class="tag tag-mcq"><i data-lucide="list"></i> MCQ</span>
+                  <span class="tag tag-theme">Sciences</span>
+                </div>
+                <div class="quiz-card-title">Quel est le plus petit os du corps humain ?</div>
+                <div class="quiz-card-info-row">
+                  <span class="quiz-card-info-item"><i data-lucide="clock"></i> 30s</span>
+                  <span class="quiz-card-info-item">N3</span>
+                </div>
+              </div>
+              <span class="quiz-card-points-mini">+250</span>
+              <button class="quiz-card-remove" title="Retirer du quiz"><i data-lucide="x"></i></button>
+            </div>
+
+            <!-- Drop indicator (montre où la card en cours de drag va atterrir) -->
+            <div class="drop-indicator"></div>
+
+            <!-- Question 3 — EN COURS DE DRAG -->
+            <div class="quiz-card dragging is-speed">
+              <span class="quiz-card-handle"><i data-lucide="grip-vertical"></i></span>
+              <div class="quiz-card-order">3</div>
+              <div class="quiz-card-body">
+                <div class="quiz-card-meta-row">
+                  <span class="tag tag-speed"><i data-lucide="zap"></i> SPEED</span>
+                  <span class="tag tag-theme">Musique</span>
+                </div>
+                <div class="quiz-card-title">Reconnaissez ce morceau de musique classique</div>
+                <div class="quiz-card-info-row">
+                  <span class="quiz-card-info-item"><i data-lucide="clock"></i> 15s</span>
+                  <span class="quiz-card-info-item has-media"><i data-lucide="music"></i></span>
+                  <span class="quiz-card-info-item">N4</span>
+                </div>
+              </div>
+              <span class="quiz-card-points-mini">+300</span>
+              <button class="quiz-card-remove" title="Retirer du quiz"><i data-lucide="x"></i></button>
+            </div>
+
+            <!-- Question 4 -->
+            <div class="quiz-card">
+              <span class="quiz-card-handle"><i data-lucide="grip-vertical"></i></span>
+              <div class="quiz-card-order">4</div>
+              <div class="quiz-card-body">
+                <div class="quiz-card-meta-row">
+                  <span class="tag tag-mcq"><i data-lucide="list"></i> MCQ</span>
+                  <span class="tag tag-theme">Littérature</span>
+                </div>
+                <div class="quiz-card-title">Qui a écrit "Cent ans de solitude" ?</div>
+                <div class="quiz-card-info-row">
+                  <span class="quiz-card-info-item"><i data-lucide="clock"></i> 25s</span>
+                  <span class="quiz-card-info-item">N4</span>
+                </div>
+              </div>
+              <span class="quiz-card-points-mini">+300</span>
+              <button class="quiz-card-remove" title="Retirer du quiz"><i data-lucide="x"></i></button>
+            </div>
+
+            <!-- Question 5 -->
+            <div class="quiz-card is-speed">
+              <span class="quiz-card-handle"><i data-lucide="grip-vertical"></i></span>
+              <div class="quiz-card-order">5</div>
+              <div class="quiz-card-body">
+                <div class="quiz-card-meta-row">
+                  <span class="tag tag-speed"><i data-lucide="zap"></i> SPEED</span>
+                  <span class="tag tag-theme">Sport</span>
+                </div>
+                <div class="quiz-card-title">Quel sport pratique Roger Federer ?</div>
+                <div class="quiz-card-info-row">
+                  <span class="quiz-card-info-item"><i data-lucide="clock"></i> 10s</span>
+                  <span class="quiz-card-info-item">N1</span>
+                </div>
+              </div>
+              <span class="quiz-card-points-mini">+150</span>
+              <button class="quiz-card-remove" title="Retirer du quiz"><i data-lucide="x"></i></button>
+            </div>
+
+          </div>
+        </div>
+        <!-- /QUIZ -->
+
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="composer-footer">
+      <div class="composer-footer-left">
+        <i data-lucide="info" style="width: 12px; height: 12px;"></i>
+        Modifications enregistrées automatiquement · Dernière sauvegarde il y a 12 sec
+      </div>
+      <div class="composer-footer-actions">
+        <button class="btn btn-ghost">Annuler les modifications</button>
+        <button class="btn btn-secondary">
+          <i data-lucide="save"></i>
+          Enregistrer brouillon
+        </button>
+        <button class="btn btn-primary">
+          <i data-lucide="check"></i>
+          Marquer comme prêt
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<script>
+  lucide.createIcons();
+</script>
+
+</body>
+</html>

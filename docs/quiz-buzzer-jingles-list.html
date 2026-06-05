@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Buzzer — Liste des jingles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --bg-base: #0b0a10;
+  --bg-surface: #141221;
+  --bg-surface-2: #1c192e;
+  --bg-surface-3: #252238;
+
+  --text-primary: #f4f3f8;
+  --text-secondary: #a8a3bd;
+  --text-muted: #6b6680;
+
+  --border-subtle: #2a2740;
+  --border-default: #3a3654;
+  --border-strong: #4f4a70;
+
+  --accent-primary: #9d6bff;
+  --accent-primary-hover: #8a52ff;
+  --accent-primary-soft: rgba(157, 107, 255, 0.12);
+  --accent-primary-glow: rgba(157, 107, 255, 0.35);
+
+  --accent-secondary: #4dd4e8;
+  --accent-secondary-soft: rgba(77, 212, 232, 0.12);
+
+  --accent-vivid: #ff4d8f;
+  --accent-vivid-soft: rgba(255, 77, 143, 0.15);
+
+  --semantic-success: #4ade80;
+  --semantic-warning: #fbbf24;
+  --semantic-danger: #f87171;
+  --semantic-success-soft: rgba(74, 222, 128, 0.12);
+  --semantic-warning-soft: rgba(251, 191, 36, 0.12);
+  --semantic-danger-soft: rgba(248, 113, 113, 0.12);
+
+  /* Catégories de jingles */
+  --cat-intro: #4ade80;
+  --cat-intro-soft: rgba(74, 222, 128, 0.12);
+  --cat-question: #4dd4e8;
+  --cat-question-soft: rgba(77, 212, 232, 0.12);
+  --cat-suspense: #fbbf24;
+  --cat-suspense-soft: rgba(251, 191, 36, 0.12);
+  --cat-correct: #22d985;
+  --cat-correct-soft: rgba(34, 217, 133, 0.14);
+  --cat-wrong: #f87171;
+  --cat-wrong-soft: rgba(248, 113, 113, 0.12);
+  --cat-transition: #b8a4ff;
+  --cat-transition-soft: rgba(184, 164, 255, 0.12);
+  --cat-victory: #d946ef;
+  --cat-victory-soft: rgba(217, 70, 239, 0.14);
+  --cat-outro: #8b8499;
+  --cat-outro-soft: rgba(139, 132, 153, 0.14);
+
+  --font-ui: "Geist", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", sans-serif;
+  --font-mono: "Geist Mono", "Menlo", monospace;
+
+  --sidebar-width: 252px;
+  --topbar-height: 52px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══════ SHELL ═══════ */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, var(--accent-primary-soft), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, var(--accent-secondary-soft), transparent 60%);
+  background-attachment: fixed;
+}
+
+.sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px 16px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sidebar-logo {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-vivid) 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--accent-primary-glow);
+}
+
+.sidebar-logo svg { width: 20px; height: 20px; color: white; }
+
+.sidebar-brand-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.sidebar-brand-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nav-group-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  padding: 0 12px;
+  margin-bottom: 4px;
+}
+
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.nav-item:hover { background: var(--bg-surface-2); color: var(--text-primary); }
+
+.nav-item.expanded {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+.nav-item.expanded > .nav-chevron { transform: rotate(90deg); }
+
+.nav-item-icon { width: 18px; height: 18px; flex-shrink: 0; }
+.nav-item-label { flex: 1; }
+.nav-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.nav-subitems {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 0 4px 28px;
+  margin-top: 2px;
+  position: relative;
+}
+
+.nav-subitems::before {
+  content: "";
+  position: absolute;
+  left: 19px;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: var(--border-default);
+}
+
+.nav-subitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.nav-subitem::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  width: 6px;
+  height: 1px;
+  background: var(--border-default);
+}
+
+.nav-subitem:hover { background: var(--bg-surface-3); color: var(--text-primary); }
+
+.nav-subitem.active {
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+  font-weight: 500;
+}
+
+.nav-subitem.active::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background: var(--accent-primary);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-subitem-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.nav-subitem.active .nav-subitem-count { color: var(--accent-primary); }
+
+.sidebar-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 12px;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.user-card:hover { background: var(--bg-surface-2); }
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-vivid));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.user-name { font-size: 13px; font-weight: 600; }
+.user-role {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ═══════ MAIN ═══════ */
+.main { display: flex; flex-direction: column; min-width: 0; }
+
+.topbar {
+  height: var(--topbar-height);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  flex: 1;
+}
+
+.topbar-breadcrumb-item { color: var(--text-muted); }
+.topbar-breadcrumb-item.current { color: var(--text-primary); font-weight: 500; }
+.topbar-breadcrumb-sep { color: var(--text-muted); opacity: 0.4; }
+
+.topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.connection-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--semantic-success);
+  box-shadow: 0 0 6px var(--semantic-success);
+}
+
+.connection-status .server { color: var(--text-muted); }
+
+.topbar-icon-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.topbar-icon-btn:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.topbar-icon-btn svg { width: 16px; height: 16px; }
+
+/* ═══════ CONTENT ═══════ */
+.content {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.page-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent-primary);
+  margin-bottom: 6px;
+}
+
+.page-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.page-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+  max-width: 600px;
+}
+
+.page-actions { display: flex; gap: 8px; }
+
+.btn {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn svg { width: 16px; height: 16px; }
+.btn-primary { background: var(--accent-primary); color: white; }
+.btn-primary:hover {
+  background: var(--accent-primary-hover);
+  box-shadow: 0 0 24px var(--accent-primary-glow);
+}
+
+.btn-secondary {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+.btn-secondary:hover { background: var(--bg-surface-3); border-color: var(--border-strong); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+}
+.btn-ghost:hover { background: var(--bg-surface-2); color: var(--text-primary); }
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  justify-content: center;
+}
+
+/* Filtres */
+.filter-bar {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 8px 12px;
+  flex: 1;
+  min-width: 240px;
+  transition: border-color 0.15s ease;
+}
+
+.search-input:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-primary-soft);
+}
+
+.search-input svg { width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; }
+
+.search-input input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  width: 100%;
+}
+
+.search-input input::placeholder { color: var(--text-muted); }
+
+.sort-control {
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.sort-control:hover { border-color: var(--border-strong); }
+.sort-control svg { width: 14px; height: 14px; opacity: 0.6; }
+
+/* Catégories chips horizontales (filtre rapide) */
+.category-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 0 4px;
+}
+
+.cat-chip {
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.cat-chip::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.cat-chip[data-cat="all"]::before { display: none; }
+.cat-chip[data-cat="intro"]::before { background: var(--cat-intro); }
+.cat-chip[data-cat="question"]::before { background: var(--cat-question); }
+.cat-chip[data-cat="suspense"]::before { background: var(--cat-suspense); }
+.cat-chip[data-cat="correct"]::before { background: var(--cat-correct); }
+.cat-chip[data-cat="wrong"]::before { background: var(--cat-wrong); }
+.cat-chip[data-cat="transition"]::before { background: var(--cat-transition); }
+.cat-chip[data-cat="victory"]::before { background: var(--cat-victory); }
+.cat-chip[data-cat="outro"]::before { background: var(--cat-outro); }
+
+.cat-chip:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.cat-chip.active {
+  background: var(--accent-primary-soft);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.cat-chip-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+.cat-chip.active .cat-chip-count { color: var(--accent-primary); }
+
+/* ═══════ GRILLE DE JINGLES ═══════ */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
+}
+
+.jingle-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.jingle-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--accent-primary);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.jingle-card:hover {
+  border-color: var(--border-default);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,0.4);
+}
+
+.jingle-card:hover::before { opacity: 1; }
+
+/* Card en cours de lecture */
+.jingle-card.playing {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 1px var(--accent-primary), 0 0 24px var(--accent-primary-glow);
+}
+
+.jingle-card.playing::before {
+  opacity: 1;
+}
+
+.jingle-card.playing .play-btn {
+  background: var(--accent-primary);
+  color: white;
+  box-shadow: 0 0 16px var(--accent-primary-glow);
+}
+
+/* Header */
+.jingle-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.jingle-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.jingle-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.jingle-card-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.jingle-card-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.jingle-card:hover .jingle-card-actions,
+.jingle-card.playing .jingle-card-actions { opacity: 1; }
+
+.jingle-card-action {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.jingle-card-action:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.jingle-card-action.danger:hover {
+  background: var(--semantic-danger-soft);
+  color: var(--semantic-danger);
+  border-color: var(--semantic-danger);
+}
+
+.jingle-card-action svg { width: 14px; height: 14px; }
+
+/* Chip de catégorie */
+.category-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+}
+
+.category-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.cat-intro { background: var(--cat-intro-soft); color: var(--cat-intro); }
+.cat-intro::before { background: var(--cat-intro); box-shadow: 0 0 4px var(--cat-intro); }
+
+.cat-question { background: var(--cat-question-soft); color: var(--cat-question); }
+.cat-question::before { background: var(--cat-question); box-shadow: 0 0 4px var(--cat-question); }
+
+.cat-suspense { background: var(--cat-suspense-soft); color: var(--cat-suspense); }
+.cat-suspense::before { background: var(--cat-suspense); box-shadow: 0 0 4px var(--cat-suspense); }
+
+.cat-correct { background: var(--cat-correct-soft); color: var(--cat-correct); }
+.cat-correct::before { background: var(--cat-correct); box-shadow: 0 0 4px var(--cat-correct); }
+
+.cat-wrong { background: var(--cat-wrong-soft); color: var(--cat-wrong); }
+.cat-wrong::before { background: var(--cat-wrong); box-shadow: 0 0 4px var(--cat-wrong); }
+
+.cat-transition { background: var(--cat-transition-soft); color: var(--cat-transition); }
+.cat-transition::before { background: var(--cat-transition); }
+
+.cat-victory { background: var(--cat-victory-soft); color: var(--cat-victory); }
+.cat-victory::before { background: var(--cat-victory); box-shadow: 0 0 4px var(--cat-victory); }
+
+.cat-outro { background: var(--cat-outro-soft); color: var(--cat-outro); }
+.cat-outro::before { background: var(--cat-outro); }
+
+/* ═══════ LECTEUR + WAVEFORM ═══════ */
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.play-btn {
+  width: 38px;
+  height: 38px;
+  background: var(--bg-surface-3);
+  border: 1px solid var(--border-default);
+  border-radius: 50%;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.play-btn:hover {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+}
+
+.play-btn svg { width: 14px; height: 14px; margin-left: 2px; }
+.play-btn.playing svg { margin-left: 0; }
+
+.waveform-wrap {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  position: relative;
+}
+
+.waveform {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.waveform .bar {
+  fill: var(--text-muted);
+  opacity: 0.45;
+  transition: fill 0.15s ease, opacity 0.15s ease;
+}
+
+.waveform .bar.played {
+  fill: var(--accent-primary);
+  opacity: 1;
+}
+
+/* Curseur de lecture */
+.waveform .cursor {
+  stroke: var(--accent-primary);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 3px var(--accent-primary));
+}
+
+/* Footer : durée, taille, usage */
+.jingle-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.jingle-card-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.jingle-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.jingle-meta svg { width: 11px; height: 11px; }
+
+.jingle-meta.usage {
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.jingle-meta.usage.unused {
+  background: var(--bg-surface-2);
+  color: var(--text-muted);
+}
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══════ SIDEBAR ═══════ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><i data-lucide="zap"></i></div>
+      <div>
+        <div class="sidebar-brand-name">Quiz Buzzer</div>
+        <div class="sidebar-brand-tag">Hub de pilotage</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div>
+        <div class="nav-group-label">Général</div>
+        <div class="nav-group">
+          <a class="nav-item">
+            <i data-lucide="layout-dashboard" class="nav-item-icon"></i>
+            <span class="nav-item-label">Tableau de bord</span>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Contenu</div>
+        <div class="nav-group">
+          <a class="nav-item expanded">
+            <i data-lucide="folder-open" class="nav-item-icon"></i>
+            <span class="nav-item-label">Contenu</span>
+            <i data-lucide="chevron-right" class="nav-chevron"></i>
+          </a>
+          <div class="nav-subitems">
+            <a class="nav-subitem">
+              <i data-lucide="folder-tree" style="width: 14px; height: 14px;"></i>
+              Thèmes
+              <span class="nav-subitem-count">12</span>
+            </a>
+            <a class="nav-subitem">
+              <i data-lucide="circle-help" style="width: 14px; height: 14px;"></i>
+              Questions
+              <span class="nav-subitem-count">147</span>
+            </a>
+            <a class="nav-subitem">
+              <i data-lucide="book-open" style="width: 14px; height: 14px;"></i>
+              Quiz
+              <span class="nav-subitem-count">8</span>
+            </a>
+            <a class="nav-subitem active">
+              <i data-lucide="music-2" style="width: 14px; height: 14px;"></i>
+              Jingles
+              <span class="nav-subitem-count">23</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">Parties</div>
+        <div class="nav-group">
+          <a class="nav-item">
+            <i data-lucide="trophy" class="nav-item-icon"></i>
+            <span class="nav-item-label">Toutes les parties</span>
+          </a>
+          <a class="nav-item">
+            <i data-lucide="plus-circle" class="nav-item-icon"></i>
+            <span class="nav-item-label">Nouvelle partie</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">A</div>
+        <div>
+          <div class="user-name">admin</div>
+          <div class="user-role">Maître de jeu</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════ MAIN ═══════ -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">
+        <span class="topbar-breadcrumb-item">Accueil</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item">Contenu</span>
+        <span class="topbar-breadcrumb-sep">/</span>
+        <span class="topbar-breadcrumb-item current">Jingles</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="connection-status">
+          <span class="dot"></span>
+          <span>Connecté</span>
+          <span class="server">· 192.168.1.10:3000</span>
+        </div>
+        <button class="topbar-icon-btn" title="Notifications"><i data-lucide="bell"></i></button>
+        <button class="topbar-icon-btn" title="Paramètres"><i data-lucide="settings"></i></button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">Backoffice · Contenu</div>
+          <div class="page-title-row">
+            <h1 class="page-title">Jingles</h1>
+            <span class="page-count">23 au total</span>
+          </div>
+          <p class="page-subtitle">Les ambiances sonores de vos parties. Chaque jingle est rattaché à un moment de jeu : intro, suspense, victoire, transitions...</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary">
+            <i data-lucide="upload"></i>
+            Nouveau jingle
+          </button>
+        </div>
+      </div>
+
+      <!-- Filtres -->
+      <div class="filter-bar">
+        <div class="search-input">
+          <i data-lucide="search"></i>
+          <input type="text" placeholder="Rechercher un jingle..." value="">
+        </div>
+
+        <div class="sort-control">
+          <i data-lucide="arrow-up-down"></i>
+          Plus récents
+          <i data-lucide="chevron-down"></i>
+        </div>
+      </div>
+
+      <!-- Chips de catégories (filtre rapide) -->
+      <div class="category-chips">
+        <button class="cat-chip active" data-cat="all">Tous <span class="cat-chip-count">23</span></button>
+        <button class="cat-chip" data-cat="intro">Intro <span class="cat-chip-count">3</span></button>
+        <button class="cat-chip" data-cat="question">Question <span class="cat-chip-count">2</span></button>
+        <button class="cat-chip" data-cat="suspense">Suspense <span class="cat-chip-count">4</span></button>
+        <button class="cat-chip" data-cat="correct">Bonne réponse <span class="cat-chip-count">3</span></button>
+        <button class="cat-chip" data-cat="wrong">Mauvaise réponse <span class="cat-chip-count">3</span></button>
+        <button class="cat-chip" data-cat="transition">Transition <span class="cat-chip-count">2</span></button>
+        <button class="cat-chip" data-cat="victory">Victoire <span class="cat-chip-count">3</span></button>
+        <button class="cat-chip" data-cat="outro">Outro <span class="cat-chip-count">3</span></button>
+      </div>
+
+      <!-- ═══════ GRILLE DE JINGLES ═══════ -->
+      <div class="cards-grid">
+
+        <!-- Jingle 1 — INTRO -->
+        <div class="jingle-card">
+          <div class="jingle-card-header">
+            <div class="jingle-card-title-row">
+              <i data-lucide="play-circle" class="jingle-icon"></i>
+              <div class="jingle-card-title">Bienvenue énergique</div>
+            </div>
+            <div class="jingle-card-actions">
+              <button class="jingle-card-action" title="Télécharger"><i data-lucide="download"></i></button>
+              <button class="jingle-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="jingle-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+          <span class="category-pill cat-intro">Intro</span>
+          <div class="player-row">
+            <button class="play-btn" title="Jouer"><i data-lucide="play"></i></button>
+            <div class="waveform-wrap">
+              <svg class="waveform" viewBox="0 0 300 48" preserveAspectRatio="none">
+                <!-- 60 barres de waveform aléatoire (intro punchy) -->
+                <g>
+                  <rect class="bar" x="0" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar" x="5" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="10" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="15" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="20" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="25" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="30" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="35" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="40" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="45" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="50" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="55" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="60" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="65" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="70" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="75" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="80" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="85" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="90" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="95" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="100" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="105" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="110" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="115" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="120" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="125" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="130" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="135" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="140" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="145" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="150" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="155" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="160" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="165" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="170" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="175" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="180" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="185" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="190" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="195" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="200" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="205" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="210" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="215" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="220" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="225" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="230" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="235" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="240" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="245" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="250" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar" x="255" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="260" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar" x="265" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="270" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="275" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="280" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="285" y="23.5" width="3" height="1" rx="1"/>
+                  <rect class="bar" x="290" y="23.5" width="3" height="1" rx="1"/>
+                  <rect class="bar" x="295" y="23.5" width="3" height="1" rx="1"/>
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="jingle-card-footer">
+            <div class="jingle-card-footer-left">
+              <span class="jingle-meta"><i data-lucide="clock"></i> 0:08</span>
+              <span class="jingle-meta"><i data-lucide="hard-drive"></i> 142 Ko</span>
+            </div>
+            <span class="jingle-meta usage">12 utilisations</span>
+          </div>
+        </div>
+
+        <!-- Jingle 2 — SUSPENSE (en cours de lecture) -->
+        <div class="jingle-card playing">
+          <div class="jingle-card-header">
+            <div class="jingle-card-title-row">
+              <i data-lucide="hourglass" class="jingle-icon"></i>
+              <div class="jingle-card-title">Tic-tac final</div>
+            </div>
+            <div class="jingle-card-actions">
+              <button class="jingle-card-action" title="Télécharger"><i data-lucide="download"></i></button>
+              <button class="jingle-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="jingle-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+          <span class="category-pill cat-suspense">Suspense</span>
+          <div class="player-row">
+            <button class="play-btn playing" title="Pause"><i data-lucide="pause"></i></button>
+            <div class="waveform-wrap">
+              <svg class="waveform" viewBox="0 0 300 48" preserveAspectRatio="none">
+                <!-- Suspense progressif : monte régulièrement, 40% lu -->
+                <g>
+                  <rect class="bar played" x="0" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar played" x="5" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar played" x="10" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar played" x="15" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar played" x="20" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar played" x="25" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar played" x="30" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar played" x="35" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar played" x="40" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar played" x="45" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar played" x="50" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar played" x="55" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar played" x="60" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar played" x="65" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar played" x="70" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar played" x="75" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar played" x="80" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar played" x="85" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar played" x="90" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar played" x="95" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar played" x="100" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar played" x="105" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar played" x="110" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar played" x="115" y="6" width="3" height="36" rx="1"/>
+                  <!-- Curseur à 40% -->
+                  <line class="cursor" x1="120" y1="0" x2="120" y2="48"/>
+                  <rect class="bar" x="120" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="125" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="130" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="135" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="140" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="145" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="150" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="155" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="160" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="165" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="170" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="175" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="180" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="185" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="190" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="195" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="200" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="205" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="210" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="215" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="220" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="225" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="230" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="235" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="240" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="245" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="250" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="255" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="260" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="265" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="270" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="275" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="280" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="285" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="290" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="295" y="2" width="3" height="44" rx="1"/>
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="jingle-card-footer">
+            <div class="jingle-card-footer-left">
+              <span class="jingle-meta"><i data-lucide="clock"></i> 0:30</span>
+              <span class="jingle-meta"><i data-lucide="hard-drive"></i> 462 Ko</span>
+            </div>
+            <span class="jingle-meta usage">28 utilisations</span>
+          </div>
+        </div>
+
+        <!-- Jingle 3 — BONNE RÉPONSE -->
+        <div class="jingle-card">
+          <div class="jingle-card-header">
+            <div class="jingle-card-title-row">
+              <i data-lucide="check-circle" class="jingle-icon"></i>
+              <div class="jingle-card-title">Ding ! Bonne réponse</div>
+            </div>
+            <div class="jingle-card-actions">
+              <button class="jingle-card-action" title="Télécharger"><i data-lucide="download"></i></button>
+              <button class="jingle-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="jingle-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+          <span class="category-pill cat-correct">Bonne réponse</span>
+          <div class="player-row">
+            <button class="play-btn"><i data-lucide="play"></i></button>
+            <div class="waveform-wrap">
+              <svg class="waveform" viewBox="0 0 300 48" preserveAspectRatio="none">
+                <!-- Court et clair : 2 pics -->
+                <g>
+                  <rect class="bar" x="0" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="5" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="10" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar" x="15" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="20" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="25" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="30" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="35" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="40" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="45" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="50" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="55" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="60" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar" x="65" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="70" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="75" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="80" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="85" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="90" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="95" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="100" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="105" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="110" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="115" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="120" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="125" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="130" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="135" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="140" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="145" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="150" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="155" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="160" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="165" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="170" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="175" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="180" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="185" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="190" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="195" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="200" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="205" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="210" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="215" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="220" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="225" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="230" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="235" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="240" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="245" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="250" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="255" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="260" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="265" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="270" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="275" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="280" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="285" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="290" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="295" y="23" width="3" height="2" rx="1"/>
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="jingle-card-footer">
+            <div class="jingle-card-footer-left">
+              <span class="jingle-meta"><i data-lucide="clock"></i> 0:02</span>
+              <span class="jingle-meta"><i data-lucide="hard-drive"></i> 38 Ko</span>
+            </div>
+            <span class="jingle-meta usage">47 utilisations</span>
+          </div>
+        </div>
+
+        <!-- Jingle 4 — MAUVAISE RÉPONSE -->
+        <div class="jingle-card">
+          <div class="jingle-card-header">
+            <div class="jingle-card-title-row">
+              <i data-lucide="x-circle" class="jingle-icon"></i>
+              <div class="jingle-card-title">Buzz raté</div>
+            </div>
+            <div class="jingle-card-actions">
+              <button class="jingle-card-action" title="Télécharger"><i data-lucide="download"></i></button>
+              <button class="jingle-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="jingle-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+          <span class="category-pill cat-wrong">Mauvaise réponse</span>
+          <div class="player-row">
+            <button class="play-btn"><i data-lucide="play"></i></button>
+            <div class="waveform-wrap">
+              <svg class="waveform" viewBox="0 0 300 48" preserveAspectRatio="none">
+                <!-- Bourdon court qui descend -->
+                <g>
+                  <rect class="bar" x="0" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="5" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="10" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="15" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="20" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="25" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="30" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="35" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="40" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="45" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="50" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="55" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="60" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="65" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="70" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="75" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar" x="80" y="21" width="3" height="6" rx="1"/>
+                  <rect class="bar" x="85" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="90" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="95" y="23.5" width="3" height="1" rx="1"/>
+                  <rect class="bar" x="100" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="105" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="110" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="115" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="120" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="125" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="130" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="135" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="140" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="145" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="150" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="155" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="160" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="165" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="170" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="175" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="180" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="185" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="190" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="195" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="200" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="205" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="210" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="215" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="220" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="225" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="230" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="235" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="240" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="245" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="250" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="255" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="260" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="265" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="270" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="275" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="280" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="285" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="290" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="295" y="24" width="3" height="0.5" rx="1"/>
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="jingle-card-footer">
+            <div class="jingle-card-footer-left">
+              <span class="jingle-meta"><i data-lucide="clock"></i> 0:03</span>
+              <span class="jingle-meta"><i data-lucide="hard-drive"></i> 52 Ko</span>
+            </div>
+            <span class="jingle-meta usage">31 utilisations</span>
+          </div>
+        </div>
+
+        <!-- Jingle 5 — VICTOIRE -->
+        <div class="jingle-card">
+          <div class="jingle-card-header">
+            <div class="jingle-card-title-row">
+              <i data-lucide="award" class="jingle-icon"></i>
+              <div class="jingle-card-title">Fanfare des champions</div>
+            </div>
+            <div class="jingle-card-actions">
+              <button class="jingle-card-action" title="Télécharger"><i data-lucide="download"></i></button>
+              <button class="jingle-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="jingle-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+          <span class="category-pill cat-victory">Victoire</span>
+          <div class="player-row">
+            <button class="play-btn"><i data-lucide="play"></i></button>
+            <div class="waveform-wrap">
+              <svg class="waveform" viewBox="0 0 300 48" preserveAspectRatio="none">
+                <!-- Triomphal et soutenu -->
+                <g>
+                  <rect class="bar" x="0" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="5" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="10" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="15" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="20" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="25" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="30" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="35" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="40" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="45" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="50" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="55" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="60" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="65" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="70" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="75" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="80" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="85" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="90" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="95" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="100" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="105" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="110" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="115" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="120" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="125" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="130" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="135" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="140" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="145" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="150" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="155" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="160" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="165" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="170" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="175" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="180" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="185" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="190" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="195" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="200" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="205" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="210" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="215" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="220" y="2" width="3" height="44" rx="1"/>
+                  <rect class="bar" x="225" y="0" width="3" height="48" rx="1"/>
+                  <rect class="bar" x="230" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="235" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="240" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="245" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="250" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="255" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar" x="260" y="21" width="3" height="6" rx="1"/>
+                  <rect class="bar" x="265" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="270" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="275" y="23.5" width="3" height="1" rx="1"/>
+                  <rect class="bar" x="280" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="285" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="290" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="295" y="24" width="3" height="0.5" rx="1"/>
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="jingle-card-footer">
+            <div class="jingle-card-footer-left">
+              <span class="jingle-meta"><i data-lucide="clock"></i> 0:12</span>
+              <span class="jingle-meta"><i data-lucide="hard-drive"></i> 218 Ko</span>
+            </div>
+            <span class="jingle-meta usage">8 utilisations</span>
+          </div>
+        </div>
+
+        <!-- Jingle 6 — TRANSITION -->
+        <div class="jingle-card">
+          <div class="jingle-card-header">
+            <div class="jingle-card-title-row">
+              <i data-lucide="repeat" class="jingle-icon"></i>
+              <div class="jingle-card-title">Pont mélodique</div>
+            </div>
+            <div class="jingle-card-actions">
+              <button class="jingle-card-action" title="Télécharger"><i data-lucide="download"></i></button>
+              <button class="jingle-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="jingle-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+          <span class="category-pill cat-transition">Transition</span>
+          <div class="player-row">
+            <button class="play-btn"><i data-lucide="play"></i></button>
+            <div class="waveform-wrap">
+              <svg class="waveform" viewBox="0 0 300 48" preserveAspectRatio="none">
+                <!-- Onde régulière, lyrique -->
+                <g>
+                  <rect class="bar" x="0" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar" x="5" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="10" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="15" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="20" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="25" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="30" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="35" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="40" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="45" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="50" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="55" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="60" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="65" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="70" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="75" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="80" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="85" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="90" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="95" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="100" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="105" y="4" width="3" height="40" rx="1"/>
+                  <rect class="bar" x="110" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="115" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="120" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="125" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="130" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="135" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="140" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="145" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="150" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="155" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="160" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="165" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="170" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="175" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="180" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="185" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="190" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="195" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="200" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="205" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="210" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="215" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="220" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="225" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="230" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="235" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar" x="240" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="245" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar" x="250" y="21" width="3" height="6" rx="1"/>
+                  <rect class="bar" x="255" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="260" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="265" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="270" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="275" y="23.5" width="3" height="1" rx="1"/>
+                  <rect class="bar" x="280" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="285" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="290" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="295" y="24" width="3" height="0.5" rx="1"/>
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="jingle-card-footer">
+            <div class="jingle-card-footer-left">
+              <span class="jingle-meta"><i data-lucide="clock"></i> 0:06</span>
+              <span class="jingle-meta"><i data-lucide="hard-drive"></i> 96 Ko</span>
+            </div>
+            <span class="jingle-meta usage">19 utilisations</span>
+          </div>
+        </div>
+
+        <!-- Jingle 7 — QUESTION -->
+        <div class="jingle-card">
+          <div class="jingle-card-header">
+            <div class="jingle-card-title-row">
+              <i data-lucide="help-circle" class="jingle-icon"></i>
+              <div class="jingle-card-title">Ambiance studieuse</div>
+            </div>
+            <div class="jingle-card-actions">
+              <button class="jingle-card-action" title="Télécharger"><i data-lucide="download"></i></button>
+              <button class="jingle-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="jingle-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+          <span class="category-pill cat-question">Question</span>
+          <div class="player-row">
+            <button class="play-btn"><i data-lucide="play"></i></button>
+            <div class="waveform-wrap">
+              <svg class="waveform" viewBox="0 0 300 48" preserveAspectRatio="none">
+                <!-- Bourdonnement régulier modéré (boucle d'ambiance) -->
+                <g>
+                  <rect class="bar" x="0" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="5" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="10" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="15" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="20" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="25" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="30" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="35" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="40" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="45" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="50" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="55" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="60" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="65" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="70" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="75" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="80" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="85" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="90" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="95" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="100" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="105" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="110" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="115" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="120" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="125" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="130" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="135" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="140" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="145" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="150" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="155" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="160" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="165" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="170" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="175" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="180" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="185" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="190" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="195" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="200" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="205" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="210" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="215" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="220" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="225" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="230" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="235" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="240" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="245" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="250" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="255" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="260" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="265" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="270" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="275" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="280" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="285" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="290" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="295" y="18" width="3" height="12" rx="1"/>
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="jingle-card-footer">
+            <div class="jingle-card-footer-left">
+              <span class="jingle-meta"><i data-lucide="clock"></i> 0:25</span>
+              <span class="jingle-meta"><i data-lucide="hard-drive"></i> 384 Ko</span>
+            </div>
+            <span class="jingle-meta usage">22 utilisations</span>
+          </div>
+        </div>
+
+        <!-- Jingle 8 — OUTRO (peu utilisé) -->
+        <div class="jingle-card">
+          <div class="jingle-card-header">
+            <div class="jingle-card-title-row">
+              <i data-lucide="circle-stop" class="jingle-icon"></i>
+              <div class="jingle-card-title">Générique de fin doux</div>
+            </div>
+            <div class="jingle-card-actions">
+              <button class="jingle-card-action" title="Télécharger"><i data-lucide="download"></i></button>
+              <button class="jingle-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="jingle-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+          <span class="category-pill cat-outro">Outro</span>
+          <div class="player-row">
+            <button class="play-btn"><i data-lucide="play"></i></button>
+            <div class="waveform-wrap">
+              <svg class="waveform" viewBox="0 0 300 48" preserveAspectRatio="none">
+                <!-- Fade out doux -->
+                <g>
+                  <rect class="bar" x="0" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="5" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="10" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="15" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="20" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="25" y="6" width="3" height="36" rx="1"/>
+                  <rect class="bar" x="30" y="8" width="3" height="32" rx="1"/>
+                  <rect class="bar" x="35" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="40" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="45" y="10" width="3" height="28" rx="1"/>
+                  <rect class="bar" x="50" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="55" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="60" y="12" width="3" height="24" rx="1"/>
+                  <rect class="bar" x="65" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="70" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="75" y="14" width="3" height="20" rx="1"/>
+                  <rect class="bar" x="80" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="85" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="90" y="16" width="3" height="16" rx="1"/>
+                  <rect class="bar" x="95" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="100" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar" x="105" y="18" width="3" height="12" rx="1"/>
+                  <rect class="bar" x="110" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar" x="115" y="21" width="3" height="6" rx="1"/>
+                  <rect class="bar" x="120" y="20" width="3" height="8" rx="1"/>
+                  <rect class="bar" x="125" y="21" width="3" height="6" rx="1"/>
+                  <rect class="bar" x="130" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="135" y="21" width="3" height="6" rx="1"/>
+                  <rect class="bar" x="140" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="145" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="150" y="22" width="3" height="4" rx="1"/>
+                  <rect class="bar" x="155" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="160" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="165" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="170" y="23.5" width="3" height="1" rx="1"/>
+                  <rect class="bar" x="175" y="23" width="3" height="2" rx="1"/>
+                  <rect class="bar" x="180" y="23.5" width="3" height="1" rx="1"/>
+                  <rect class="bar" x="185" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="190" y="23.5" width="3" height="1" rx="1"/>
+                  <rect class="bar" x="195" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="200" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="205" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="210" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="215" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="220" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="225" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="230" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="235" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="240" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="245" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="250" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="255" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="260" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="265" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="270" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="275" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="280" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="285" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="290" y="24" width="3" height="0.5" rx="1"/>
+                  <rect class="bar" x="295" y="24" width="3" height="0.5" rx="1"/>
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="jingle-card-footer">
+            <div class="jingle-card-footer-left">
+              <span class="jingle-meta"><i data-lucide="clock"></i> 0:15</span>
+              <span class="jingle-meta"><i data-lucide="hard-drive"></i> 235 Ko</span>
+            </div>
+            <span class="jingle-meta usage unused">Jamais utilisé</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+<script>
+  lucide.createIcons();
+</script>
+
+</body>
+</html>

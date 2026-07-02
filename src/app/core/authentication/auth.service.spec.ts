@@ -2,6 +2,7 @@ import { TestBed } from "@angular/core/testing";
 import { AuthService } from "./auth.service";
 import { HttpTestingController, provideHttpClientTesting } from "@angular/common/http/testing";
 import { provideHttpClient } from "@angular/common/http";
+import { environment } from '../../../environments/environment';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -26,5 +27,15 @@ describe('AuthService', () => {
     service.initialize();
     const req = httpMock.expectOne('/api/v1/token');
     expect(req.request.method).toBe('POST');
+  });
+
+
+  it('sends credentials from environment in the body', () => {
+    service.initialize();
+    const req = httpMock.expectOne('/api/v1/token');
+    expect(req.request.body).toEqual({
+      username: environment.username,
+      password: environment.password
+    });
   });
 });

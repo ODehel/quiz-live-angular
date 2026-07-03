@@ -38,4 +38,11 @@ describe('AuthService', () => {
       password: environment.password
     });
   });
+
+  it('stores the token from API response', () => {
+    service.initialize();
+    const req = httpMock.expectOne('/api/v1/token');
+    req.flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+    expect(service.token()).toEqual("fake-jwt");
+  });
 });

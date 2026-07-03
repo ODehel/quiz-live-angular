@@ -39,7 +39,8 @@ describe("ErrorPage", () => {
         { variant: 'not-found', call: s => s.notFound() },
         { variant: 'connection-lost', call: s => s.connectionLost() },
         { variant: 'server-error', call: s => s.serverError() },
-        { variant: 'game-corrupted', call: s => s.gameCorrupted() }
+        { variant: 'game-corrupted', call: s => s.gameCorrupted() },
+        { variant: 'invalid-credentials', call: s => s.invalidCredentials() }
     ])("sets data-variant to '$variant' when error is $variant", async ({ variant, call }) => {
         const service = TestBed.inject(ErrorService)
         call(service);
@@ -61,7 +62,8 @@ describe("ErrorPage", () => {
         { variant: 'not-found', call: s => s.notFound(), iconName: "map-pin-off" },
         { variant: 'connection-lost', call: s => s.connectionLost(), iconName: "wifi-off" },
         { variant: 'server-error', call: s => s.serverError(), iconName: "server-crash" },
-        { variant: 'game-corrupted', call: s => s.gameCorrupted(), iconName: "octagon-alert" }
+        { variant: 'game-corrupted', call: s => s.gameCorrupted(), iconName: "octagon-alert" },
+        { variant: 'invalid-credentials', call: s => s.invalidCredentials(), iconName: "shield-x" }
     ])("renders the main icon when error is $variant", async ({ variant, call, iconName }) => {
         const service = TestBed.inject(ErrorService);
         call(service);
@@ -75,7 +77,8 @@ describe("ErrorPage", () => {
         { variant: 'not-found', call: s => s.notFound(), content: "Erreur 404" },
         { variant: 'connection-lost', call: s => s.connectionLost(), content: "Connexion perdue" },
         { variant: 'server-error', call: s => s.serverError(), content: "Erreur 500 · Serveur" },
-        { variant: 'game-corrupted', call: s => s.gameCorrupted(), content: "Incident critique" }
+        { variant: 'game-corrupted', call: s => s.gameCorrupted(), content: "Incident critique" },
+        { variant: 'invalid-credentials', call: s => s.invalidCredentials(), content: "Authentification refusée" }
     ])("renders the eyebrow when error is $variant", async ({ variant, call, content }) => {
         const service = TestBed.inject(ErrorService);
         call(service);
@@ -88,7 +91,8 @@ describe("ErrorPage", () => {
         { variant: 'not-found', call: s => s.notFound(), title: "Cette page n'existe pas (encore)" },
         { variant: 'connection-lost', call: s => s.connectionLost(), title: "Le hub ne répond plus" },
         { variant: 'server-error', call: s => s.serverError(), title: "Le serveur a rencontré un problème" },
-        { variant: 'game-corrupted', call: s => s.gameCorrupted(), title: "Cette partie est corrompue" }
+        { variant: 'game-corrupted', call: s => s.gameCorrupted(), title: "Cette partie est corrompue" },
+        { variant: 'invalid-credentials', call: s => s.invalidCredentials(), title: "Identifiants invalides" }
     ])("renders the title when error is $variant", async ({ variant, call, title }) => {
         const service = TestBed.inject(ErrorService);
         call(service);
@@ -101,7 +105,8 @@ describe("ErrorPage", () => {
         { variant: 'not-found', call: s => s.notFound(), message: "Le lien que vous avez suivi est cassé ou la ressource a été supprimée. Vérifiez l'URL ou retournez à l'accueil pour repartir d'un endroit connu." },
         { variant: 'connection-lost', call: s => s.connectionLost(), message: "L'application n'arrive plus à communiquer avec le serveur Quiz Buzzer. Cela peut être un problème temporaire de réseau ou un redémarrage du hub. Nous tentons une reconnexion automatique." },
         { variant: 'server-error', call: s => s.serverError(), message: "Une erreur inattendue s'est produite côté hub. Ce n'est pas un problème lié à votre action — l'incident a été enregistré dans les logs et peut être consulté pour diagnostic." },
-        { variant: 'game-corrupted', call: s => s.gameCorrupted(), message: "L'état de la partie « Soirée découverte du monde » est devenu incohérent et ne peut pas être restauré. Cela peut arriver suite à un crash du hub ou une déconnexion prolongée. Les scores enregistrés jusqu'ici sont conservés en sécurité." }
+        { variant: 'game-corrupted', call: s => s.gameCorrupted(), message: "L'état de la partie « Soirée découverte du monde » est devenu incohérent et ne peut pas être restauré. Cela peut arriver suite à un crash du hub ou une déconnexion prolongée. Les scores enregistrés jusqu'ici sont conservés en sécurité." },
+        { variant: 'invalid-credentials', call : s => s.invalidCredentials(), message: "L'application n'a pas pu se connecter au serveur Quiz Buzzer. Les identifiants ne sont pas corrects." }
     ])("renders the message when error is $variant", async ({ variant, call, message }) => {
         const service = TestBed.inject(ErrorService);
         call(service);

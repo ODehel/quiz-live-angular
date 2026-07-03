@@ -3,16 +3,21 @@ import { AuthService } from "./auth.service";
 import { HttpTestingController, provideHttpClientTesting } from "@angular/common/http/testing";
 import { provideHttpClient } from "@angular/common/http";
 import { environment } from '../../../environments/environment';
+import { Mock } from "vitest";
+import { ErrorService } from "../error/error.service";
 
 describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
+  let fakeErrorService: { invalidCredentials: Mock };
 
   beforeEach(() => {
+    fakeErrorService = { invalidCredentials: vi.fn() };
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: ErrorService, useValue: fakeErrorService }
       ],
     });
     service = TestBed.inject(AuthService);
@@ -44,5 +49,12 @@ describe('AuthService', () => {
     const req = httpMock.expectOne('/api/v1/token');
     req.flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
     expect(service.token()).toEqual("fake-jwt");
+  });
+
+  it('raises an error when invalid credentials', () => {
+    service.initialize();
+    const req = httpMock.expectOne('/api/v1/token');
+    req.flush(null, { status: 401, statusText: 'Unauthorized' });
+    expect(fakeErrorService.invalidCredentials).toHaveBeenCalled();
   });
 });

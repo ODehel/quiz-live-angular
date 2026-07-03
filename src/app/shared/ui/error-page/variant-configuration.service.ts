@@ -21,6 +21,15 @@ const VARIANT_CONFIGS: Record<ErrorContext['variant'], ErrorVariantConfig> = {
         ],
         message: "L'application n'arrive plus à communiquer avec le serveur Quiz Buzzer. Cela peut être un problème temporaire de réseau ou un redémarrage du hub. Nous tentons une reconnexion automatique."
     },
+    "invalid-credentials": {
+        icon: "shield-x",
+        eyebrow: "Authentification refusée",
+        titleSegments: [
+            { content: "Identifiants " },
+            { content: "invalides", colored: true }
+        ],
+        message: "L'application n'a pas pu se connecter au serveur Quiz Buzzer. Les identifiants ne sont pas corrects."
+    },
     "server-error": {
         icon: "server-crash",
         eyebrow: "Erreur 500 · Serveur",

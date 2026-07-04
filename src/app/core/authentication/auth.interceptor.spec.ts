@@ -3,14 +3,16 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { authInterceptor } from './auth.interceptor';
 import { AuthService } from './auth.service';
-import { signal } from '@angular/core';
+import { signal, WritableSignal } from '@angular/core';
 
 describe('authInterceptor', () => {
   let httpClient: HttpClient;
   let httpMock: HttpTestingController;
+  let tokenSignal: WritableSignal<string | null>;
 
   beforeEach(() => {
-    const fakeAuthService = { token: signal('fake-jwt') };
+    tokenSignal = signal<string | null>('fake-jwt');
+    const fakeAuthService = { token: tokenSignal };
 
     TestBed.configureTestingModule({
       providers: [
@@ -28,6 +30,17 @@ describe('authInterceptor', () => {
 
     const req = httpMock.expectOne('/some-url');
     expect(req.request.headers.get('Authorization')).toBe('Bearer fake-jwt');
+
+    req.flush(null);
+  });
+
+  it('leaves the request untouched when there is no token', () => {
+    tokenSignal.set(null);
+
+    httpClient.get('/some-url').subscribe();
+
+    const req = httpMock.expectOne('/some-url');
+    expect(req.request.headers.has('Authorization')).toBe(false);
 
     req.flush(null);
   });

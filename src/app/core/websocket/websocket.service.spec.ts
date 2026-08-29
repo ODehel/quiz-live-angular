@@ -1,35 +1,39 @@
-import { WebSocketService } from './websocket.service';
+import { signal } from '@angular/core';
+import { SocketLike, WebSocketService } from './websocket.service';
 
-class FakeSocket {
+class FakeSocket implements SocketLike {
     constructor(public readonly url: string) { }
 
-    public readyState = 0;
+    public sentMessage: string | undefined;
 
-    public onopen: ((evt: Event) => void) | null = null;
-    public onclose: ((evt: CloseEvent) => void) | null = null;
-    public onerror: ((evt: Event) => void) | null = null;
-    public onmessage: ((evt: MessageEvent) => void) | null = null;
-
-    // 4. send(data) : capturer l'argument reçu.
-    //    → une méthode + un endroit où stocker ce qui a été envoyé.
-    //      (un seul message ? plusieurs ? le CA parle du "premier"...)
-
-    // 5. close() : rxjs l'appelle au teardown.
-    //    → une méthode. Doit-elle faire quelque chose pour notre test ?
+    send(data: string): void {
+        this.sentMessage = data;
+    }
 }
 
 describe("WebSocket service", () => {
-    it("should setup the url", () => {
-        let capturedSocket: FakeSocket | undefined;
-
-        const ctor = class {
+    let capturedSocket: FakeSocket | undefined;
+    let service: WebSocketService;
+    beforeEach(() => {
+        const ctor = class extends FakeSocket {
             constructor(url: string) {
-                capturedSocket = new FakeSocket(url);
-                return capturedSocket;
+                super(url);
+                capturedSocket = this;
             }
         };
-        const service = new WebSocketService(ctor, 'ws://test/ws');
+        const fakeTokenProvider  = { token: signal('fake-jwt') }
+        service = new WebSocketService(ctor, 'ws://test/ws', fakeTokenProvider);
+    });
+    it("should setup the url", () => {
         service.connect();
         expect(capturedSocket!.url).toBe('ws://test/ws');
+    });
+    it("should send auth as type", () => {
+        service.connect();
+        expect(JSON.parse(capturedSocket!.sentMessage!).type).toBe("auth");
+    });
+    it("should send the token", () => {
+        service.connect();
+        expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('fake-jwt');
     });
 });

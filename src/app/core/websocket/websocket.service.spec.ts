@@ -63,9 +63,20 @@ describe("WebSocket service", () => {
 
         expect(received).toBe('{"type":"auth_success"}');
     });
-    it("should reconnect after disconnection", () => {
+    it("should not reconnect before a delay elapses",   () => {
+        vi.useFakeTimers();
+
         service.connect();
         capturedSocket!.simulateClose();
+
+        // assertion 1 : rien ne s'est encore reconnecté
+        expect(callCount).toBe(1);
+
+        vi.advanceTimersByTime(1000);
+
+        // assertion 2 : maintenant, oui
         expect(callCount).toBe(2);
+
+        vi.useRealTimers();
     });
 });

@@ -30,7 +30,7 @@ export class WebSocketService {
       this._messages$.next(event.data);
     };
     websocket.onclose = (event) => {
-      this.connect();
+      setTimeout(() => this.connect(), 1000);
     };
 
     websocket.send(JSON.stringify({ type: 'auth', token: this.tokenProvider.token() }));

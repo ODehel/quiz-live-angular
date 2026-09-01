@@ -7,6 +7,7 @@ export interface TokenProvider {
 
 export interface SocketLike {
   onmessage: ((event: MessageEvent) => void) | null;
+  onclose: ((event: CloseEvent) => void) | null;
   send(message: string): void;
 }
 
@@ -27,6 +28,9 @@ export class WebSocketService {
 
     websocket.onmessage = (event) => {
       this._messages$.next(event.data);
+    };
+    websocket.onclose = (event) => {
+      this.connect();
     };
 
     websocket.send(JSON.stringify({ type: 'auth', token: this.tokenProvider.token() }));

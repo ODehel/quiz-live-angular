@@ -5,6 +5,7 @@ class FakeSocket implements SocketLike {
     constructor(public readonly url: string) { }
 
     onmessage: ((event: MessageEvent) => void) | null = null;
+    onclose: ((event: CloseEvent) => void) | null = null;
 
     public sentMessage: string | undefined;
 
@@ -17,16 +18,25 @@ class FakeSocket implements SocketLike {
             this.onmessage(new MessageEvent('message', { data }));
         }
     }
+
+    simulateClose(): void {
+        if (this.onclose !== null) {
+            this.onclose(new CloseEvent('close'));
+        }
+    }
 }
 
 describe("WebSocket service", () => {
+    let callCount: number;
     let capturedSocket: FakeSocket | undefined;
     let service: WebSocketService;
     beforeEach(() => {
+        callCount = 0;
         const ctor = class extends FakeSocket {
             constructor(url: string) {
                 super(url);
                 capturedSocket = this;
+                callCount++;
             }
         };
         const fakeTokenProvider = { token: signal('fake-jwt') }
@@ -52,5 +62,10 @@ describe("WebSocket service", () => {
         capturedSocket!.simulateMessage('{"type":"auth_success"}');
 
         expect(received).toBe('{"type":"auth_success"}');
+    });
+    it("should reconnect after disconnection", () => {
+        service.connect();
+        capturedSocket!.simulateClose();
+        expect(callCount).toBe(2);
     });
 });

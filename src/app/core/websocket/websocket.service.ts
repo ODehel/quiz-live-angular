@@ -14,6 +14,7 @@ export interface SocketLike {
 type WebSocketCtor = new (url: string) => SocketLike;
 
 export class WebSocketService {
+  private attempt:number = 0;
   private readonly _messages$ = new Subject<string>();
   readonly messages$: Observable<string> = this._messages$.asObservable();
 
@@ -30,7 +31,8 @@ export class WebSocketService {
       this._messages$.next(event.data);
     };
     websocket.onclose = (event) => {
-      setTimeout(() => this.connect(), 1000);
+      setTimeout(() => this.connect(), Math.pow(2, this.attempt) * 1000);
+      this.attempt++;
     };
 
     websocket.send(JSON.stringify({ type: 'auth', token: this.tokenProvider.token() }));

@@ -63,7 +63,7 @@ describe("WebSocket service", () => {
 
         expect(received).toBe('{"type":"auth_success"}');
     });
-    it("should not reconnect before a delay elapses",   () => {
+    it("should not reconnect before a delay elapses", () => {
         vi.useFakeTimers();
 
         service.connect();
@@ -76,6 +76,26 @@ describe("WebSocket service", () => {
 
         // assertion 2 : maintenant, oui
         expect(callCount).toBe(2);
+
+        vi.useRealTimers();
+    });
+    it("should reconnect after exponential delay", () => {
+        vi.useFakeTimers();
+        
+        service.connect();
+        capturedSocket!.simulateClose();
+
+        expect(callCount).toBe(1);
+
+        vi.advanceTimersByTime(1000);
+        expect(callCount).toBe(2);
+
+        capturedSocket!.simulateClose();
+        vi.advanceTimersByTime(1000);
+        expect(callCount).toBe(2);
+
+        vi.advanceTimersByTime(1000);
+        expect(callCount).toBe(3);
 
         vi.useRealTimers();
     });

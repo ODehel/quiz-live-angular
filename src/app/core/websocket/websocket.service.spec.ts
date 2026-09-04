@@ -81,7 +81,7 @@ describe("WebSocket service", () => {
     });
     it("should reconnect after exponential delay", () => {
         vi.useFakeTimers();
-        
+
         service.connect();
         capturedSocket!.simulateClose();
 
@@ -96,6 +96,29 @@ describe("WebSocket service", () => {
 
         vi.advanceTimersByTime(1000);
         expect(callCount).toBe(3);
+
+        vi.useRealTimers();
+    });
+    it("should cap the reconnection delay at 30 seconds", () => {
+        vi.useFakeTimers();
+
+        service.connect();
+
+        // Monte attempt de 0 à 5 : encaisse 5 fermetures, chaque délai écoulé.
+        for (let i = 0; i < 5; i++) {
+            capturedSocket!.simulateClose();
+            vi.advanceTimersByTime(Math.pow(2, i) * 1000);   // 1000, 2000, 4000, 8000, 16000
+        }
+        expect(callCount).toBe(6);          // 1 connexion initiale + 5 reconnexions
+
+        // 6e fermeture (attempt = 5) : exponentiel pur armerait 32000, le contrat plafonne à 30000.
+        capturedSocket!.simulateClose();
+
+        vi.advanceTimersByTime(29999);
+        expect(callCount).toBe(6);          // borne basse : rien avant 30000 (tue tout plafond < 30000)
+
+        vi.advanceTimersByTime(1);          // total 30000
+        expect(callCount).toBe(7);          // ← MORD : plafonné reconnecte, 32000 dormirait encore
 
         vi.useRealTimers();
     });

@@ -30,7 +30,10 @@ describe("WebSocket service", () => {
     let callCount: number;
     let capturedSocket: FakeSocket | undefined;
     let service: WebSocketService;
-    let fakeTokenProvider: { token: WritableSignal<string>; refresh: ReturnType<typeof vi.fn<() => void>>; };
+    let fakeTokenProvider: {
+        token: WritableSignal<string>;
+        refresh: ReturnType<typeof vi.fn<() => Promise<void>>>;
+    };
     beforeEach(() => {
         callCount = 0;
         const ctor = class extends FakeSocket {
@@ -40,7 +43,7 @@ describe("WebSocket service", () => {
                 callCount++;
             }
         };
-        fakeTokenProvider = { token: signal('fake-jwt'), refresh: vi.fn<() => void>() };
+        fakeTokenProvider = { token: signal('fake-jwt'), refresh: vi.fn<() => Promise<void>>() };
         service = new WebSocketService(ctor, 'ws://test/ws', fakeTokenProvider);
     });
     it("should setup the url", () => {
@@ -143,6 +146,39 @@ describe("WebSocket service", () => {
         capturedSocket!.simulateClose(4002);
 
         expect(fakeTokenProvider.refresh).toHaveBeenCalled();
+
+        vi.useRealTimers();
+    });
+    it("should not reconnect until the token refresh has completed after a 4002 close", async () => {
+        vi.useFakeTimers();
+
+        service.connect();
+
+        // Promesse CONTRÔLÉE : refresh reste en vol jusqu'à ce que le test la résolve.
+        let resolveRefresh!: () => void;
+        fakeTokenProvider.refresh = vi.fn(() =>
+            new Promise<void>((resolve) => {
+                resolveRefresh = () => {
+                    fakeTokenProvider.token.set('refreshed-jwt');
+                    resolve();
+                };
+            })
+        );
+
+        capturedSocket!.simulateClose(4002);
+
+        // Instantané 1 : refresh EN VOL. On avance le temps.
+        // Prod correcte (await) : onclose bloqué → aucun setTimeout armé → pas de reconnexion.
+        // Prod fautive (sans await) : setTimeout déjà armé → reconnecte → callCount passe à 2.
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(callCount).toBe(1);   // ← MORD : sans await, ce serait 2
+
+        // Instantané 2 : le refresh aboutit. Le token devient frais, le setTimeout s'arme.
+        resolveRefresh();
+        await vi.advanceTimersByTimeAsync(1000);
+
+        expect(callCount).toBe(2);
+        expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('refreshed-jwt');
 
         vi.useRealTimers();
     });

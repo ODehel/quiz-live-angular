@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { signal, WritableSignal } from '@angular/core';
 import { SocketLike, WebSocketService } from './websocket.service';
 
 class FakeSocket implements SocketLike {
@@ -30,6 +30,7 @@ describe("WebSocket service", () => {
     let callCount: number;
     let capturedSocket: FakeSocket | undefined;
     let service: WebSocketService;
+    let fakeTokenProvider: { token: WritableSignal<string>; }
     beforeEach(() => {
         callCount = 0;
         const ctor = class extends FakeSocket {
@@ -39,7 +40,7 @@ describe("WebSocket service", () => {
                 callCount++;
             }
         };
-        const fakeTokenProvider = { token: signal('fake-jwt') }
+        fakeTokenProvider = { token: signal('fake-jwt') };
         service = new WebSocketService(ctor, 'ws://test/ws', fakeTokenProvider);
     });
     it("should setup the url", () => {
@@ -119,6 +120,19 @@ describe("WebSocket service", () => {
 
         vi.advanceTimersByTime(1);          // total 30000
         expect(callCount).toBe(7);          // ← MORD : plafonné reconnecte, 32000 dormirait encore
+
+        vi.useRealTimers();
+    });
+    it("should send the current token on reconnection", () => {
+        vi.useFakeTimers();
+
+        service.connect();
+        fakeTokenProvider.token.set('refreshed-jwt');
+
+        capturedSocket!.simulateClose();
+        vi.advanceTimersByTime(1000);
+
+        expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('refreshed-jwt');
 
         vi.useRealTimers();
     });

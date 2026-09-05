@@ -6,6 +6,9 @@ export interface TokenProvider {
   refresh(): Promise<void>;
 }
 
+export interface ErrorNavigator {
+  goToError(): void;
+}
 export interface SocketLike {
   onmessage: ((event: MessageEvent) => void) | null;
   onclose: ((event: CloseEvent) => void) | null;
@@ -22,7 +25,8 @@ export class WebSocketService {
   constructor(
     private readonly webSocketConstructor: WebSocketCtor,
     private readonly wsUrl: string,
-    private readonly tokenProvider: TokenProvider
+    private readonly tokenProvider: TokenProvider,
+    private readonly errorNavigator: ErrorNavigator
   ) { }
 
   connect(): void {
@@ -32,6 +36,10 @@ export class WebSocketService {
       this._messages$.next(event.data);
     };
     websocket.onclose = async (event) => {
+      if (event.code === 4004) {
+        this.errorNavigator.goToError();
+        return;
+      }
       if (event.code === 4002) await this.tokenProvider.refresh();
       setTimeout(() => this.connect(), this.backOffDelay(this.attempt));
       this.attempt++;

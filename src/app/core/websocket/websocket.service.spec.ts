@@ -34,6 +34,7 @@ describe("WebSocket service", () => {
         token: WritableSignal<string>;
         refresh: ReturnType<typeof vi.fn<() => Promise<void>>>;
     };
+    let fakeErrorNavigator: { goToError: ReturnType<typeof vi.fn<() => void>> };
     beforeEach(() => {
         callCount = 0;
         const ctor = class extends FakeSocket {
@@ -44,7 +45,8 @@ describe("WebSocket service", () => {
             }
         };
         fakeTokenProvider = { token: signal('fake-jwt'), refresh: vi.fn<() => Promise<void>>() };
-        service = new WebSocketService(ctor, 'ws://test/ws', fakeTokenProvider);
+        fakeErrorNavigator = { goToError: vi.fn<() => void>() };
+        service = new WebSocketService(ctor, 'ws://test/ws', fakeTokenProvider, fakeErrorNavigator);
     });
     it("should setup the url", () => {
         service.connect();
@@ -179,6 +181,19 @@ describe("WebSocket service", () => {
 
         expect(callCount).toBe(2);
         expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('refreshed-jwt');
+
+        vi.useRealTimers();
+    });
+    it("should navigate to the error page without reconnecting when the server closes with 4004", () => {
+        vi.useFakeTimers();
+
+        service.connect();
+        capturedSocket!.simulateClose(4004);
+
+        vi.advanceTimersByTime(30000);
+
+        expect(callCount).toBe(1);
+        expect(fakeErrorNavigator.goToError).toHaveBeenCalled();
 
         vi.useRealTimers();
     });

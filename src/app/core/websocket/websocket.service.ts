@@ -3,6 +3,7 @@ import { Observable, Subject } from "rxjs";
 
 export interface TokenProvider {
   readonly token: Signal<string | null>;
+  refresh(): void;
 }
 
 export interface SocketLike {
@@ -31,6 +32,7 @@ export class WebSocketService {
       this._messages$.next(event.data);
     };
     websocket.onclose = (event) => {
+      if (event.code === 4002) this.tokenProvider.refresh();
       setTimeout(() => this.connect(), this.backOffDelay(this.attempt));
       this.attempt++;
     };

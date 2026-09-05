@@ -19,9 +19,9 @@ class FakeSocket implements SocketLike {
         }
     }
 
-    simulateClose(): void {
+    simulateClose(code: number = 1000): void {
         if (this.onclose !== null) {
-            this.onclose(new CloseEvent('close'));
+            this.onclose(new CloseEvent('close', { code }));
         }
     }
 }
@@ -30,7 +30,7 @@ describe("WebSocket service", () => {
     let callCount: number;
     let capturedSocket: FakeSocket | undefined;
     let service: WebSocketService;
-    let fakeTokenProvider: { token: WritableSignal<string>; }
+    let fakeTokenProvider: { token: WritableSignal<string>; refresh: ReturnType<typeof vi.fn<() => void>>; };
     beforeEach(() => {
         callCount = 0;
         const ctor = class extends FakeSocket {
@@ -40,7 +40,7 @@ describe("WebSocket service", () => {
                 callCount++;
             }
         };
-        fakeTokenProvider = { token: signal('fake-jwt') };
+        fakeTokenProvider = { token: signal('fake-jwt'), refresh: vi.fn<() => void>() };
         service = new WebSocketService(ctor, 'ws://test/ws', fakeTokenProvider);
     });
     it("should setup the url", () => {
@@ -133,6 +133,16 @@ describe("WebSocket service", () => {
         vi.advanceTimersByTime(1000);
 
         expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('refreshed-jwt');
+
+        vi.useRealTimers();
+    });
+    it("should refresh the token when the server closes with 4002", () => {
+        vi.useFakeTimers();
+
+        service.connect();
+        capturedSocket!.simulateClose(4002);
+
+        expect(fakeTokenProvider.refresh).toHaveBeenCalled();
 
         vi.useRealTimers();
     });

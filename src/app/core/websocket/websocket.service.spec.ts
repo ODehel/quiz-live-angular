@@ -69,132 +69,108 @@ describe("WebSocket service", () => {
 
         expect(received).toBe('{"type":"auth_success"}');
     });
-    it("should not reconnect before a delay elapses", () => {
-        vi.useFakeTimers();
-
-        service.connect();
-        capturedSocket!.simulateClose();
-
-        // assertion 1 : rien ne s'est encore reconnecté
-        expect(callCount).toBe(1);
-
-        vi.advanceTimersByTime(1000);
-
-        // assertion 2 : maintenant, oui
-        expect(callCount).toBe(2);
-
-        vi.useRealTimers();
-    });
-    it("should reconnect after exponential delay", () => {
-        vi.useFakeTimers();
-
-        service.connect();
-        capturedSocket!.simulateClose();
-
-        expect(callCount).toBe(1);
-
-        vi.advanceTimersByTime(1000);
-        expect(callCount).toBe(2);
-
-        capturedSocket!.simulateClose();
-        vi.advanceTimersByTime(1000);
-        expect(callCount).toBe(2);
-
-        vi.advanceTimersByTime(1000);
-        expect(callCount).toBe(3);
-
-        vi.useRealTimers();
-    });
-    it("should cap the reconnection delay at 30 seconds", () => {
-        vi.useFakeTimers();
-
-        service.connect();
-
-        // Monte attempt de 0 à 5 : encaisse 5 fermetures, chaque délai écoulé.
-        for (let i = 0; i < 5; i++) {
+    describe("under simulated time", () => {
+        beforeEach(() => vi.useFakeTimers());
+        afterEach(() => vi.useRealTimers());
+        it("should not reconnect before a delay elapses", () => {
+            service.connect();
             capturedSocket!.simulateClose();
-            vi.advanceTimersByTime(Math.pow(2, i) * 1000);   // 1000, 2000, 4000, 8000, 16000
-        }
-        expect(callCount).toBe(6);          // 1 connexion initiale + 5 reconnexions
 
-        // 6e fermeture (attempt = 5) : exponentiel pur armerait 32000, le contrat plafonne à 30000.
-        capturedSocket!.simulateClose();
+            // assertion 1 : rien ne s'est encore reconnecté
+            expect(callCount).toBe(1);
 
-        vi.advanceTimersByTime(29999);
-        expect(callCount).toBe(6);          // borne basse : rien avant 30000 (tue tout plafond < 30000)
+            vi.advanceTimersByTime(1000);
 
-        vi.advanceTimersByTime(1);          // total 30000
-        expect(callCount).toBe(7);          // ← MORD : plafonné reconnecte, 32000 dormirait encore
+            // assertion 2 : maintenant, oui
+            expect(callCount).toBe(2);
+        });
+        it("should reconnect after exponential delay", () => {
+            service.connect();
+            capturedSocket!.simulateClose();
 
-        vi.useRealTimers();
-    });
-    it("should send the current token on reconnection", () => {
-        vi.useFakeTimers();
+            expect(callCount).toBe(1);
 
-        service.connect();
-        fakeTokenProvider.token.set('refreshed-jwt');
+            vi.advanceTimersByTime(1000);
+            expect(callCount).toBe(2);
 
-        capturedSocket!.simulateClose();
-        vi.advanceTimersByTime(1000);
+            capturedSocket!.simulateClose();
+            vi.advanceTimersByTime(1000);
+            expect(callCount).toBe(2);
 
-        expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('refreshed-jwt');
+            vi.advanceTimersByTime(1000);
+            expect(callCount).toBe(3);
+        });
+        it("should cap the reconnection delay at 30 seconds", () => {
+            service.connect();
 
-        vi.useRealTimers();
-    });
-    it("should refresh the token when the server closes with 4002", () => {
-        vi.useFakeTimers();
+            // Monte attempt de 0 à 5 : encaisse 5 fermetures, chaque délai écoulé.
+            for (let i = 0; i < 5; i++) {
+                capturedSocket!.simulateClose();
+                vi.advanceTimersByTime(Math.pow(2, i) * 1000);   // 1000, 2000, 4000, 8000, 16000
+            }
+            expect(callCount).toBe(6);          // 1 connexion initiale + 5 reconnexions
 
-        service.connect();
-        capturedSocket!.simulateClose(4002);
+            // 6e fermeture (attempt = 5) : exponentiel pur armerait 32000, le contrat plafonne à 30000.
+            capturedSocket!.simulateClose();
 
-        expect(fakeTokenProvider.refresh).toHaveBeenCalled();
+            vi.advanceTimersByTime(29999);
+            expect(callCount).toBe(6);          // borne basse : rien avant 30000 (tue tout plafond < 30000)
 
-        vi.useRealTimers();
-    });
-    it("should not reconnect until the token refresh has completed after a 4002 close", async () => {
-        vi.useFakeTimers();
+            vi.advanceTimersByTime(1);          // total 30000
+            expect(callCount).toBe(7);          // ← MORD : plafonné reconnecte, 32000 dormirait encore
+        });
+        it("should send the current token on reconnection", () => {
+            service.connect();
+            fakeTokenProvider.token.set('refreshed-jwt');
 
-        service.connect();
+            capturedSocket!.simulateClose();
+            vi.advanceTimersByTime(1000);
 
-        // Promesse CONTRÔLÉE : refresh reste en vol jusqu'à ce que le test la résolve.
-        let resolveRefresh!: () => void;
-        fakeTokenProvider.refresh = vi.fn(() =>
-            new Promise<void>((resolve) => {
-                resolveRefresh = () => {
-                    fakeTokenProvider.token.set('refreshed-jwt');
-                    resolve();
-                };
-            })
-        );
+            expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('refreshed-jwt');
+        });
+        it("should refresh the token when the server closes with 4002", () => {
+            service.connect();
+            capturedSocket!.simulateClose(4002);
 
-        capturedSocket!.simulateClose(4002);
+            expect(fakeTokenProvider.refresh).toHaveBeenCalled();
+        });
+        it("should not reconnect until the token refresh has completed after a 4002 close", async () => {
+            service.connect();
 
-        // Instantané 1 : refresh EN VOL. On avance le temps.
-        // Prod correcte (await) : onclose bloqué → aucun setTimeout armé → pas de reconnexion.
-        // Prod fautive (sans await) : setTimeout déjà armé → reconnecte → callCount passe à 2.
-        await vi.advanceTimersByTimeAsync(1000);
-        expect(callCount).toBe(1);   // ← MORD : sans await, ce serait 2
+            // Promesse CONTRÔLÉE : refresh reste en vol jusqu'à ce que le test la résolve.
+            let resolveRefresh!: () => void;
+            fakeTokenProvider.refresh = vi.fn(() =>
+                new Promise<void>((resolve) => {
+                    resolveRefresh = () => {
+                        fakeTokenProvider.token.set('refreshed-jwt');
+                        resolve();
+                    };
+                })
+            );
 
-        // Instantané 2 : le refresh aboutit. Le token devient frais, le setTimeout s'arme.
-        resolveRefresh();
-        await vi.advanceTimersByTimeAsync(1000);
+            capturedSocket!.simulateClose(4002);
 
-        expect(callCount).toBe(2);
-        expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('refreshed-jwt');
+            // Instantané 1 : refresh EN VOL. On avance le temps.
+            // Prod correcte (await) : onclose bloqué → aucun setTimeout armé → pas de reconnexion.
+            // Prod fautive (sans await) : setTimeout déjà armé → reconnecte → callCount passe à 2.
+            await vi.advanceTimersByTimeAsync(1000);
+            expect(callCount).toBe(1);   // ← MORD : sans await, ce serait 2
 
-        vi.useRealTimers();
-    });
-    it("should navigate to the error page without reconnecting when the server closes with 4004", () => {
-        vi.useFakeTimers();
+            // Instantané 2 : le refresh aboutit. Le token devient frais, le setTimeout s'arme.
+            resolveRefresh();
+            await vi.advanceTimersByTimeAsync(1000);
 
-        service.connect();
-        capturedSocket!.simulateClose(4004);
+            expect(callCount).toBe(2);
+            expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('refreshed-jwt');
+        });
+        it("should navigate to the error page without reconnecting when the server closes with 4004", () => {
+            service.connect();
+            capturedSocket!.simulateClose(4004);
 
-        vi.advanceTimersByTime(30000);
+            vi.advanceTimersByTime(30000);
 
-        expect(callCount).toBe(1);
-        expect(fakeErrorNavigator.goToError).toHaveBeenCalled();
-
-        vi.useRealTimers();
+            expect(callCount).toBe(1);
+            expect(fakeErrorNavigator.goToError).toHaveBeenCalled();
+        });
     });
 });

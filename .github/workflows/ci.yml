@@ -29,6 +29,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Check the code style
+        run: npm run lint
+
       - name: Type-check the application
         run: npx tsc -p tsconfig.app.json --noEmit
 

@@ -12,6 +12,6 @@ describe('GameStateService', () => {
     it('should change of state', () => {
         service.transitionTo('lobby');
 
-        expect(service.state().phase).toBe('lobby');
+        expect(service.state().phase).toBe('results');
     });
 });

@@ -54,9 +54,9 @@ describe('Toast', () => {
             const iconInstance: IconStub = iconDebugEl.componentInstance;
             expect(iconInstance.name()).toBe('x');
         });
-        it('emits close when clicked', async () => {
+        it('emits dismissed when clicked', async () => {
             let emitCount = 0;
-            fixture.componentInstance.close.subscribe(() => emitCount++);
+            fixture.componentInstance.dismissed.subscribe(() => emitCount++);
 
             // ACT : on simule un click sur le bouton
             const button = fixture.nativeElement.querySelector('[data-testid="close"]') as HTMLButtonElement;

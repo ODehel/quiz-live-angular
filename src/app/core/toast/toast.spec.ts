@@ -59,7 +59,7 @@ describe('Toast', () => {
             fixture.componentInstance.dismissed.subscribe(() => emitCount++);
 
             // ACT : on simule un click sur le bouton
-            const button = fixture.nativeElement.querySelector('[data-testid="close"]') as HTMLButtonElement;
+            const button = fixture.nativeElement.querySelector('[data-testid="dismissed"]') as HTMLButtonElement;
             button.click();
             await fixture.whenStable();
 

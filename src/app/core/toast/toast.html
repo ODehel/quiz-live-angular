@@ -2,6 +2,6 @@
     @if (notification().duration !== undefined) {
     <div data-testid="progressBar" [style.animation-duration.ms]="notification().duration"></div>
     }
-    <button data-testid="close" (click)="dismissed.emit()"><app-icon name="x" /></button>
+    <button data-testid="dismissed" (click)="dismissed.emit()"><app-icon name="x" /></button>
     {{ notification().message }}
 </div>

@@ -12,7 +12,5 @@ import { Icon } from "../../shared/ui/icon/icon";
 })
 export class Toast {
   readonly notification = input.required<ToastNotification>();
-  // TODO(fix(toast)): rename; `close` collides with the native DOM event (dette connue, traitée à part)
-  // eslint-disable-next-line @angular-eslint/no-output-native
-  readonly close = output<void>();
+  readonly dismissed = output<void>();
 }

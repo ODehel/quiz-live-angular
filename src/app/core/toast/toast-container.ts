@@ -6,7 +6,7 @@ import { Toast } from "./toast";
     selector: 'app-toast-container',
     template: `
         @for (notification of toastService.notifications(); track notification) {
-        <app-toast [notification]="notification" (close)="toastService.remove(notification)" ></app-toast>
+        <app-toast [notification]="notification" (dismissed)="toastService.remove(notification)" ></app-toast>
     }`,
     styles: `
     :host {

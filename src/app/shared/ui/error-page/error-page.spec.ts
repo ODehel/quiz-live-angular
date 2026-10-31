@@ -64,7 +64,7 @@ describe("ErrorPage", () => {
         { variant: 'server-error', call: s => s.serverError(), iconName: "server-crash" },
         { variant: 'game-corrupted', call: s => s.gameCorrupted(), iconName: "octagon-alert" },
         { variant: 'invalid-credentials', call: s => s.invalidCredentials(), iconName: "shield-x" }
-    ])("renders the main icon when error is $variant", async ({ variant, call, iconName }) => {
+    ])("renders the main icon when error is $variant", async ({ call, iconName }) => {
         const service = TestBed.inject(ErrorService);
         call(service);
         await fixture.whenStable();
@@ -79,7 +79,7 @@ describe("ErrorPage", () => {
         { variant: 'server-error', call: s => s.serverError(), content: "Erreur 500 · Serveur" },
         { variant: 'game-corrupted', call: s => s.gameCorrupted(), content: "Incident critique" },
         { variant: 'invalid-credentials', call: s => s.invalidCredentials(), content: "Authentification refusée" }
-    ])("renders the eyebrow when error is $variant", async ({ variant, call, content }) => {
+    ])("renders the eyebrow when error is $variant", async ({ call, content }) => {
         const service = TestBed.inject(ErrorService);
         call(service);
         await fixture.whenStable();
@@ -93,7 +93,7 @@ describe("ErrorPage", () => {
         { variant: 'server-error', call: s => s.serverError(), title: "Le serveur a rencontré un problème" },
         { variant: 'game-corrupted', call: s => s.gameCorrupted(), title: "Cette partie est corrompue" },
         { variant: 'invalid-credentials', call: s => s.invalidCredentials(), title: "Identifiants invalides" }
-    ])("renders the title when error is $variant", async ({ variant, call, title }) => {
+    ])("renders the title when error is $variant", async ({ call, title }) => {
         const service = TestBed.inject(ErrorService);
         call(service);
         await fixture.whenStable();
@@ -107,7 +107,7 @@ describe("ErrorPage", () => {
         { variant: 'server-error', call: s => s.serverError(), message: "Une erreur inattendue s'est produite côté hub. Ce n'est pas un problème lié à votre action — l'incident a été enregistré dans les logs et peut être consulté pour diagnostic." },
         { variant: 'game-corrupted', call: s => s.gameCorrupted(), message: "L'état de la partie « Soirée découverte du monde » est devenu incohérent et ne peut pas être restauré. Cela peut arriver suite à un crash du hub ou une déconnexion prolongée. Les scores enregistrés jusqu'ici sont conservés en sécurité." },
         { variant: 'invalid-credentials', call : s => s.invalidCredentials(), message: "L'application n'a pas pu se connecter au serveur Quiz Buzzer. Les identifiants ne sont pas corrects." }
-    ])("renders the message when error is $variant", async ({ variant, call, message }) => {
+    ])("renders the message when error is $variant", async ({ call, message }) => {
         const service = TestBed.inject(ErrorService);
         call(service);
         await fixture.whenStable();
@@ -137,11 +137,10 @@ describe("ErrorPage", () => {
 
 describe("Tag colors", async () => {
     it("renders at least a em tag when a colored title is required", async () => {
-        let fixture: ComponentFixture<ErrorPage>;
-        let mockRouter: { navigate: Mock } = { navigate: vi.fn() };
-        let context: ErrorContext = { variant: "connection-lost" };
-        let mockService: { currentError: Mock } = { currentError: vi.fn().mockReturnValue(context) };
-        let variantConfig: ErrorVariantConfig = {
+        const mockRouter: { navigate: Mock } = { navigate: vi.fn() };
+        const context: ErrorContext = { variant: "connection-lost" };
+        const mockService: { currentError: Mock } = { currentError: vi.fn().mockReturnValue(context) };
+        const variantConfig: ErrorVariantConfig = {
             icon: "any-icon",
             eyebrow: "any-eyebrow",
             titleSegments: [
@@ -151,7 +150,7 @@ describe("Tag colors", async () => {
             ],
             message: "any-message"
         };
-        let mockConfigurationService: { configFor: Mock } = { configFor: vi.fn().mockReturnValue(variantConfig) };
+        const mockConfigurationService: { configFor: Mock } = { configFor: vi.fn().mockReturnValue(variantConfig) };
         await TestBed.configureTestingModule({
             providers: [
                 { provide: Router, useValue: mockRouter },
@@ -160,7 +159,7 @@ describe("Tag colors", async () => {
             ]
         }).compileComponents();
         stubIconIn(ErrorPage);
-        fixture = TestBed.createComponent(ErrorPage);
+        const fixture: ComponentFixture<ErrorPage> = TestBed.createComponent(ErrorPage);
         await fixture.whenStable();
         const titleField: HTMLElement = fixture.nativeElement.querySelector('[data-testid="title"]');
         expect(titleField.innerHTML).toContain("<em ");

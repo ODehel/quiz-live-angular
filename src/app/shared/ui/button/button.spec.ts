@@ -1,10 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Button } from './button';
 import { Component } from '@angular/core';
-import { By } from '@angular/platform-browser';
 
 @Component({
-    selector: 'host-test',
+    selector: 'app-host-test',
     imports: [Button],
     template: `<app-button (click)="addOccurrence()">Valider la réponse</app-button>`
 })

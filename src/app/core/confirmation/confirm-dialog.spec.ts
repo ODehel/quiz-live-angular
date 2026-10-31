@@ -63,8 +63,7 @@ describe("Confirm Dialog", () => {
         it.each<{ label: string; contextRows: ConfirmOptions['contextRows'] }>([
             { label: "missing", contextRows: undefined },
             { label: "empty", contextRows: [] }
-        ])
-            ("doesn't render the context rows when data is $label", async ({ contextRows }) => {
+        ])("doesn't render the context rows when data is $label", async ({ contextRows }) => {
                 const { fixture } = await createConfirmComponent({ contextRows });
                 const contextRowField = fixture.nativeElement.querySelector('[data-testid="context-rows"]');
                 expect(contextRowField).toBeNull();
@@ -84,8 +83,7 @@ describe("Confirm Dialog", () => {
         it.each<{ field: string, testValues: string[] }>([
             { field: "key", testValues: ["k1", "k2"] },
             { field: "value", testValues: ["v1", "v2"] }
-        ])
-            ("renders the context $field in the DOM", async ({ field, testValues }) => {
+        ])("renders the context $field in the DOM", async ({ field, testValues }) => {
                 const rows: ContextRow[] = testValues.map<ContextRow>(r => ({ key: "any-key", value: "any-value", [field]: r }));
                 const { fixture } = await createConfirmComponent({ contextRows: rows });
                 const fields: HTMLElement[] = fixture.nativeElement.querySelectorAll(`[data-testid="context-${field}"]`);
@@ -114,8 +112,7 @@ describe("Confirm Dialog", () => {
             ([
                 { variant: "info", iconName: "circle-play" },
                 { variant: "destructive", iconName: "triangle-alert" },
-                { variant: "warning", iconName: "circle-alert" }])
-            ('renders the $variant icon when variant is $variant', async ({ variant, iconName }) => {
+                { variant: "warning", iconName: "circle-alert" }])('renders the $variant icon when variant is $variant', async ({ variant, iconName }) => {
                 const { fixture } = await createConfirmComponent({ variant });
                 const variantIcon = fixture.debugElement.query(By.css('[data-testid="variant-icon"]'));
                 const iconInstance: IconStub = variantIcon.componentInstance;
@@ -126,8 +123,7 @@ describe("Confirm Dialog", () => {
             { variant: "info", iconName: "play" },
             { variant: "destructive", iconName: "trash-2" },
             { variant: "warning", iconName: "log-out" }
-        ])
-            ("renders the $iconName icon in the confirm button when variant is $variant", async ({ iconName, variant }) => {
+        ])("renders the $iconName icon in the confirm button when variant is $variant", async ({ iconName, variant }) => {
                 const { fixture } = await createConfirmComponent({ variant });
                 const iconConfirmButton = fixture.debugElement.query(By.css('[data-testid="confirm-icon"]'));
                 const iconInstance: IconStub = iconConfirmButton.componentInstance;
@@ -138,8 +134,7 @@ describe("Confirm Dialog", () => {
             { variant: "info" },
             { variant: "destructive" },
             { variant: "warning" }
-        ])
-            ("sets the $variant variant to the root element", async ({ variant }) => {
+        ])("sets the $variant variant to the root element", async ({ variant }) => {
                 const { fixture } = await createConfirmComponent({ variant });
                 const rootElement = fixture.nativeElement as HTMLElement;
                 const variantAttribute = rootElement.getAttribute('data-variant');

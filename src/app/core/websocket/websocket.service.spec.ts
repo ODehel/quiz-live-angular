@@ -37,10 +37,11 @@ describe("WebSocket service", () => {
     let fakeErrorNavigator: { goToError: ReturnType<typeof vi.fn<() => void>> };
     beforeEach(() => {
         callCount = 0;
+        const register = (socket: FakeSocket): void => { capturedSocket = socket; };
         const ctor = class extends FakeSocket {
             constructor(url: string) {
                 super(url);
-                capturedSocket = this;
+                register(this);
                 callCount++;
             }
         };

@@ -45,11 +45,11 @@ describe('Toast', () => {
         });
     });
 
-    describe('close button', () => {
+    describe('dismiss button', () => {
         beforeEach(async () => {
             await renderToast("Juste une notification", 'info');
         });
-        it('renders an icon in the close button', () => {
+        it('renders an icon in the dismiss button', () => {
             const iconDebugEl = fixture.debugElement.query(By.directive(IconStub));
             const iconInstance: IconStub = iconDebugEl.componentInstance;
             expect(iconInstance.name()).toBe('x');

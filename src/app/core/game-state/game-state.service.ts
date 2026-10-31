@@ -7,4 +7,4 @@ export class GameStateService {
     transitionTo(phase: Phase): void {
         this.state.set({ phase });
     }
-}
+}export const brokenApp: number = 'x';

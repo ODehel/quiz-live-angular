@@ -14,4 +14,4 @@ describe('GameStateService', () => {
 
         expect(service.state().phase).toBe('lobby');
     });
-});const brokenSpec: number = 'x';
+});

@@ -15,3 +15,5 @@ export class App {
   protected readonly title = signal('quiz-live-angular');
   private readonly toastService = inject(ToastService);
 }
+
+const unused = 1;

@@ -45,21 +45,21 @@ describe('Toast', () => {
         });
     });
 
-    describe('close button', () => {
+    describe('dismiss button', () => {
         beforeEach(async () => {
             await renderToast("Juste une notification", 'info');
         });
-        it('renders an icon in the close button', () => {
+        it('renders an icon in the dismiss button', () => {
             const iconDebugEl = fixture.debugElement.query(By.directive(IconStub));
             const iconInstance: IconStub = iconDebugEl.componentInstance;
             expect(iconInstance.name()).toBe('x');
         });
-        it('emits close when clicked', async () => {
+        it('emits dismissed when clicked', async () => {
             let emitCount = 0;
-            fixture.componentInstance.close.subscribe(() => emitCount++);
+            fixture.componentInstance.dismissed.subscribe(() => emitCount++);
 
             // ACT : on simule un click sur le bouton
-            const button = fixture.nativeElement.querySelector('[data-testid="close"]') as HTMLButtonElement;
+            const button = fixture.nativeElement.querySelector('[data-testid="dismissed"]') as HTMLButtonElement;
             button.click();
             await fixture.whenStable();
 

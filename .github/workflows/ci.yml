@@ -1,0 +1,10 @@
+name: CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  stub:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "stub: test des droits de push sur .github/workflows"

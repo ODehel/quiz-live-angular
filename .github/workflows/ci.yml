@@ -1,10 +1,37 @@
 name: CI
 
 on:
+  pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  stub:
+  verify:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "stub: test des droits de push sur .github/workflows"
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Show toolchain versions
+        run: |
+          node -v
+          npm -v
+
+      - run: npm ci
+
+      - name: Type-check the application
+        run: npx tsc -p tsconfig.app.json --noEmit
+
+      - name: Type-check the specs
+        run: npx tsc -p tsconfig.spec.json --noEmit
+
+      - name: Run the tests
+        run: npm test -- --no-watch

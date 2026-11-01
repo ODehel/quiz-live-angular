@@ -2,7 +2,7 @@
 
 ## 📋 Contexte projet
 
-Voir [VISION.md](VISION.md) pour la description complète du projet et de ses quatre applications.
+Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) pour la description complète du projet et de ses quatre applications.
 
 L'application Angular est l'interface de gestion des parties du maître de jeu. Elle communique avec le serveur Node.js exclusivement via l'API REST (Bearer JWT) et le WebSocket (authentification post-connexion).
 
@@ -208,12 +208,12 @@ Si l'application est ouverte dans deux onglets, le serveur ferme la première co
 
 | Document | Contenu |
 |---|---|
-| [VISION.md](VISION.md) | Description complète du projet |
+| [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) | Description complète du projet |
 | [CONVENTIONS-TECHNIQUES-ANGULAR.md](CONVENTIONS-TECHNIQUES-ANGULAR.md) | Stack, principes, conventions de code Angular |
-| [US-003 — Authentification JWT (serveur)](US-003-authentication-token.md) | Endpoint `POST /api/v1/token` |
-| [US-009 — Connexion WebSocket (serveur)](US-009-websocket-connection.md) | Protocole d'auth WebSocket |
-| [US-019 — Reprise après crash (serveur)](US-019-game-recovery.md) | Format `game_state_sync` |
-| [US-021 — Refresh JWT WebSocket (serveur)](US-021-token-refresh.md) | Protocole `token_expiring_soon` / `auth_refresh` |
+| [US-003 — Authentification JWT (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-003-authentication-token.md) | Endpoint `POST /api/v1/token` |
+| [US-009 — Connexion WebSocket (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-009-websocket-connection.md) | Protocole d'auth WebSocket |
+| [US-019 — Reprise après crash (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-019-game-recovery.md) | Format `game_state_sync` |
+| [US-021 — Refresh JWT WebSocket (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-021-token-refresh.md) | Protocole `token_expiring_soon` / `auth_refresh` |
 
 ---
 

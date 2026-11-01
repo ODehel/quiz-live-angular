@@ -2,7 +2,7 @@
 
 ## 📋 Contexte projet
 
-Voir [VISION.md](VISION.md) pour la description complète du projet et de ses quatre applications.
+Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) pour la description complète du projet et de ses quatre applications.
 
 ---
 
@@ -316,14 +316,14 @@ En fin de partie directe, `buildResults()` reconstruit le résultat depuis les `
 
 | Document | Contenu |
 |---|---|
-| [VISION.md](VISION.md) | Description complète du projet |
+| [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) | Description complète du projet |
 | [CONVENTIONS-TECHNIQUES-ANGULAR.md](CONVENTIONS-TECHNIQUES-ANGULAR.md) | Stack, principes, conventions |
 | [US-ANG-001 — Initialisation](US-ANG-001-init-session.md) | `GameStateService`, `WebSocketService` |
 | [US-ANG-007 — Lobby](US-ANG-007-lobby.md) | Flux précédent |
-| [US-011 — Workflow MCQ (serveur)](US-011-mcq-question-workflow.md) | Protocole WebSocket MCQ complet |
-| [US-012 — Workflow SPEED (serveur)](US-012-speed-question-workflow.md) | Protocole WebSocket SPEED complet |
-| [US-013 — Résultats finaux (serveur)](US-013-game-results.md) | Endpoint `GET /api/v1/games/:id/results` |
-| [US-014 — Classement intermédiaire (serveur)](US-014-intermediate-ranking-display.md) | Message `trigger_intermediate_ranking` |
+| [US-011 — Workflow MCQ (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-011-mcq-question-workflow.md) | Protocole WebSocket MCQ complet |
+| [US-012 — Workflow SPEED (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-012-speed-question-workflow.md) | Protocole WebSocket SPEED complet |
+| [US-013 — Résultats finaux (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-013-game-results.md) | Endpoint `GET /api/v1/games/:id/results` |
+| [US-014 — Classement intermédiaire (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-014-intermediate-ranking-display.md) | Message `trigger_intermediate_ranking` |
 
 ---
 

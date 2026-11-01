@@ -2,7 +2,7 @@
 
 ## 📋 Contexte projet
 
-Voir [VISION.md](VISION.md) pour la description complète du projet et de ses quatre applications.
+Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) pour la description complète du projet et de ses quatre applications.
 
 ---
 
@@ -204,11 +204,11 @@ Après une suppression réussie (`204`), la liste est mise à jour localement vi
 
 | Document | Contenu |
 |---|---|
-| [VISION.md](VISION.md) | Description complète du projet |
+| [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) | Description complète du projet |
 | [CONVENTIONS-TECHNIQUES-ANGULAR.md](CONVENTIONS-TECHNIQUES-ANGULAR.md) | Stack, principes, conventions de code |
 | [US-ANG-002 — Tableau de bord](US-ANG-002-dashboard.md) | Désactivation des liens Contenu si partie active |
 | [US-ANG-003 — Gestion des questions](US-ANG-003-gestion-questions.md) | `ThemeService` réutilisé dans `QuestionFormComponent` |
-| [US-004 — CRUD des thèmes (serveur)](US-004-themes-crud.md) | Endpoints POST, GET, PUT, DELETE |
+| [US-004 — CRUD des thèmes (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-004-themes-crud.md) | Endpoints POST, GET, PUT, DELETE |
 
 ---
 

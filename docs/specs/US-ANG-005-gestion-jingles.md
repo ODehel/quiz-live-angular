@@ -2,7 +2,7 @@
 
 ## 📋 Contexte projet
 
-Voir [VISION.md](VISION.md) pour la description complète du projet et de ses quatre applications.
+Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) pour la description complète du projet et de ses quatre applications.
 
 ---
 
@@ -180,11 +180,11 @@ Si un buzzer se déconnecte entre le moment où l'utilisateur ouvre le select et
 
 | Document | Contenu |
 |---|---|
-| [VISION.md](VISION.md) | Description complète du projet |
+| [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) | Description complète du projet |
 | [CONVENTIONS-TECHNIQUES-ANGULAR.md](CONVENTIONS-TECHNIQUES-ANGULAR.md) | Stack, principes, conventions de code |
 | [US-ANG-001 — Initialisation](US-ANG-001-init-session.md) | `WebSocketService` |
-| [US-017 — Gestion des jingles (serveur)](US-017-jingles-management.md) | Endpoints REST et messages WebSocket |
-| [US-018 — Sons système (serveur)](US-018-system-sounds-trigger.md) | Format `trigger_system_sound` |
+| [US-017 — Gestion des jingles (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-017-jingles-management.md) | Endpoints REST et messages WebSocket |
+| [US-018 — Sons système (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-018-system-sounds-trigger.md) | Format `trigger_system_sound` |
 
 ---
 

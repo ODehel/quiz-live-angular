@@ -28,3 +28,6 @@ Le smoke test de #14 (Edge headless + faux hub Node) n'est pas versionné, choix
 
 ## #9 — Le token n'est lu que par `getToken()`, le signal reste privé
 CA-2 : `AuthService` expose `getToken()` et `isReady()` ; le signal n'est plus exposé. `authInterceptor` lit `getToken()`. `isReady()` est dérivé de la présence du token (pas d'état séparé, YAGNI). Choix d'Olivier de rendre le signal privé tout de suite, malgré le port `TokenProvider` du WebSocket qui n'est plus satisfait par `AuthService` (voir `DEBTS.md`). (chore(authentication): expose the session token and its readiness)
+
+## #10 — `authInterceptor` branché globalement, sans filtre d'origine
+CA-4 : `provideHttpClient(withInterceptors([authInterceptor]))` dans `appConfig` ; l'en-tête `Authorization` est posé sur toutes les requêtes `HttpClient` dès qu'un token existe, comme le CDC l'écrit. Lève la réserve de la décision #3. Le POST du token passe sans en-tête (`getToken()` vaut `null` à ce moment-là). Contrepartie, choix d'Olivier de suivre le CA tel quel : le JWT partirait aussi vers une origine tierce ; aucune n'existe aujourd'hui, la dette est tracée dans `DEBTS.md`. Commit `chore` : aucun effet observable en prod avant la première requête authentifiée. (chore(authentication): attach the session token to every request)

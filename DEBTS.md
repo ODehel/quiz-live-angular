@@ -8,7 +8,6 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 - **Route `/error` absente** 🟠 : le CA-3 et le CA-23 demandent une navigation vers `/error`, sans guard. Aujourd'hui l'erreur est posée dans `ErrorService` et `<app-error-page />` (dans `app.html`) l'affiche. Observé au navigateur le 2026-11-01 (hub muet).
 - **Texte « Nous tentons une reconnexion automatique »** 🟠 : affiché sur la page « connexion perdue », alors que le CDC interdit tout retry de l'initialisation. Faux au démarrage ; vrai seulement pour le WebSocket (US-ANG-010).
 - **Icône principale vide sur la page « connexion perdue »** 🟠 : le grand carré est vide sur une capture (2026-11-01), l'icône du logo s'affiche. Autres variantes **non vérifiées** (« il me semble qu'elles s'affichent »). À confirmer avant d'y voir un bug.
-- **`provideHttpClient(withInterceptors([authInterceptor]))` non câblé** 🟠 : `authInterceptor` existe et est testé (CA-4, couche S) mais n'est branché nulle part. À faire avec la première requête authentifiée.
 - **Délai de 10 s non mesuré hors poste d'Olivier** 🟠 : mesuré une fois (10,07 s, Edge, proxy de dev). Choix, pas mesure de référence ; non confirmé sur un déploiement réel.
 - **Un vrai 500 du hub s'affiche « connexion perdue »** 🟠 : le proxy de dev répond 500 quand le hub est éteint, les deux cas sont indiscernables (voir décision #2).
 - **Branches distantes résiduelles** 🟠 : `chore/node-version`, `ci/prove-red`, `ci/workflows`, `ci/prove-lint-red`, plus les branches `session/*` déjà fusionnées. Rien supprimé par Claude ; suppression à faire par Olivier.
@@ -23,6 +22,11 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 
 - **`AuthService` ne peut pas servir de `TokenProvider` au WebSocket** 🟠 : le port (`websocket.service.ts`) exige `token()` et `refresh()` ; `AuthService` expose maintenant `getToken()` et `isReady()`, sans `refresh()` (CA-11, CA-12). À réconcilier quand `WebSocketService` sera injecté : adapter le port (consommateur) plutôt qu'ouvrir de nouveau le signal.
 - **`isReady()` = présence du token** 🟠 : `true` dès qu'un token est stocké, `false` avant et après un échec. Au refresh (CA-12 à CA-16), un token expiré resterait « prêt » ; à retravailler avec le CA-5 (`authGuard`).
+
+## Mesurées pendant `chore(authentication): attach the session token to every request`
+
+- **Le JWT partirait vers toute origine** 🟠 : `authInterceptor` est branché globalement (CA-4 : « toutes les requêtes `HttpClient` ») sans filtre d'origine. Aucune requête vers une origine tierce n'existe aujourd'hui ; à restreindre (origine du hub) avant d'en ajouter une.
+- **Branchement non observable en prod** 🟠 : l'application ne fait aucune requête `HttpClient` après le POST du token (le premier `GET` est au CA-17). Le branchement n'est prouvé que par `app.config.spec.ts`, jamais au navigateur ; à observer avec la première requête authentifiée.
 
 ## Reportées du récap du 2026-10-31 (non revérifiées)
 

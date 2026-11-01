@@ -5,7 +5,6 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
-- **Route `/error` vide** 🟠 : `{ path: 'error', children: [] }` navigue mais ne rend rien ; la page reste rendue par `<app-error-page />` dans `app.html` (transitoire, pour éviter un double rendu). À remplacer par `component: ErrorPage` et retirer l'élément de `app.html` : session `refactor(error): render the error page only through its route`.
 - **`ErrorPage.goHome()` navigue vers `/`, route absente** 🟠 : seules `/playground` et `/error` existent ; la navigation vers `/` n'a pas été exécutée ici, rejet probable (« Cannot match any routes »). Non vérifié ; à observer au navigateur avant d'y toucher.
 - **Texte « Nous tentons une reconnexion automatique »** 🟠 : affiché sur la page « connexion perdue », alors que le CDC interdit tout retry de l'initialisation. Faux au démarrage ; vrai seulement pour le WebSocket (US-ANG-010).
 - **Icône principale vide sur la page « connexion perdue »** 🟠 : le grand carré est vide sur une capture (2026-11-01), l'icône du logo s'affiche. Autres variantes **non vérifiées** (« il me semble qu'elles s'affichent »). Revue sur `/error` (2026-11-01, PR #19) : le carré est toujours vide. À confirmer avant d'y voir un bug.

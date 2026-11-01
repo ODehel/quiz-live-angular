@@ -19,3 +19,9 @@ Le CDC (l.98, l.185) impose une `Promise` pour que l'initialiseur soit stricteme
 
 ## #6 — Numérotation des critères ajoutés
 CA-24 et CA-25 de US-ANG-001 sont numérotés en fin de série (aucune renumérotation, aucune référence cassée) mais placés après le CA-3 qu'ils précisent. (#14)
+
+## #7 — Matrice CA × couches par dépôt dans le gabarit de handoff
+Le gabarit (Repository / Service / Route) était celui du hub. Ici : Service / Câblage / Guards, plus trois règles de relevé (partir du réel, associer par titres de tests, dire ce qui n'est pas exécuté). `session-close.ps1` ne lit pas cette section : il n'est pas modifié. Olivier veut propager : on propage les **règles de relevé**, les colonnes restent propres à chaque dépôt (une matrice Angular n'a pas de sens pour un hub ou un firmware). Une session par dépôt. (2026-11-01)
+
+## #8 — `scripts/smoke.ps1` reste hors dépôt
+Le smoke test de #14 (Edge headless + faux hub Node) n'est pas versionné, choix d'Olivier. Contrepartie : il disparaît avec le poste ; une session `chore` pourra le reprendre si le besoin revient. (2026-11-01)

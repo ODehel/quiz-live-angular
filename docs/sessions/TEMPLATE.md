@@ -29,8 +29,16 @@
 
 ## Matrice CA × couches : <US-XXX>
 > Recalculée sur le réel à chaque clôture. Jamais recopiée du handoff précédent.
+> Colonnes propres à chaque dépôt. Angular : **Service** (testé en isolation), **Câblage**
+> (`app.config.ts`, providers), **Guards** (guards et routing dans `app.routes.ts`).
 
-| CA | Repository | Service | Route |
-|---|---|---|---|
-| CA-1 | | | |
-| CA-2 | | | |
+Règles de relevé :
+- Partir du réel : `git diff --stat <HEAD de départ>..HEAD`, puis un `grep` hors specs des symboles propres à chaque CA. Zéro occurrence = ❌ au câblage.
+- Associer un CA à un test par les **titres des tests** et le dire dans la note (aucun libellé `CA-n` dans les specs).
+- ✅ testé à cette couche · 🟡 partiel · ❌ à faire · — non applicable.
+- Dire ce qui est lu mais non exécuté (navigateur, hub réel).
+
+| CA | Service | Câblage | Guards | Note |
+|---|---|---|---|---|
+| CA-1 | | | | |
+| CA-2 | | | | |

@@ -44,12 +44,38 @@ describe('AuthService', () => {
     });
   });
 
-  it('stores the token from API response', async () => {
+  it('has no token before the initialization', () => {
+    expect(service.getToken()).toBeNull();
+  });
+
+  it('gives the token from API response', async () => {
     const initialization = service.initialize();
-    const req = httpMock.expectOne('/api/v1/token');
-    req.flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+    httpMock.expectOne('/api/v1/token')
+      .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
     await initialization;
-    expect(service.token()).toEqual("fake-jwt");
+    expect(service.getToken()).toEqual('fake-jwt');
+  });
+
+  it('is not ready before the initialization', () => {
+    expect(service.isReady()).toBe(false);
+  });
+
+  it('is ready once the token is obtained', async () => {
+    const initialization = service.initialize();
+    httpMock.expectOne('/api/v1/token').flush({ token: 'fake-jwt' });
+    await initialization;
+    expect(service.isReady()).toBe(true);
+  });
+
+  it.each([
+    ['invalid credentials', { status: 401, statusText: 'Unauthorized' }],
+    ['a server error', { status: 500, statusText: 'Internal Server Error' }],
+  ])('stays not ready after %s', async (_cause, response) => {
+    const initialization = service.initialize();
+    httpMock.expectOne('/api/v1/token').flush(null, response);
+    await initialization;
+    expect(service.isReady()).toBe(false);
+    expect(service.getToken()).toBeNull();
   });
 
   it('raises an error when invalid credentials', async () => {

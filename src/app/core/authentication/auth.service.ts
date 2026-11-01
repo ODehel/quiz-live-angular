@@ -11,7 +11,14 @@ export class AuthService {
     private readonly http = inject(HttpClient);
     private readonly errorService = inject(ErrorService);
     private readonly _token = signal<string | null>(null);
-    readonly token = this._token.asReadonly();
+
+    getToken(): string | null {
+        return this._token();
+    }
+
+    isReady(): boolean {
+        return this._token() !== null;
+    }
 
     async initialize(): Promise<void> {
         try {

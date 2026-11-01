@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { inject, Injectable, signal } from "@angular/core";
-import { firstValueFrom, timeout, TimeoutError } from "rxjs";
+import { firstValueFrom, timeout } from "rxjs";
 import { environment } from "../../../environments/environment";
 import { ErrorService } from "../error/error.service";
 
@@ -27,13 +27,10 @@ export class AuthService {
     }
 
     private reportFailure(error: unknown): void {
-        const status = error instanceof HttpErrorResponse ? error.status : null;
-        if (error instanceof TimeoutError || status === 0) {
-            this.errorService.connectionLost();
-        } else if (status === 401) {
+        if (error instanceof HttpErrorResponse && error.status === 401) {
             this.errorService.invalidCredentials();
         } else {
-            this.errorService.serverError();
+            this.errorService.connectionLost();
         }
     }
 }

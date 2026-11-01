@@ -9,10 +9,10 @@ import { ErrorService } from "../error/error.service";
 describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
-  let fakeErrorService: { invalidCredentials: Mock; connectionLost: Mock; serverError: Mock };
+  let fakeErrorService: { invalidCredentials: Mock; connectionLost: Mock };
 
   beforeEach(() => {
-    fakeErrorService = { invalidCredentials: vi.fn(), connectionLost: vi.fn(), serverError: vi.fn() };
+    fakeErrorService = { invalidCredentials: vi.fn(), connectionLost: vi.fn() };
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -68,12 +68,12 @@ describe('AuthService', () => {
     expect(fakeErrorService.invalidCredentials).not.toHaveBeenCalled();
   });
 
-  it('raises a server error on any other non-2xx response', async () => {
+  it('raises a connection error on any other non-2xx response', async () => {
     const initialization = service.initialize();
     httpMock.expectOne('/api/v1/token')
       .flush(null, { status: 500, statusText: 'Internal Server Error' });
     await initialization;
-    expect(fakeErrorService.serverError).toHaveBeenCalled();
+    expect(fakeErrorService.connectionLost).toHaveBeenCalled();
     expect(fakeErrorService.invalidCredentials).not.toHaveBeenCalled();
   });
 

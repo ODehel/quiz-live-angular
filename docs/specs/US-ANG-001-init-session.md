@@ -28,7 +28,7 @@ L'application Angular est l'interface de gestion des parties du maître de jeu. 
 | CA-2 | En cas de succès (`200 OK`), le token JWT est stocké dans un signal privé de `AuthService` | `AuthService.getToken()` retourne le token ; `AuthService.isReady()` passe à `true` |
 | CA-3 | En cas d'échec réseau ou de réponse non-2xx, l'application navigue vers `/error` avec un message explicite | Aucune autre navigation n'est tentée ; l'utilisateur voit une page d'erreur bloquante |
 | CA-24 | Si `POST /api/v1/token` n'a reçu aucune réponse au bout de 10 s, la requête est abandonnée et l'échec est traité comme un échec réseau (CA-3) | Le démarrage n'attend jamais plus de 10 s ; aucun retry automatique |
-| CA-25 | Le message de la page d'erreur dépend de la cause de l'échec du `POST /api/v1/token` : `401` → identifiants invalides ; délai dépassé ou serveur injoignable → connexion perdue ; toute autre réponse non-2xx → erreur serveur | L'utilisateur n'est jamais informé d'« identifiants invalides » pour une panne réseau ou serveur |
+| CA-25 | Le message de la page d'erreur dépend de la cause de l'échec du `POST /api/v1/token` : `401` → identifiants invalides ; toute autre cause (délai dépassé, serveur injoignable, autre réponse non-2xx) → connexion perdue | L'utilisateur n'est jamais informé d'« identifiants invalides » pour une panne réseau ou serveur |
 | CA-4 | `authInterceptor` injecte automatiquement le header `Authorization: Bearer <token>` sur toutes les requêtes `HttpClient` | L'injection ne se produit pas si `AuthService.getToken()` retourne `null` |
 | CA-5 | `authGuard` bloque l'accès à toutes les routes protégées si `AuthService.isReady()` est `false` | Redirection vers `/error` |
 

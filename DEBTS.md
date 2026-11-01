@@ -5,9 +5,10 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
-- **Route `/error` absente** 🟠 : le CA-3 et le CA-23 demandent une navigation vers `/error`, sans guard. Aujourd'hui l'erreur est posée dans `ErrorService` et `<app-error-page />` (dans `app.html`) l'affiche. Observé au navigateur le 2026-11-01 (hub muet).
+- **Route `/error` vide** 🟠 : `{ path: 'error', children: [] }` navigue mais ne rend rien ; la page reste rendue par `<app-error-page />` dans `app.html` (transitoire, pour éviter un double rendu). À remplacer par `component: ErrorPage` et retirer l'élément de `app.html` : session `refactor(error): render the error page only through its route`.
+- **`ErrorPage.goHome()` navigue vers `/`, route absente** 🟠 : seules `/playground` et `/error` existent ; la navigation vers `/` n'a pas été exécutée ici, rejet probable (« Cannot match any routes »). Non vérifié ; à observer au navigateur avant d'y toucher.
 - **Texte « Nous tentons une reconnexion automatique »** 🟠 : affiché sur la page « connexion perdue », alors que le CDC interdit tout retry de l'initialisation. Faux au démarrage ; vrai seulement pour le WebSocket (US-ANG-010).
-- **Icône principale vide sur la page « connexion perdue »** 🟠 : le grand carré est vide sur une capture (2026-11-01), l'icône du logo s'affiche. Autres variantes **non vérifiées** (« il me semble qu'elles s'affichent »). À confirmer avant d'y voir un bug.
+- **Icône principale vide sur la page « connexion perdue »** 🟠 : le grand carré est vide sur une capture (2026-11-01), l'icône du logo s'affiche. Autres variantes **non vérifiées** (« il me semble qu'elles s'affichent »). Revue sur `/error` (2026-11-01, PR #19) : le carré est toujours vide. À confirmer avant d'y voir un bug.
 - **Délai de 10 s non mesuré hors poste d'Olivier** 🟠 : mesuré une fois (10,07 s, Edge, proxy de dev). Choix, pas mesure de référence ; non confirmé sur un déploiement réel.
 - **Un vrai 500 du hub s'affiche « connexion perdue »** 🟠 : le proxy de dev répond 500 quand le hub est éteint, les deux cas sont indiscernables (voir décision #2).
 - **Branches distantes résiduelles** 🟠 : `chore/node-version`, `ci/prove-red`, `ci/workflows`, `ci/prove-lint-red`, plus les branches `session/*` déjà fusionnées. Rien supprimé par Claude ; suppression à faire par Olivier.

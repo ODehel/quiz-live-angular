@@ -2,7 +2,7 @@
 
 ## 📋 Contexte projet
 
-Voir [VISION.md](VISION.md) pour la description complète du projet et de ses quatre applications.
+Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) pour la description complète du projet et de ses quatre applications.
 
 ---
 
@@ -243,12 +243,12 @@ L'association entre le N-ième participant et le N-ième buzzer est une conventi
 
 | Document | Contenu |
 |---|---|
-| [VISION.md](VISION.md) | Description complète du projet |
+| [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) | Description complète du projet |
 | [CONVENTIONS-TECHNIQUES-ANGULAR.md](CONVENTIONS-TECHNIQUES-ANGULAR.md) | Stack, principes, conventions de code |
 | [US-ANG-001 — Initialisation](US-ANG-001-init-session.md) | `WebSocketService`, `GameStateService` |
 | [US-ANG-006 — Liste des parties et création](US-ANG-006-liste-parties-creation.md) | Flux précédent |
 | [US-ANG-008 — Pilotage](US-ANG-008-pilotage.md) | Suite immédiate après démarrage |
-| [US-010 — CRUD des parties (serveur)](US-010-game-crud.md) | Endpoints POST start et DELETE |
+| [US-010 — CRUD des parties (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-010-game-crud.md) | Endpoints POST start et DELETE |
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## 📋 Contexte projet
 
-Voir [VISION.md](VISION.md) pour la description complète du projet et de ses quatre applications.
+Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) pour la description complète du projet et de ses quatre applications.
 
 ---
 
@@ -221,12 +221,12 @@ La validation locale utilise `.toLowerCase()` pour être cohérente avec la vali
 
 | Document | Contenu |
 |---|---|
-| [VISION.md](VISION.md) | Description complète du projet |
+| [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) | Description complète du projet |
 | [CONVENTIONS-TECHNIQUES-ANGULAR.md](CONVENTIONS-TECHNIQUES-ANGULAR.md) | Stack, principes, conventions de code |
 | [US-ANG-001 — Initialisation](US-ANG-001-init-session.md) | `GameStateService` |
 | [US-ANG-007 — Lobby](US-ANG-007-lobby.md) | Suite immédiate après création |
-| [US-010 — CRUD des parties (serveur)](US-010-game-crud.md) | Endpoints POST, GET, DELETE |
-| [US-008 — CRUD des quiz (serveur)](US-008-quiz-crud.md) | Endpoint GET pour l'aperçu et l'enrichissement |
+| [US-010 — CRUD des parties (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-010-game-crud.md) | Endpoints POST, GET, DELETE |
+| [US-008 — CRUD des quiz (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-008-quiz-crud.md) | Endpoint GET pour l'aperçu et l'enrichissement |
 
 ---
 

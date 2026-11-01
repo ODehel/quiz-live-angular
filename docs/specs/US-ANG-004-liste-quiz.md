@@ -2,7 +2,7 @@
 
 ## 📋 Contexte projet
 
-Voir [VISION.md](VISION.md) pour la description complète du projet et de ses quatre applications.
+Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) pour la description complète du projet et de ses quatre applications.
 
 ---
 
@@ -191,11 +191,11 @@ La route est ajoutée comme enfant de `content` avec le même guard `noActiveGam
 
 | Document | Contenu |
 |---|---|
-| [VISION.md](VISION.md) | Description complète du projet |
+| [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) | Description complète du projet |
 | [CONVENTIONS-TECHNIQUES-ANGULAR.md](CONVENTIONS-TECHNIQUES-ANGULAR.md) | Stack, principes, conventions de code |
 | [US-ANG-001 — Initialisation](US-ANG-001-init-session.md) | `AuthService`, `WebSocketService` |
 | [US-ANG-003 — Gestion des questions](US-ANG-003-gestion-questions.md) | `QuestionService`, `QuestionListComponent` |
-| [US-008 — CRUD quiz (serveur)](../hub/US-008-quiz-crud.md) | Endpoints et contrat API |
+| [US-008 — CRUD quiz (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-008-quiz-crud.md) | Endpoints et contrat API |
 
 ---
 

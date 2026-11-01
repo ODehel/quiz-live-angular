@@ -2,7 +2,7 @@
 
 ## 📋 Contexte projet
 
-Voir [VISION.md](VISION.md) pour la description complète du projet et de ses quatre applications.
+Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) pour la description complète du projet et de ses quatre applications.
 
 ---
 
@@ -238,11 +238,11 @@ La bannière réagit à `GameStateService.isPiloting()` qui est un `computed` d�
 
 | Document | Contenu |
 |---|---|
-| [VISION.md](VISION.md) | Description complète du projet |
+| [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) | Description complète du projet |
 | [CONVENTIONS-TECHNIQUES-ANGULAR.md](CONVENTIONS-TECHNIQUES-ANGULAR.md) | Stack, principes, conventions de code |
 | [US-ANG-001 — Initialisation](US-ANG-001-init-session.md) | `AuthService`, `WebSocketService`, `GameStateService` |
-| [US-010 — CRUD des parties (serveur)](US-010-game-crud.md) | Format `GET /api/v1/games` |
-| [US-020 — Health check (serveur)](US-020-health-check.md) | Format `GET /api/v1/health` |
+| [US-010 — CRUD des parties (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-010-game-crud.md) | Format `GET /api/v1/games` |
+| [US-020 — Health check (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-020-health-check.md) | Format `GET /api/v1/health` |
 
 ---
 

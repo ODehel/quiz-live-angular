@@ -2,7 +2,7 @@
 
 ## 📋 Contexte projet
 
-Voir [VISION.md](VISION.md) pour la description complète du projet et de ses quatre applications.
+Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) pour la description complète du projet et de ses quatre applications.
 
 ---
 
@@ -291,13 +291,13 @@ La validation croisée `correct_answer ∈ choices` est effectuée côté Angula
 
 | Document | Contenu |
 |---|---|
-| [VISION.md](VISION.md) | Description complète du projet |
+| [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/shared/VISION.md) | Description complète du projet |
 | [CONVENTIONS-TECHNIQUES-ANGULAR.md](CONVENTIONS-TECHNIQUES-ANGULAR.md) | Stack, principes, conventions de code |
 | [US-ANG-001 — Initialisation](US-ANG-001-init-session.md) | `AuthService`, `WebSocketService` |
-| [US-005 — CRUD questions (serveur)](US-005-crud-questions.md) | Endpoints POST, GET, PUT, DELETE |
-| [US-006 — Filtrage avancé (serveur)](US-006-questions-filtrage.md) | Paramètres de filtrage |
-| [US-007 — PATCH questions (serveur)](US-007-questions-patch.md) | Sémantique JSON Merge Patch |
-| [US-016 — Upload médias (serveur)](US-016-media-upload-questions.md) | Endpoints upload et suppression |
+| [US-005 — CRUD questions (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-005-crud-questions.md) | Endpoints POST, GET, PUT, DELETE |
+| [US-006 — Filtrage avancé (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-006-questions-filtrage.md) | Paramètres de filtrage |
+| [US-007 — PATCH questions (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-007-questions-patch.md) | Sémantique JSON Merge Patch |
+| [US-016 — Upload médias (serveur)](https://github.com/ODehel/quiz-live-server/blob/main/docs/specs/US-016-media-upload-questions.md) | Endpoints upload et suppression |
 
 ---
 

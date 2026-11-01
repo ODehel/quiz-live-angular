@@ -25,3 +25,6 @@ Le gabarit (Repository / Service / Route) était celui du hub. Ici : Service / C
 
 ## #8 — `scripts/smoke.ps1` reste hors dépôt
 Le smoke test de #14 (Edge headless + faux hub Node) n'est pas versionné, choix d'Olivier. Contrepartie : il disparaît avec le poste ; une session `chore` pourra le reprendre si le besoin revient. (2026-11-01)
+
+## #9 — Le token n'est lu que par `getToken()`, le signal reste privé
+CA-2 : `AuthService` expose `getToken()` et `isReady()` ; le signal n'est plus exposé. `authInterceptor` lit `getToken()`. `isReady()` est dérivé de la présence du token (pas d'état séparé, YAGNI). Choix d'Olivier de rendre le signal privé tout de suite, malgré le port `TokenProvider` du WebSocket qui n'est plus satisfait par `AuthService` (voir `DEBTS.md`). (chore(authentication): expose the session token and its readiness)

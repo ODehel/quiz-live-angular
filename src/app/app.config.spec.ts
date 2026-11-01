@@ -1,4 +1,5 @@
-import { ApplicationInitStatus } from '@angular/core';
+import { ApplicationInitStatus, ApplicationRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { HttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -73,5 +74,41 @@ describe('appConfig', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('navigates to the error page when the token request fails', async () => {
+    startApplication();
+    httpMock.expectOne('/api/v1/token')
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
+    await initStatus.donePromise;
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/error');
+  });
+
+  it('navigates to the error page when the server never answers', async () => {
+    vi.useFakeTimers();
+    try {
+      startApplication();
+      httpMock.expectOne('/api/v1/token');
+      await vi.advanceTimersByTimeAsync(10_000);
+      await initStatus.donePromise;
+      await vi.runAllTimersAsync();
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(TestBed.inject(Router).url).toBe('/error');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not navigate when the token request succeeds', async () => {
+    startApplication();
+    httpMock.expectOne('/api/v1/token')
+      .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+    await initStatus.donePromise;
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/');
   });
 });

@@ -12,9 +12,6 @@ export const appConfig: ApplicationConfig = {
       X, TriangleAlert, CircleAlert, CirclePlay, Play, Trash2, LogOut, Check, ArrowLeft, WifiOff, ServerCrash, MapPinOff, OctagonAlert,
       Zap, ShieldX
     })),
-    provideAppInitializer(() => {
-      const authService = inject(AuthService);
-      authService.initialize();
-    })
+    provideAppInitializer(() => inject(AuthService).initialize())
   ]
 };

@@ -44,17 +44,19 @@ describe('AuthService', () => {
     });
   });
 
-  it('stores the token from API response', () => {
-    service.initialize();
+  it('stores the token from API response', async () => {
+    const initialization = service.initialize();
     const req = httpMock.expectOne('/api/v1/token');
     req.flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+    await initialization;
     expect(service.token()).toEqual("fake-jwt");
   });
 
-  it('raises an error when invalid credentials', () => {
-    service.initialize();
+  it('raises an error when invalid credentials', async () => {
+    const initialization = service.initialize();
     const req = httpMock.expectOne('/api/v1/token');
     req.flush(null, { status: 401, statusText: 'Unauthorized' });
+    await initialization;
     expect(fakeErrorService.invalidCredentials).toHaveBeenCalled();
   });
 });

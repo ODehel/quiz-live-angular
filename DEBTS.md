@@ -1,13 +1,12 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-01.
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-03.
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
 - **`ErrorPage.goHome()` mène à une page vide** 🟠 : `/` n'a pas de route. Observé le 2026-11-01 (Olivier, puis navigateur sans interface) : la navigation réussit, l'écran reste noir, aucune erreur en console. L'hypothèse d'un rejet « Cannot match any routes » est infirmée (une URL vide n'exige aucune route). La destination attendue est `/dashboard` (CA-21), non faite.
 - **Texte « Nous tentons une reconnexion automatique »** 🟠 : affiché sur la page « connexion perdue », alors que le CDC interdit tout retry de l'initialisation. Faux au démarrage ; vrai seulement pour le WebSocket (US-ANG-010).
-- **Icône `home` jamais enregistrée, icône principale vide** 🟠 : `error-page.html` utilise `home`, absente de `LucideAngularModule.pick` (`app.config.ts`). Chaque affichage de la page journalise « The "home" icon has not been provided », et le bouton « Retour à l'accueil » n'a pas d'icône. Mesuré le 2026-11-01, identique sur `main` (`b30ef3c`) et sur la branche. Cause probable du « carré vide » signalé plus tôt : en enregistrant `House` (et `name="house"`) dans une copie jetable de `main`, l'erreur disparaît, le bouton et l'icône principale s'affichent. Mesuré sur la variante `invalid-credentials` seulement ; correction : session dédiée.
 - **Variante `invalid-credentials` sans bloc CSS** 🟠 : `error-page.scss` définit `--variant-color` pour 4 variantes (`not-found`, `connection-lost`, `server-error`, `game-corrupted`), pas pour `invalid-credentials` (ajoutée avec CA-25). Sur cette page, « invalides » est invisible (dégradé sur une variable non définie) et la couleur de l'eyebrow aussi. Capture d'Olivier du 2026-11-01, reproduit en navigateur sans interface sur `main`. Rendu des 4 autres variantes non regardé.
 - **Délai de 10 s non mesuré hors poste d'Olivier** 🟠 : mesuré une fois (10,07 s, Edge, proxy de dev). Choix, pas mesure de référence ; non confirmé sur un déploiement réel.
 - **Un vrai 500 du hub s'affiche « connexion perdue »** 🟠 : le proxy de dev répond 500 quand le hub est éteint, les deux cas sont indiscernables (voir décision #2).

@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { appConfig } from './app.config';
 import { ErrorService } from './core/error/error.service';
+import { ErrorPage } from './shared/ui/error-page/error-page';
 
 describe('appConfig', () => {
   let initStatus: ApplicationInitStatus;
@@ -100,6 +101,19 @@ describe('appConfig', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('draws the home icon on the error page button', async () => {
+    startApplication();
+    httpMock.expectOne('/api/v1/token')
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
+    await initStatus.donePromise;
+
+    const fixture = TestBed.createComponent(ErrorPage);
+    await fixture.whenStable();
+
+    const homeButton = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="home-button"]');
+    expect(homeButton?.querySelector('svg')).not.toBeNull();
   });
 
   it('does not navigate when the token request succeeds', async () => {

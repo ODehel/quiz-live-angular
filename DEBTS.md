@@ -28,6 +28,12 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 - **Le JWT partirait vers toute origine** 🟠 : `authInterceptor` est branché globalement (CA-4 : « toutes les requêtes `HttpClient` ») sans filtre d'origine. Aucune requête vers une origine tierce n'existe aujourd'hui ; à restreindre (origine du hub) avant d'en ajouter une.
 - **Branchement non observable en prod** 🟠 : l'application ne fait aucune requête `HttpClient` après le POST du token (le premier `GET` est au CA-17). Le branchement n'est prouvé que par `app.config.spec.ts`, jamais au navigateur ; à observer avec la première requête authentifiée.
 
+## Mesurées pendant `chore(authentication): block protected routes until the session is ready`
+
+- **`authGuard` redirige vers une page vide si aucune erreur n'a été signalée** 🟠 : le guard renvoie `/error` quand `isReady()` est faux, sans appeler `ErrorService`. Or `error-page.html` n'affiche rien tant que `currentError` est `null` (`@if (error(); as err)`). Aujourd'hui sans effet (l'échec d'`initialize()` signale toujours une erreur avant) ; à trancher à la première route protégée : le guard signale lui-même une variante, ou la page affiche un défaut. Lu dans le gabarit, non observé au navigateur.
+- **`authGuard` sans consommateur, non observable** 🟠 : aucune route protégée (`app.routes.ts` inchangé), donc prouvé par `auth.guard.spec.ts` seulement, jamais au navigateur. À câbler avec la première route protégée (CA-21).
+- **Le guard hérite de la limite d'`isReady()`** 🟠 : présence du token seulement (voir l'entrée de `chore(authentication): expose the session token and its readiness`). Au refresh (CA-12 à CA-16), un token expiré passerait le guard.
+
 ## Reportées du récap du 2026-10-31 (non revérifiées)
 
 Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'a été remesuré le 2026-11-01, sauf mention contraire.

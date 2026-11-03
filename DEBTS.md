@@ -30,9 +30,15 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 
 ## Mesurées pendant `chore(authentication): block protected routes until the session is ready`
 
-- **`authGuard` redirige vers une page vide si aucune erreur n'a été signalée** 🟠 : le guard renvoie `/error` quand `isReady()` est faux, sans appeler `ErrorService`. Or `error-page.html` n'affiche rien tant que `currentError` est `null` (`@if (error(); as err)`). Aujourd'hui sans effet (l'échec d'`initialize()` signale toujours une erreur avant) ; à trancher à la première route protégée : le guard signale lui-même une variante, ou la page affiche un défaut. Lu dans le gabarit, non observé au navigateur.
-- **`authGuard` sans consommateur, non observable** 🟠 : aucune route protégée (`app.routes.ts` inchangé), donc prouvé par `auth.guard.spec.ts` seulement, jamais au navigateur. À câbler avec la première route protégée (CA-21).
+- **`authGuard` redirige vers une page vide si aucune erreur n'a été signalée** 🟠 : le guard renvoie `/error` quand `isReady()` est faux, sans appeler `ErrorService`. Or `error-page.html` n'affiche rien tant que `currentError` est `null` (`@if (error(); as err)`). Aujourd'hui sans effet (l'échec d'`initialize()` signale toujours une erreur avant) ; à trancher : le guard signale lui-même une variante, ou la page affiche un défaut. Lu dans le gabarit, non observé au navigateur. `/dashboard` est maintenant la première route protégée, mais le cas reste inatteignable (le démarrage est bloquant, l'échec d'`initialize()` signale toujours une erreur) ; la décision attend un chemin d'accès réel.
 - **Le guard hérite de la limite d'`isReady()`** 🟠 : présence du token seulement (voir l'entrée de `chore(authentication): expose the session token and its readiness`). Au refresh (CA-12 à CA-16), un token expiré passerait le guard.
+
+## Mesurées pendant `feat(dashboard): protect the dashboard page until the session is ready`
+
+- **`authGuard` branché sur `/dashboard`, non encore observé au navigateur** 🟠 : prouvé par `app.routes.spec.ts` (session prête : la page ; session non prête : `/error`). Remplace l'entrée « sans consommateur » ; levée si le smoke test de cette session est conforme.
+- **`/dashboard` n'est joignable que par son URL** 🟠 : aucune navigation n'y mène (CA-21 non faite), « Retour à l'accueil » mène toujours à `/` (écran noir).
+- **Page `/dashboard` minimale, hors shell** 🟠 : un titre seulement, sans sidebar ni topbar ; le fond ambiant (deux dégradés du design system) est recopié dans `dashboard.scss`, comme dans `error-page.scss`. À factoriser avec le shell (session `feat(layout)` à venir).
+- **Style du titre sans test** 🟠 : SCSS sans rouge honnête (taille, graisse, interlettrage du design system), vérifié au smoke test seulement.
 
 ## Reportées du récap du 2026-10-31 (non revérifiées)
 

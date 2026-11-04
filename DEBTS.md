@@ -35,7 +35,8 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 
 ## Mesurées pendant `feat(dashboard): protect the dashboard page until the session is ready`
 
-- **`authGuard` branché sur `/dashboard`, non encore observé au navigateur** 🟠 : prouvé par `app.routes.spec.ts` (session prête : la page ; session non prête : `/error`). Remplace l'entrée « sans consommateur » ; levée si le smoke test de cette session est conforme.
+- **Refus du guard non observé au navigateur** 🟠 : le chemin « session prête » est observé (titre affiché sur `/dashboard`, smoke test d'Olivier du 2026-11-04, hub allumé). Le chemin « session non prête » n'est prouvé que par `app.routes.spec.ts` : au navigateur il se confond avec l'échec du démarrage (CA-3), qui mène déjà à `/error`. URL et console non relevées lors du smoke test.
+- **Identifiants de développement désalignés du hub local** 🟠 : `environment.development.ts` versionne `dev-password`, or l'admin de la base du hub local a un autre mot de passe (le `.env` du hub en portait un autre). Le hub répondait 401 et l'application finissait sur la page « identifiants invalides ». Cause : `seed-users.ts` n'insère les utilisateurs que si la table est vide ; relancer `npm run seed` après avoir changé `ADMIN_PASSWORD` ne change rien et ne signale rien, et le `.env` n'est pas relu à la connexion (le hub compare au hash stocké). Contourné au smoke test par une modification locale non commitée de `environment.development.ts`. Le validateur du hub accepte `dev-password` (12 à 72 caractères ASCII imprimables, sans autre règle). Piste : session dédiée pour fixer une convention (valeur commune ou réinitialisation documentée), et signaler dans le `DEBTS.md` du hub que le seed ignore silencieusement un mot de passe différent. Complète l'entrée « Entre dépôts ».
 - **`/dashboard` n'est joignable que par son URL** 🟠 : aucune navigation n'y mène (CA-21 non faite), « Retour à l'accueil » mène toujours à `/` (écran noir).
 - **Page `/dashboard` minimale, hors shell** 🟠 : un titre seulement, sans sidebar ni topbar ; le fond ambiant (deux dégradés du design system) est recopié dans `dashboard.scss`, comme dans `error-page.scss`. À factoriser avec le shell (session `feat(layout)` à venir).
 - **Style du titre sans test** 🟠 : SCSS sans rouge honnête (taille, graisse, interlettrage du design system), vérifié au smoke test seulement.
@@ -73,6 +74,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Levées
 
+- ~~`authGuard` sans consommateur, non observable~~ : branché sur `/dashboard` (`feat(dashboard): protect the dashboard page until the session is ready`), chemin « session prête » observé au navigateur le 2026-11-04.
 - ~~Lint absent de `ci.yml`~~ : étape en place depuis #10, démontrée rouge et verte.
 - ~~Lint jamais exécuté sous Node 26~~ : runner Node 26.13.0 et poste (Node 26.13.0).
 - ~~`ng serve` jamais exécuté dans un navigateur~~ : démarrage, 401, hub absent et hub muet observés le 2026-11-01 (smoke test de #14).

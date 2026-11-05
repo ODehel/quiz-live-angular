@@ -62,4 +62,20 @@ describe('routes', () => {
       .querySelector('[data-testid="error-screen"]');
     expect(page).not.toBeNull();
   });
+
+  it('keeps the error page readable after returning home when the session is not ready', async () => {
+    sessionReady = false;
+    TestBed.inject(ErrorService).connectionLost();
+    const harness = await RouterTestingHarness.create('/error');
+    const homeButton = (harness.fixture.nativeElement as HTMLElement)
+      .querySelector('[data-testid="home-button"]') as HTMLButtonElement;
+
+    homeButton.click();
+    await harness.fixture.whenStable();
+
+    const page = (harness.fixture.nativeElement as HTMLElement)
+      .querySelector('[data-testid="error-screen"]');
+    expect(TestBed.inject(Router).url).toBe('/error');
+    expect(page).not.toBeNull();
+  });
 });

@@ -3,6 +3,7 @@ import { ErrorContext, ErrorService } from "../../../core/error/error.service";
 import { Icon } from "../icon/icon";
 import { Router } from "@angular/router";
 import { VariantConfigurationService } from "./variant-configuration.service";
+import { AuthService } from "../../../core/authentication/auth.service";
 
 export interface TitleSegment {
     content: string;
@@ -27,10 +28,12 @@ export class ErrorPage {
     private readonly errorService = inject(ErrorService);
     private readonly variantConfigurationService = inject(VariantConfigurationService);
     private readonly router = inject(Router);
+    private readonly authService = inject(AuthService);
     readonly error = this.errorService.currentError;
 
     goHome(): void {
-        this.errorService.clearError();
+        if (this.authService.isReady())
+            this.errorService.clearError();
         this.router.navigate(['/']);
     }
 

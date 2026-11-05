@@ -7,15 +7,21 @@ import { IconStub } from "../icon/icon.stub";
 import { Router } from "@angular/router";
 import { Mock } from "vitest";
 import { VariantConfigurationService } from "./variant-configuration.service";
+import { AuthService } from "../../../core/authentication/auth.service";
 
 describe("ErrorPage", () => {
     let fixture: ComponentFixture<ErrorPage>;
     let mockRouter: { navigate: Mock };
+    let sessionReady: boolean;
 
     beforeEach(async () => {
         mockRouter = { navigate: vi.fn() };
+        sessionReady = true;
         await TestBed.configureTestingModule({
-            providers: [{ provide: Router, useValue: mockRouter }]
+            providers: [
+                { provide: Router, useValue: mockRouter },
+                { provide: AuthService, useValue: { isReady: () => sessionReady } }
+            ]
         }).compileComponents();
         stubIconIn(ErrorPage);
         fixture = TestBed.createComponent(ErrorPage);
@@ -49,13 +55,23 @@ describe("ErrorPage", () => {
         expect(page?.getAttribute('data-variant')).toBe(variant);
     });
 
-    it("clears the error when user asks to return on homepage", async () => {
+    it("clears the error when user asks to return on homepage once the session is ready", async () => {
         const service = TestBed.inject(ErrorService);
         service.notFound();
         await fixture.whenStable();
         const homeButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="home-button"]');
         homeButton.click();
         expect(service.currentError()).toBeNull();
+    });
+
+    it("keeps the error when user asks to return on homepage while the session is not ready", async () => {
+        sessionReady = false;
+        const service = TestBed.inject(ErrorService);
+        service.connectionLost();
+        await fixture.whenStable();
+        const homeButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="home-button"]');
+        homeButton.click();
+        expect(service.currentError()).toEqual({ variant: 'connection-lost' });
     });
 
     it.each<{ variant: ErrorContext['variant'], call: (s: ErrorService) => void, iconName: string }>([

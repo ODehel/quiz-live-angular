@@ -39,6 +39,20 @@ describe('routes', () => {
     expect(TestBed.inject(Router).url).toBe('/error');
   });
 
+  it('redirects the root to the dashboard when the session is ready', async () => {
+    await RouterTestingHarness.create('/');
+
+    expect(TestBed.inject(Router).url).toBe('/dashboard');
+  });
+
+  it('redirects the root to the error page when the session is not ready', async () => {
+    sessionReady = false;
+
+    await RouterTestingHarness.create('/');
+
+    expect(TestBed.inject(Router).url).toBe('/error');
+  });
+
   it('renders the error page on /error', async () => {
     TestBed.inject(ErrorService).notFound();
 

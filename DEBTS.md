@@ -5,7 +5,7 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
-- **`ErrorPage.goHome()` mène à une page vide** 🟠 : `/` n'a pas de route. Observé le 2026-11-01 (Olivier, puis navigateur sans interface) : la navigation réussit, l'écran reste noir, aucune erreur en console. L'hypothèse d'un rejet « Cannot match any routes » est infirmée (une URL vide n'exige aucune route). `/` redirige maintenant vers `/dashboard` (`feat(routing): open the dashboard when the application starts at the root`), mais la page d'erreur n'apparaît aujourd'hui que si la session n'est pas prête : `goHome()` efface l'erreur, `/` mène à `/dashboard`, le guard renvoie vers `/error`, qui n'affiche rien sans erreur. Observé le 2026-11-05 en navigateur sans interface avec un faux hub (401, puis hub éteint), puis confirmé sur le hub réel (smoke test d'Olivier, Edge sans interface, hub éteint) : `/error`, page vide. Le bouton reste un cul-de-sac.
+- **`ErrorPage.goHome()` reboucle sur `/error` quand la session n'est pas prête** 🟠 : la page d'erreur n'apparaît aujourd'hui que si la session n'est pas prête ; `/` mène à `/dashboard`, le guard renvoie vers `/error`. Depuis `fix(error): explain why the dashboard is unavailable when the session is not ready`, l'erreur n'est plus effacée dans ce cas : la page reste lisible (plus de page vide, historique : noir observé le 2026-11-01 puis le 2026-11-05 sur le hub réel). Le bouton ne mène toujours nulle part : un vrai « réessayer » (nouvelle initialisation) reste à concevoir.
 - **Texte « Nous tentons une reconnexion automatique »** 🟠 : affiché sur la page « connexion perdue », alors que le CDC interdit tout retry de l'initialisation. Faux au démarrage ; vrai seulement pour le WebSocket (US-ANG-010).
 - **Variante `invalid-credentials` sans bloc CSS** 🟠 : `error-page.scss` définit `--variant-color` pour 4 variantes (`not-found`, `connection-lost`, `server-error`, `game-corrupted`), pas pour `invalid-credentials` (ajoutée avec CA-25). Sur cette page, « invalides » est invisible (dégradé sur une variable non définie) et la couleur de l'eyebrow aussi. Capture d'Olivier du 2026-11-01, reproduit en navigateur sans interface sur `main`. Rendu des 4 autres variantes non regardé.
 - **Délai de 10 s non mesuré hors poste d'Olivier** 🟠 : mesuré une fois (10,07 s, Edge, proxy de dev). Choix, pas mesure de référence ; non confirmé sur un déploiement réel.
@@ -30,7 +30,7 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 
 ## Mesurées pendant `chore(authentication): block protected routes until the session is ready`
 
-- **`authGuard` redirige vers une page vide si aucune erreur n'a été signalée** 🟠 : le guard renvoie `/error` quand `isReady()` est faux, sans appeler `ErrorService`. Or `error-page.html` n'affiche rien tant que `currentError` est `null` (`@if (error(); as err)`). Sans effet tant que `/dashboard` n'était joignable que par son URL (l'échec d'`initialize()` signale toujours une erreur avant). `/dashboard` est la première route protégée. Le cas est devenu atteignable avec `feat(routing): open the dashboard when the application starts at the root` : après un échec du démarrage, « Retour à l'accueil » efface l'erreur puis le guard renvoie vers `/error` (voir `ErrorPage.goHome()`). Observé le 2026-11-05 en navigateur sans interface (faux hub), confirmé sur le hub réel le même jour (smoke test d'Olivier). La décision attend d'être prise : le guard signale lui-même une variante, ou la page affiche un défaut.
+- **`authGuard` redirige vers une page vide si aucune erreur n'a été signalée** 🟠 : le guard renvoie `/error` quand `isReady()` est faux, sans appeler `ErrorService`, et `error-page.html` n'affiche rien tant que `currentError` est `null` (`@if (error(); as err)`). Latent depuis `fix(error): explain why the dashboard is unavailable when the session is not ready` (décision #13) : « session non prête » implique « erreur posée » parce que `initialize()` signale toujours son échec et que `goHome()` ne l'efface plus dans ce cas. Rien ne le garantit côté guard : toute future lecture de `isReady()` à faux sans erreur (refresh, CA-12 à CA-16) ou tout nouvel appel à `clearError()` rouvre la page vide.
 - **Le guard hérite de la limite d'`isReady()`** 🟠 : présence du token seulement (voir l'entrée de `chore(authentication): expose the session token and its readiness`). Au refresh (CA-12 à CA-16), un token expiré passerait le guard.
 
 ## Mesurées pendant `feat(dashboard): protect the dashboard page until the session is ready`
@@ -42,6 +42,11 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 ## Mesurées pendant `feat(routing): open the dashboard when the application starts at the root`
 
 - **`pathMatch: 'full'` de la redirection racine non verrouillé par un test** 🟠 : muter en `'prefix'` laisse les 165 tests verts. Mutant équivalent avec la table de routes actuelle (quand la redirection ne mène nulle part, Angular retombe sur la route suivante). Deviendra observable avec une route enfant sous `/dashboard` (session `feat(layout)`) : à tester à ce moment-là.
+
+## Mesurées pendant `fix(error): explain why the dashboard is unavailable when the session is not ready`
+
+- **`ErrorPage` (`shared/ui`) dépend d'`AuthService` (`core`)** 🟠 : `goHome()` lit `isReady()` pour décider d'effacer l'erreur. Un composant partagé qui connaît l'authentification est un couplage de plus ; piste : déplacer la règle dans `ErrorService` ou dans un service d'orchestration quand le shell arrivera (`feat(layout)`).
+- **Chemin « session prête » de `goHome()` non observable au navigateur** 🟠 : aucune erreur n'existe aujourd'hui avec une session prête (`not-found`, `server-error`, `game-corrupted` n'ont pas d'émetteur). Couvert par `error-page.spec.ts` seulement.
 
 ## Reportées du récap du 2026-10-31 (non revérifiées)
 

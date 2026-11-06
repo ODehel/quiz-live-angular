@@ -41,3 +41,7 @@ CA-21 (« après initialisation réussie, le Router navigue vers `/dashboard` »
 
 ## #13 — « Retour à l'accueil » ne perd pas la cause de l'erreur tant que la session n'est pas prête
 Option B retenue par Olivier. `ErrorPage.goHome()` n'efface l'erreur que si `AuthService.isReady()` est vrai ; sinon la variante d'origine (`invalid-credentials` ou `connection-lost`) reste affichée quand le guard renvoie vers `/error`. Option A écartée : un `authGuard` qui signale `connectionLost()` aurait rendu la page lisible mais faux (un 401 au démarrage serait affiché « connexion perdue »). Contreparties : `ErrorPage` dépend d'`AuthService` (voir `DEBTS.md`), et le bouton reboucle sur `/error` tant que la session n'est pas prête. Lève le choix laissé ouvert par la décision #12. (fix(error): explain why the dashboard is unavailable when the session is not ready)
+
+
+## #14 — Le message « connexion perdue » ne promet pas de reconnexion et ne donne pas de consigne
+Choix d'Olivier : retirer la dernière phrase (« Nous tentons une reconnexion automatique. »), le CDC interdisant tout retry de l'initialisation (CA-24). Variante écartée : la remplacer par une consigne (« Rechargez la page ») : une promesse de plus tant que le bouton de la page ne relance rien (voir `DEBTS.md`). Le texte reste valable pour le démarrage ; le WebSocket (US-ANG-010) aura besoin d'un message propre. Aucun CA ne cite le texte : le CDC n'est pas modifié. (fix(error): remove the automatic reconnection promise at startup)

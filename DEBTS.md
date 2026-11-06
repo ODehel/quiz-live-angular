@@ -6,7 +6,6 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
 - **`ErrorPage.goHome()` reboucle sur `/error` quand la session n'est pas prête** 🟠 : la page d'erreur n'apparaît aujourd'hui que si la session n'est pas prête ; `/` mène à `/dashboard`, le guard renvoie vers `/error`. Depuis `fix(error): explain why the dashboard is unavailable when the session is not ready`, l'erreur n'est plus effacée dans ce cas : la page reste lisible (plus de page vide, historique : noir observé le 2026-11-01 puis le 2026-11-05 sur le hub réel). Le bouton ne mène toujours nulle part : un vrai « réessayer » (nouvelle initialisation) reste à concevoir.
-- **Variante `invalid-credentials` sans bloc CSS** 🟠 : `error-page.scss` définit `--variant-color` pour 4 variantes (`not-found`, `connection-lost`, `server-error`, `game-corrupted`), pas pour `invalid-credentials` (ajoutée avec CA-25). Sur cette page, « invalides » est invisible (dégradé sur une variable non définie) et la couleur de l'eyebrow aussi. Capture d'Olivier du 2026-11-01, reproduit en navigateur sans interface sur `main`. Rendu des 4 autres variantes non regardé.
 - **Délai de 10 s non mesuré hors poste d'Olivier** 🟠 : mesuré une fois (10,07 s, Edge, proxy de dev). Choix, pas mesure de référence ; non confirmé sur un déploiement réel.
 - **Un vrai 500 du hub s'affiche « connexion perdue »** 🟠 : le proxy de dev répond 500 quand le hub est éteint, les deux cas sont indiscernables (voir décision #2).
 - **Branches distantes résiduelles** 🟠 : `chore/node-version`, `ci/prove-red`, `ci/workflows`, `ci/prove-lint-red`, plus les branches `session/*` déjà fusionnées. Rien supprimé par Claude ; suppression à faire par Olivier.
@@ -52,6 +51,11 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 - **Le test d'absence ne cible que le mot « reconnexion »** 🟠 : `does not promise an automatic reconnection when the connection is lost` échoue sur « reconnexion » (casse ignorée, mutation « Reconnexion en cours » tuée), mais une autre promesse (« nouvelle tentative », « réessai automatique ») passerait. Acceptable tant que le message tient en deux phrases.
 - **Copies obsolètes du texte hors code** 🟠 : `docs/quiz-buzzer-03-guide-implementation-angular.md` (l. 445) et la maquette `docs/quiz-buzzer-error-page.html` (l. 813) portent encore la promesse. Non modifiées (le guide et la maquette ne sont pas le CDC, aucun CA ne cite le texte).
 - **La variante `connection-lost` ne dit plus rien d'une reprise** 🟠 : vrai au démarrage, insuffisant pour le WebSocket (US-ANG-010), où une reconnexion existe et doit s'afficher. À traiter avec l'émetteur de cette erreur : sans doute un message distinct, pas un retour de la phrase retirée.
+
+## Mesurées pendant `fix(error): make the invalid credentials title readable`
+
+- **Le test vérifie la présence d'une couleur de variante, pas son effet** 🟠 : `gives the $variant screen a variant color…` exige `--variant-color` non vide (jsdom, styles compilés du composant). Il ne détecte ni une mauvaise valeur, ni un dégradé de titre invalide, ni la lisibilité réelle. Vérifié au navigateur seulement pour `invalid-credentials` (smoke test d'Olivier) ; le rendu des quatre autres variantes reste non regardé.
+- **Maquette et design system muets sur la variante `invalid-credentials`** 🟠 : `docs/quiz-buzzer-error-page.html` (4 variantes) et la section 14 de `docs/quiz-buzzer-01-design-system.md` ne la décrivent pas ; le CDC (CA-25) ne fixe que le message. Couleur choisie par défaut (décision #15). À compléter dans un commit `docs` dédié.
 
 ## Reportées du récap du 2026-10-31 (non revérifiées)
 

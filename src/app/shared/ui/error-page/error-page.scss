@@ -43,6 +43,17 @@
   --variant-glow: var(--semantic-danger-glow);
 }
 
+/* Fond ambiant — invalid-credentials (rouge, refus d'authentification) */
+[data-testid="error-screen"][data-variant="invalid-credentials"] {
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 30%, rgba(239, 68, 68, 0.10), transparent 70%),
+    radial-gradient(ellipse 60% 30% at 50% 70%, rgba(239, 68, 68, 0.04), transparent 70%),
+    var(--bg-base);
+  --variant-color: var(--semantic-danger);
+  --variant-soft: var(--semantic-danger-soft);
+  --variant-glow: var(--semantic-danger-glow);
+}
+
 /* Fond ambiant — game-corrupted (rouge profond + magenta, critique) */
 [data-testid="error-screen"][data-variant="game-corrupted"] {
   background:

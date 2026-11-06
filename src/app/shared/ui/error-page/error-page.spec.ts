@@ -55,6 +55,19 @@ describe("ErrorPage", () => {
         expect(page?.getAttribute('data-variant')).toBe(variant);
     });
 
+    it.each<{ variant: ErrorContext['variant'], call: (s: ErrorService) => void }>([
+        { variant: 'not-found', call: s => s.notFound() },
+        { variant: 'connection-lost', call: s => s.connectionLost() },
+        { variant: 'server-error', call: s => s.serverError() },
+        { variant: 'game-corrupted', call: s => s.gameCorrupted() },
+        { variant: 'invalid-credentials', call: s => s.invalidCredentials() }
+    ])("gives the $variant screen a variant color so its title stays readable", async ({ call }) => {
+        call(TestBed.inject(ErrorService));
+        await fixture.whenStable();
+        const screen: HTMLElement = fixture.nativeElement.querySelector('[data-testid="error-screen"]');
+        expect(getComputedStyle(screen).getPropertyValue('--variant-color')).not.toBe('');
+    });
+
     it("clears the error when user asks to return on homepage once the session is ready", async () => {
         const service = TestBed.inject(ErrorService);
         service.notFound();

@@ -18,7 +18,6 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 
 ## Mesurées pendant `chore(authentication): expose the session token and its readiness`
 
-- **`AuthService` ne peut pas servir de `TokenProvider` au WebSocket** 🟠 : le port (`websocket.service.ts`) exige `token()` et `refresh()` ; `AuthService` expose maintenant `getToken()` et `isReady()`, sans `refresh()` (CA-11, CA-12). À réconcilier quand `WebSocketService` sera injecté : adapter le port (consommateur) plutôt qu'ouvrir de nouveau le signal.
 - **`isReady()` = présence du token** 🟠 : `true` dès qu'un token est stocké, `false` avant et après un échec. Au refresh (CA-12 à CA-16), un token expiré resterait « prêt » ; à retravailler avec le CA-5 (`authGuard`).
 
 ## Mesurées pendant `chore(authentication): attach the session token to every request`
@@ -88,8 +87,13 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **Poste d'Olivier parfois en retard sur `main`** 🟠 : discipline `git pull --ff-only` après chaque fusion.
 - **Entre dépôts** 🟠 : `ADMIN_PASSWORD=dev-password` du `.env` local du hub ; preuve du hub faite sous Node 22 alors qu'il exige `>=26 <27`. Les dettes du hub vivent dans le `DEBTS.md` du hub.
 
+## Mesurées pendant `chore(websocket): align the token port with the authentication service`
+
+- **`AuthService` n'a pas `refresh()`, que le port `TokenProvider` exige** 🟠 : la lecture du token est alignée (`getToken()`, décision #16), mais `AuthService` ne satisfait toujours pas le port (CA-11, CA-12). Aucun test ne prouve la compatibilité : l'alignement de `getToken()` tient à la convention, pas au compilateur. À prouver (injecter `AuthService` comme `TokenProvider`) quand `refresh()` sera ajouté.
+
 ## Levées
 
+- ~~Le port `TokenProvider` exigeait un signal qu'`AuthService` n'expose plus~~ : le port lit `getToken()` (`chore(websocket): align the token port with the authentication service`, décision #16) ; reste `refresh()` (voir ci-dessus).
 - ~~Refus du guard non observé au navigateur~~ : observé sur le hub réel le 2026-11-05 (smoke test d'Olivier) : après l'échec du démarrage, « Retour à l'accueil » efface l'erreur, `/` mène à `/dashboard`, le guard renvoie vers `/error` (page vide, voir `ErrorPage.goHome()`).
 - ~~`/dashboard` n'est joignable que par son URL~~ : la racine `/` y redirige (`feat(routing): open the dashboard when the application starts at the root`), observé sur le hub réel le 2026-11-05 (smoke test d'Olivier : `/` -> `/dashboard`, titre rendu, POST du token en 200).
 - ~~`authGuard` sans consommateur, non observable~~ : branché sur `/dashboard` (`feat(dashboard): protect the dashboard page until the session is ready`), chemin « session prête » observé au navigateur le 2026-11-04.

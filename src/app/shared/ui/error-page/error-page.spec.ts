@@ -119,7 +119,7 @@ describe("ErrorPage", () => {
 
     it.each<{ variant: ErrorContext['variant'], call: (s: ErrorService) => void, message: string }>([
         { variant: 'not-found', call: s => s.notFound(), message: "Le lien que vous avez suivi est cassé ou la ressource a été supprimée. Vérifiez l'URL ou retournez à l'accueil pour repartir d'un endroit connu." },
-        { variant: 'connection-lost', call: s => s.connectionLost(), message: "L'application n'arrive plus à communiquer avec le serveur Quiz Buzzer. Cela peut être un problème temporaire de réseau ou un redémarrage du hub. Nous tentons une reconnexion automatique." },
+        { variant: 'connection-lost', call: s => s.connectionLost(), message: "L'application n'arrive plus à communiquer avec le serveur Quiz Buzzer. Cela peut être un problème temporaire de réseau ou un redémarrage du hub." },
         { variant: 'server-error', call: s => s.serverError(), message: "Une erreur inattendue s'est produite côté hub. Ce n'est pas un problème lié à votre action — l'incident a été enregistré dans les logs et peut être consulté pour diagnostic." },
         { variant: 'game-corrupted', call: s => s.gameCorrupted(), message: "L'état de la partie « Soirée découverte du monde » est devenu incohérent et ne peut pas être restauré. Cela peut arriver suite à un crash du hub ou une déconnexion prolongée. Les scores enregistrés jusqu'ici sont conservés en sécurité." },
         { variant: 'invalid-credentials', call : s => s.invalidCredentials(), message: "L'application n'a pas pu se connecter au serveur Quiz Buzzer. Les identifiants ne sont pas corrects." }
@@ -129,6 +129,14 @@ describe("ErrorPage", () => {
         await fixture.whenStable();
         const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
         expect(messageField.textContent).toContain(message);
+    });
+
+    it("does not promise an automatic reconnection when the connection is lost", async () => {
+        const service = TestBed.inject(ErrorService);
+        service.connectionLost();
+        await fixture.whenStable();
+        const messageField = fixture.nativeElement.querySelector('[data-testid="message"]');
+        expect(messageField.textContent.toLowerCase()).not.toContain('reconnexion');
     });
 
     it("renders a label for Home button", async () => {

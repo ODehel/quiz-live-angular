@@ -19,7 +19,7 @@ const VARIANT_CONFIGS: Record<ErrorContext['variant'], ErrorVariantConfig> = {
             { content: "Le hub " },
             { content: "ne répond plus", colored: true }
         ],
-        message: "L'application n'arrive plus à communiquer avec le serveur Quiz Buzzer. Cela peut être un problème temporaire de réseau ou un redémarrage du hub. Nous tentons une reconnexion automatique."
+        message: "L'application n'arrive plus à communiquer avec le serveur Quiz Buzzer. Cela peut être un problème temporaire de réseau ou un redémarrage du hub."
     },
     "invalid-credentials": {
         icon: "shield-x",

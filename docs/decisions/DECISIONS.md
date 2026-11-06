@@ -45,3 +45,7 @@ Option B retenue par Olivier. `ErrorPage.goHome()` n'efface l'erreur que si `Aut
 
 ## #14 — Le message « connexion perdue » ne promet pas de reconnexion et ne donne pas de consigne
 Choix d'Olivier : retirer la dernière phrase (« Nous tentons une reconnexion automatique. »), le CDC interdisant tout retry de l'initialisation (CA-24). Variante écartée : la remplacer par une consigne (« Rechargez la page ») : une promesse de plus tant que le bouton de la page ne relance rien (voir `DEBTS.md`). Le texte reste valable pour le démarrage ; le WebSocket (US-ANG-010) aura besoin d'un message propre. Aucun CA ne cite le texte : le CDC n'est pas modifié. (fix(error): remove the automatic reconnection promise at startup)
+
+
+## #15 — La variante `invalid-credentials` est rouge (`--semantic-danger`), le CDC étant muet
+Le CDC (CA-25), la maquette de la page d'erreur (4 variantes) et la section 14 du design system ne disent rien de la couleur de cette variante, ajoutée avec CA-25. Choix d'Olivier : `--semantic-danger` (rouge), au sens que le design system donne à ce jeton (« invalidation, suppression ») ; un refus d'authentification rend l'application inutilisable, ce qui exclut l'ambre (« alertes douces »). Bloc calqué sur `server-error`. Variante écartée : `--semantic-warning` (ambre, comme `connection-lost`). Contrepartie : `server-error` partage la même couleur, seuls l'icône (`shield-x`), l'eyebrow et le titre les distinguent. Le design system et la maquette ne sont pas modifiés (voir `DEBTS.md`). (fix(error): make the invalid credentials title readable)

@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-06.
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-07.
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -75,8 +75,6 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **Écrasement silencieux possible du `environment.ts` local** 🟠.
 - **Build de production dépendant du réseau (fonts), non couvert par la CI** 🟠.
 - **`engines` racine non discriminant** 🟠.
-- **Forme d'`environment` ≠ spec** 🟠 : `wsUrl` absent (CA-6).
-- **`WebSocketService` non câblé** 🟠 : jamais injecté hors specs.
 - **Code de fermeture `4004` hors US** 🟠 : `goToError` testé mais non spécifié dans US-ANG-001.
 - **Fixture d'auth en camelCase** 🟠 : format du hub (`expires_in`, `token_type`) à confronter à la spec.
 - **Indentation des `it.each` de `confirm-dialog.spec.ts`** 🟠.
@@ -96,10 +94,19 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 - **`attempt` n'est jamais remis à zéro** 🟠 : après une connexion réussie suivie d'une coupure, le backoff repart du dernier délai atteint au lieu de 1 s (CA-9 : « 1 s, 2 s, 4 s… »). Aucun test ne le verrouille. À traiter avec la réception de `auth_success` (CA-8), seul signal fiable d'une connexion aboutie : `onopen` ne prouve pas l'authentification.
 - **Un `refresh()` rejeté dans `onclose` (code `4002`) n'est pas capturé** 🟠 : la promesse du gestionnaire est rejetée sans `catch`, et aucune reconnexion n'est armée. À reprendre avec CA-15 (3 tentatives à 5 s, puis fermeture et reconnexion complète).
-- **Le service n'a jamais tourné sur un vrai `WebSocket`** 🟠 : seul `FakeSocket` l'exerce. Le défaut corrigé ici (envoi avant ouverture, `InvalidStateError` constaté sous Node 22) en était la preuve. Un smoke test réel reste impossible tant que le service n'est pas câblé (voir `WebSocketService` non câblé).
+- **Le service n'a jamais tourné sur un vrai `WebSocket`** 🟠 : seul `FakeSocket` l'exerce. Le défaut corrigé ici (envoi avant ouverture, `InvalidStateError` constaté sous Node 22) en était la preuve. Le service est câblé depuis `feat(websocket): connect to the hub once the session is ready` : le smoke test réel (navigateur et hub) reste à faire.
+
+## Mesurées pendant `feat(websocket): connect to the hub once the session is ready`
+
+- **`ErrorNavigator` factice** 🟠 : `app.config.ts` passe `{ goToError: () => { } }`. Un code `4004` (session remplacée) arrête la reconnexion sans rien afficher. À remplacer par la session B (variante d'erreur propre au WebSocket, voir la note de la décision #14 sur le texte « connexion perdue »).
+- **Une exception synchrone de `new WebSocket(...)` empêche le démarrage** 🟠 : `connect()` est appelé dans l'initialiseur sans `try/catch`. Une `wsUrl` invalide (valeur de production mal injectée, par exemple) ferait échouer le démarrage de l'application au lieu de la seule socket.
+- **Trois doublures de socket dans les specs** 🟡 : `FakeSocket` (`websocket.service.spec.ts`), `FakeSocket` (`app.config.websocket.spec.ts`) et `InertSocket` (`app.config.spec.ts`). À mutualiser dans une aide de test partagée si une quatrième apparaît.
+- **Le build de production n'a pas été exécuté** 🟡 : le téléchargement des polices Google est refusé (403) depuis l'environnement de session ; la valeur de production de `wsUrl` n'est vérifiée que par `tsc`.
 
 ## Levées
 
+- ~~Forme d'`environment` ≠ spec (`wsUrl` absent, CA-6)~~ : `wsUrl` ajouté aux deux environnements (`feat(websocket): connect to the hub once the session is ready`, décision #19).
+- ~~`WebSocketService` non câblé~~ : fourni par `app.config.ts` et connecté une fois la session prête (décision #19) ; le chemin « vraie socket » reste à observer (voir l'entrée « jamais tourné sur un vrai `WebSocket` »).
 - ~~`AuthService` incomplet vs spec (`getToken()`, `isReady`, `refresh()` absents)~~ : `getToken()` et `isReady()` existaient déjà (l'entrée était périmée) ; `refresh()` ajouté (`chore(authentication): refresh the session token on demand`, décision #17).
 - ~~`AuthService` n'a pas `refresh()`, que le port `TokenProvider` exige~~ : `refresh()` ajouté, compatibilité prouvée au compilateur (`const provider: TokenProvider = service` dans `auth.service.spec.ts`).
 - ~~Le port `TokenProvider` exigeait un signal qu'`AuthService` n'expose plus~~ : le port lit `getToken()` (`chore(websocket): align the token port with the authentication service`, décision #16) ; reste `refresh()` (voir ci-dessus).

@@ -5,4 +5,6 @@
 export const environment = {
   username: 'admin',
   password: 'dev-password',
+  // Le proxy de dev (proxy.conf.json) ne couvre que /api : la socket joint le hub directement (PORT=3000 par défaut).
+  wsUrl: 'ws://localhost:3000/ws',
 };

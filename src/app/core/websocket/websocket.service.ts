@@ -35,6 +35,9 @@ export class WebSocketService {
     websocket.onmessage = (event) => {
       this._messages$.next(event.data);
       if (this.isAuthSuccess(event.data)) this.attempt = 0;
+      if (this.isTokenExpiringSoon(event.data)) {
+        this.tokenProvider.refresh().catch(() => { /* échec ignoré : relances = CA-15 */ });
+      }
     };
     websocket.onclose = async (event) => {
       if (event.code === 4004) {
@@ -58,10 +61,18 @@ export class WebSocketService {
   }
 
   private isAuthSuccess(data: string): boolean {
+    return this.messageType(data) === 'auth_success';
+  }
+
+  private isTokenExpiringSoon(data: string): boolean {
+    return this.messageType(data) === 'token_expiring_soon';
+  }
+
+  private messageType(data: string): unknown {
     try {
-      return JSON.parse(data).type === 'auth_success';
+      return JSON.parse(data).type;
     } catch {
-      return false;
+      return undefined;
     }
   }
 

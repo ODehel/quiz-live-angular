@@ -53,7 +53,7 @@ describe("WebSocket service", () => {
         };
         fakeTokenProvider = {
             getToken: vi.fn<() => string | null>(() => 'fake-jwt'),
-            refresh: vi.fn<() => Promise<void>>()
+            refresh: vi.fn<() => Promise<void>>(() => Promise.resolve())
         };
         fakeErrorNavigator = { goToError: vi.fn<() => void>() };
         service = new WebSocketService(ctor, 'ws://test/ws', fakeTokenProvider, fakeErrorNavigator);
@@ -101,6 +101,30 @@ describe("WebSocket service", () => {
         expect(() => capturedSocket!.simulateMessage('not json')).not.toThrow();
 
         expect(received).toBe('not json');
+    });
+    it("should refresh the token when the hub announces its expiry", () => {
+        service.connect();
+
+        capturedSocket!.simulateMessage('{"type":"token_expiring_soon"}');
+
+        expect(fakeTokenProvider.refresh).toHaveBeenCalledTimes(1);
+    });
+    it("should stay silent when the token refresh fails after the expiry announcement", async () => {
+        // Fonction nue, pas un spy : vi.fn() attache un gestionnaire aux promesses qu'il retourne
+        // et masquerait un rejet non capturé.
+        let refreshCalls = 0;
+        Object.assign(fakeTokenProvider, {
+            refresh: () => {
+                refreshCalls++;
+                return Promise.reject(new Error('network down'));
+            }
+        });
+        service.connect();
+
+        capturedSocket!.simulateMessage('{"type":"token_expiring_soon"}');
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+        expect(refreshCalls).toBe(1);
     });
     describe("under simulated time", () => {
         beforeEach(() => vi.useFakeTimers());

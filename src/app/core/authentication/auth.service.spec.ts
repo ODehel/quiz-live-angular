@@ -5,6 +5,7 @@ import { provideHttpClient } from "@angular/common/http";
 import { environment } from '../../../environments/environment';
 import { Mock } from "vitest";
 import { ErrorService } from "../error/error.service";
+import { TokenProvider } from "../websocket/websocket.service";
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -103,6 +104,53 @@ describe('AuthService', () => {
     expect(fakeErrorService.invalidCredentials).not.toHaveBeenCalled();
   });
 
+  describe('refresh', () => {
+    it('can serve as the token provider of the WebSocket', () => {
+      const provider: TokenProvider = service;
+      expect(provider.getToken()).toBeNull();
+    });
+
+    it('requests a new token with the credentials from environment', () => {
+      service.refresh();
+      const req = httpMock.expectOne('/api/v1/token');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({
+        username: environment.username,
+        password: environment.password
+      });
+    });
+
+    it('replaces the token with the new one', async () => {
+      const initialization = service.initialize();
+      httpMock.expectOne('/api/v1/token').flush({ token: 'first-jwt' });
+      await initialization;
+
+      const refresh = service.refresh();
+      httpMock.expectOne('/api/v1/token').flush({ token: 'second-jwt' });
+      await refresh;
+
+      expect(service.getToken()).toEqual('second-jwt');
+    });
+
+    it.each([
+      ['invalid credentials', { status: 401, statusText: 'Unauthorized' }],
+      ['a server error', { status: 500, statusText: 'Internal Server Error' }],
+    ])('keeps the current token and stays ready after %s, and reports the failure to the caller', async (_cause, response) => {
+      const initialization = service.initialize();
+      httpMock.expectOne('/api/v1/token').flush({ token: 'first-jwt' });
+      await initialization;
+
+      const refresh = service.refresh();
+      httpMock.expectOne('/api/v1/token').flush(null, response);
+
+      await expect(refresh).rejects.toBeDefined();
+      expect(service.getToken()).toEqual('first-jwt');
+      expect(service.isReady()).toBe(true);
+      expect(fakeErrorService.invalidCredentials).not.toHaveBeenCalled();
+      expect(fakeErrorService.connectionLost).not.toHaveBeenCalled();
+    });
+  });
+
   describe('when the server does not answer', () => {
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());
@@ -119,6 +167,19 @@ describe('AuthService', () => {
       expect(req.cancelled).toBe(true);
       expect(fakeErrorService.connectionLost).toHaveBeenCalled();
       expect(fakeErrorService.invalidCredentials).not.toHaveBeenCalled();
+    });
+
+    it('gives up refreshing after 10 seconds and reports the failure to the caller', async () => {
+      const outcome = service.refresh().then(() => 'resolved', () => 'rejected');
+      const req = httpMock.expectOne('/api/v1/token');
+
+      await vi.advanceTimersByTimeAsync(9_999);
+      expect(req.cancelled).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(req.cancelled).toBe(true);
+      expect(await outcome).toBe('rejected');
+      expect(fakeErrorService.connectionLost).not.toHaveBeenCalled();
     });
   });
 });

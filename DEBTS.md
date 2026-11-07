@@ -86,7 +86,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `chore(authentication): refresh the session token on demand`
 
-- **Appels concurrents à `refresh()` non dédoublonnés** 🟠 : chaque appel émet son propre `POST /api/v1/token`. Un `4002` et un `token_expiring_soon` proches (CA-11, CA-12) en lanceraient deux, le dernier arrivé gagnant. À trancher avec CA-12 (partager la requête en vol, ou laisser faire).
+- **Appels concurrents à `refresh()` non dédoublonnés** 🟠 : chaque appel émet son propre `POST /api/v1/token`. Un `4002` et un `token_expiring_soon` proches (CA-11, CA-12) en lanceraient deux, le dernier arrivé gagnant. Tranché au CA-12 : on laisse faire (décision #22) ; le cas est désormais atteignable en production et reste ouvert tant que la requête n'est pas partagée.
 - **Un `refresh()` en échec ne touche ni au token ni à `isReady()`** 🟠 : choix d'Olivier (décision #17). L'appelant reçoit l'erreur ; rien n'invalide un token que le serveur a déjà refusé (voir l'entrée sur `isReady()`). À reprendre avec CA-15.
 - **Le spec d'`AuthService` importe le port du WebSocket** 🟠 : la preuve de compatibilité (`const provider: TokenProvider = service`) place un import `core/authentication` → `core/websocket` dans un spec. Sans effet en prod ; si le port migre ou est scindé, la preuve suit.
 
@@ -117,7 +117,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `fix(websocket): restart the reconnection delay once the hub accepts the session`
 
-- **Le service analyse chaque message entrant pour y lire `auth_success`** 🟡 : `isAuthSuccess` fait un `JSON.parse` par message, en plus de l'émission brute sur `messages$`. Les futurs consommateurs (CA-8, CA-12, CA-14) analyseront le même JSON chacun de leur côté. À mutualiser quand `messages$` sera filtré et typé.
+- **Le service analyse chaque message entrant pour y lire son type** 🟡 : la lecture du type est mutualisée (`messageType`), mais `auth_success` et `token_expiring_soon` sont testés l'un après l'autre : deux `JSON.parse` par message, en plus de l'émission brute sur `messages$`. Les futurs consommateurs (CA-14) en ajouteraient un chacun. À résoudre en lisant le type une seule fois par message, quand `messages$` sera filtré et typé.
 - **La remise à zéro du délai n'a jamais été observée sur un vrai hub** 🟡 : verrouillée par trois tests sous temps simulé (remise à zéro sur `auth_success`, pas sur un autre message, pas sur un message non JSON), pas au navigateur. Observable avec deux coupures successives après une reprise réussie.
 
 ## Mesurées pendant `fix(websocket): keep the connection attempts going when the token refresh fails`
@@ -125,3 +125,10 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **Un refresh en échec relance la connexion avec le token expiré** 🟠 : le hub refusera de nouveau (`4002`) et la boucle reconnexion / refus tourne indéfiniment au rythme du backoff (plafonné à 30 s). Les 3 tentatives à 5 s puis la fermeture de CA-15 n'existent pas. À reprendre avec CA-15.
 - **L'échec du refresh est avalé sans trace** 🟡 : le `catch` est vide, rien n'est journalisé ni signalé à l'utilisateur. À reconsidérer avec CA-15.
 - **La reprise après un `refresh()` rejeté n'a jamais été observée sur un vrai hub** 🟡 : test unitaire seulement (choix d'Olivier). Observable avec un `JWT_EXPIRATION_TIME` court côté hub et le hub joignable mais `POST /api/v1/token` en échec.
+
+## Mesurées pendant `feat(websocket): refresh the token when the hub announces its expiry`
+
+- **Le nouveau token n'est jamais renvoyé au hub** 🟠 : `token_expiring_soon` déclenche `POST /api/v1/token`, mais sans CA-13 la connexion ouverte garde l'ancien token (pas de `auth_refresh`). Le refresh ne prolonge donc pas la session en cours ; le hub la fermera à l'expiration (`4002`), et la reconnexion repartira alors avec le token rafraîchi. À reprendre avec CA-13.
+- **L'échec du refresh proactif est avalé sans trace** 🟡 : le `catch` est vide, aucune relance (CA-15 prévoit 3 tentatives à 5 s) ni journal. À reprendre avec CA-15.
+- **`token_expiring_soon` n'a jamais été reçu d'un vrai hub** 🟡 : test unitaire seulement (aucun smoke test, voir le handoff). Reste à vérifier que le hub l'émet et sous quelle forme (`JWT_EXPIRATION_TIME` court côté hub).
+- **Les doublures `vi.fn()` masquent les rejets non capturés** 🟡 : `vi.fn()` attache un gestionnaire aux promesses qu'il retourne ; un test sur « pas de rejet non capturé » doit employer une fonction nue (c'est le cas du test « should stay silent… »). Le `refresh` du `beforeEach` est resté un `vi.fn` : un futur test de ce type doit le remplacer, pas s'y fier.

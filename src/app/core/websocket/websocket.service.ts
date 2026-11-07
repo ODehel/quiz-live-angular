@@ -9,6 +9,7 @@ export interface ErrorNavigator {
   goToError(): void;
 }
 export interface SocketLike {
+  onopen: (() => void) | null;
   onmessage: ((event: MessageEvent) => void) | null;
   onclose: ((event: CloseEvent) => void) | null;
   send(message: string): void;
@@ -44,7 +45,9 @@ export class WebSocketService {
       this.attempt++;
     };
 
-    websocket.send(JSON.stringify({ type: 'auth', token: this.tokenProvider.getToken() }));
+    websocket.onopen = () => {
+      websocket.send(JSON.stringify({ type: 'auth', token: this.tokenProvider.getToken() }));
+    };
   }
 
   private backOffDelay(attempt: number): number {

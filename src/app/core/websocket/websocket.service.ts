@@ -9,13 +9,13 @@ export interface ErrorNavigator {
   goToError(): void;
 }
 export interface SocketLike {
-  onopen: (() => void) | null;
+  onopen: ((event: Event) => void) | null;
   onmessage: ((event: MessageEvent) => void) | null;
   onclose: ((event: CloseEvent) => void) | null;
   send(message: string): void;
 }
 
-type WebSocketCtor = new (url: string) => SocketLike;
+export type WebSocketCtor =new (url: string) => SocketLike;
 
 export class WebSocketService {
   private attempt: number = 0;

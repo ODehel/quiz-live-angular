@@ -6,6 +6,9 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/authentication/auth.interceptor';
 import { AuthService } from './core/authentication/auth.service';
 import { ErrorService } from './core/error/error.service';
+import { WEB_SOCKET_CONSTRUCTOR } from './core/websocket/websocket.providers';
+import { WebSocketService } from './core/websocket/websocket.service';
+import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,6 +28,22 @@ export const appConfig: ApplicationConfig = {
         }
       });
     }),
-    provideAppInitializer(() => inject(AuthService).initialize())
+    {
+      provide: WebSocketService,
+      useFactory: () => new WebSocketService(
+        inject(WEB_SOCKET_CONSTRUCTOR),
+        environment.wsUrl,
+        inject(AuthService),
+        { goToError: () => { } }
+      )
+    },
+    provideAppInitializer(async () => {
+      const authService = inject(AuthService);
+      const webSocketService = inject(WebSocketService);
+      await authService.initialize();
+      if (authService.isReady()) {
+        webSocketService.connect();
+      }
+    })
   ]
 };

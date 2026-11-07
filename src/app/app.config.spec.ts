@@ -6,6 +6,15 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { appConfig } from './app.config';
 import { ErrorService } from './core/error/error.service';
 import { ErrorPage } from './shared/ui/error-page/error-page';
+import { WEB_SOCKET_CONSTRUCTOR } from './core/websocket/websocket.providers';
+
+// Ces tests ne portent pas sur la socket (voir app.config.websocket.spec.ts) : une doublure inerte évite d'ouvrir une vraie connexion.
+class InertSocket {
+  onopen = null;
+  onmessage = null;
+  onclose = null;
+  send(): void { }
+}
 
 describe('appConfig', () => {
   let initStatus: ApplicationInitStatus;
@@ -18,7 +27,11 @@ describe('appConfig', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [...appConfig.providers, provideHttpClientTesting()],
+      providers: [
+        ...appConfig.providers,
+        provideHttpClientTesting(),
+        { provide: WEB_SOCKET_CONSTRUCTOR, useValue: InertSocket },
+      ],
     });
   });
 

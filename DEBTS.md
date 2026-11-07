@@ -92,6 +92,12 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **Un `refresh()` en échec ne touche ni au token ni à `isReady()`** 🟠 : choix d'Olivier (décision #17). L'appelant reçoit l'erreur ; rien n'invalide un token que le serveur a déjà refusé (voir l'entrée sur `isReady()`). À reprendre avec CA-15.
 - **Le spec d'`AuthService` importe le port du WebSocket** 🟠 : la preuve de compatibilité (`const provider: TokenProvider = service`) place un import `core/authentication` → `core/websocket` dans un spec. Sans effet en prod ; si le port migre ou est scindé, la preuve suit.
 
+## Mesurées pendant `fix(websocket): send the auth message once the socket is open`
+
+- **`attempt` n'est jamais remis à zéro** 🟠 : après une connexion réussie suivie d'une coupure, le backoff repart du dernier délai atteint au lieu de 1 s (CA-9 : « 1 s, 2 s, 4 s… »). Aucun test ne le verrouille. À traiter avec la réception de `auth_success` (CA-8), seul signal fiable d'une connexion aboutie : `onopen` ne prouve pas l'authentification.
+- **Un `refresh()` rejeté dans `onclose` (code `4002`) n'est pas capturé** 🟠 : la promesse du gestionnaire est rejetée sans `catch`, et aucune reconnexion n'est armée. À reprendre avec CA-15 (3 tentatives à 5 s, puis fermeture et reconnexion complète).
+- **Le service n'a jamais tourné sur un vrai `WebSocket`** 🟠 : seul `FakeSocket` l'exerce. Le défaut corrigé ici (envoi avant ouverture, `InvalidStateError` constaté sous Node 22) en était la preuve. Un smoke test réel reste impossible tant que le service n'est pas câblé (voir `WebSocketService` non câblé).
+
 ## Levées
 
 - ~~`AuthService` incomplet vs spec (`getToken()`, `isReady`, `refresh()` absents)~~ : `getToken()` et `isReady()` existaient déjà (l'entrée était périmée) ; `refresh()` ajouté (`chore(authentication): refresh the session token on demand`, décision #17).

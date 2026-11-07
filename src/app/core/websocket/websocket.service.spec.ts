@@ -3,6 +3,7 @@ import { SocketLike, WebSocketService } from './websocket.service';
 class FakeSocket implements SocketLike {
     constructor(public readonly url: string) { }
 
+    onopen: (() => void) | null = null;
     onmessage: ((event: MessageEvent) => void) | null = null;
     onclose: ((event: CloseEvent) => void) | null = null;
 
@@ -10,6 +11,12 @@ class FakeSocket implements SocketLike {
 
     send(data: string): void {
         this.sentMessage = data;
+    }
+
+    simulateOpen(): void {
+        if (this.onopen !== null) {
+            this.onopen();
+        }
     }
 
     simulateMessage(data: string): void {
@@ -55,13 +62,27 @@ describe("WebSocket service", () => {
         service.connect();
         expect(capturedSocket!.url).toBe('ws://test/ws');
     });
+    it("should not send anything before the socket is open", () => {
+        service.connect();
+        expect(capturedSocket!.sentMessage).toBeUndefined();
+    });
     it("should send auth as type", () => {
         service.connect();
+        capturedSocket!.simulateOpen();
         expect(JSON.parse(capturedSocket!.sentMessage!).type).toBe("auth");
     });
     it("should send the token", () => {
         service.connect();
+        capturedSocket!.simulateOpen();
         expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('fake-jwt');
+    });
+    it("should read the token when the socket opens, not when it is created", () => {
+        service.connect();
+        fakeTokenProvider.getToken.mockReturnValue('late-jwt');
+
+        capturedSocket!.simulateOpen();
+
+        expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('late-jwt');
     });
     it("should emit incoming messages", () => {
         service.connect();
@@ -128,6 +149,7 @@ describe("WebSocket service", () => {
 
             capturedSocket!.simulateClose();
             vi.advanceTimersByTime(1000);
+            capturedSocket!.simulateOpen();
 
             expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('refreshed-jwt');
         });
@@ -164,6 +186,7 @@ describe("WebSocket service", () => {
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(callCount).toBe(2);
+            capturedSocket!.simulateOpen();
             expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('refreshed-jwt');
         });
         it("should navigate to the error page without reconnecting when the server closes with 4004", () => {

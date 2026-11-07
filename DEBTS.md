@@ -92,7 +92,6 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `fix(websocket): send the auth message once the socket is open`
 
-- **`attempt` n'est jamais remis à zéro** 🟠 : après une connexion réussie suivie d'une coupure, le backoff repart du dernier délai atteint au lieu de 1 s (CA-9 : « 1 s, 2 s, 4 s… »). Aucun test ne le verrouille. À traiter avec la réception de `auth_success` (CA-8), seul signal fiable d'une connexion aboutie : `onopen` ne prouve pas l'authentification. Depuis le câblage, le défaut est atteignable : après une reprise, la coupure suivante attendrait le dernier délai (jusqu'à 30 s) dès la première tentative (conséquence du code, non observée).
 - **Un `refresh()` rejeté dans `onclose` (code `4002`) n'est pas capturé** 🟠 : la promesse du gestionnaire est rejetée sans `catch`, et aucune reconnexion n'est armée. À reprendre avec CA-15 (3 tentatives à 5 s, puis fermeture et reconnexion complète).
 
 ## Mesurées pendant `feat(websocket): connect to the hub once the session is ready`
@@ -118,3 +117,8 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - ~~Lint jamais exécuté sous Node 26~~ : runner Node 26.13.0 et poste (Node 26.13.0).
 - ~~`ng serve` jamais exécuté dans un navigateur~~ : démarrage, 401, hub absent et hub muet observés le 2026-11-01 (smoke test de #14).
 - ~~Hypothèse du récap « `provideHttpClient` absent, échec d'injection probable »~~ : infirmée, `HttpClient` est `providedIn: 'root'` en Angular 21.2 (décision #3).
+
+## Mesurées pendant `fix(websocket): restart the reconnection delay once the hub accepts the session`
+
+- **Le service analyse chaque message entrant pour y lire `auth_success`** 🟡 : `isAuthSuccess` fait un `JSON.parse` par message, en plus de l'émission brute sur `messages$`. Les futurs consommateurs (CA-8, CA-12, CA-14) analyseront le même JSON chacun de leur côté. À mutualiser quand `messages$` sera filtré et typé.
+- **La remise à zéro du délai n'a jamais été observée sur un vrai hub** 🟡 : verrouillée par trois tests sous temps simulé (remise à zéro sur `auth_success`, pas sur un autre message, pas sur un message non JSON), pas au navigateur. Observable avec deux coupures successives après une reprise réussie.

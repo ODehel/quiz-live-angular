@@ -93,6 +93,15 @@ describe("WebSocket service", () => {
 
         expect(received).toBe('{"type":"auth_success"}');
     });
+    it("should still emit a message that is not JSON", () => {
+        service.connect();
+        let received: string | undefined;
+        service.messages$.subscribe((m) => received = m);
+
+        expect(() => capturedSocket!.simulateMessage('not json')).not.toThrow();
+
+        expect(received).toBe('not json');
+    });
     describe("under simulated time", () => {
         beforeEach(() => vi.useFakeTimers());
         afterEach(() => vi.useRealTimers());
@@ -142,6 +151,59 @@ describe("WebSocket service", () => {
 
             vi.advanceTimersByTime(1);          // total 30000
             expect(callCount).toBe(7);          // ← MORD : plafonné reconnecte, 32000 dormirait encore
+        });
+        it("should restart the reconnection delay at 1 second once the hub accepts the session", () => {
+            service.connect();
+
+            // Deux coupures sans aboutir : attempt monte à 2 (délais 1 s puis 2 s).
+            capturedSocket!.simulateClose();
+            vi.advanceTimersByTime(1000);
+            capturedSocket!.simulateClose();
+            vi.advanceTimersByTime(2000);
+            expect(callCount).toBe(3);
+
+            // Le hub accepte la session : la série d'échecs est terminée.
+            capturedSocket!.simulateMessage('{"type":"auth_success"}');
+
+            // Nouvelle coupure : sans remise à zéro, le délai serait 4 s.
+            capturedSocket!.simulateClose();
+            vi.advanceTimersByTime(1000);
+
+            expect(callCount).toBe(4);
+        });
+        it("should keep the reconnection delay growing when the hub sends any other message", () => {
+            service.connect();
+
+            capturedSocket!.simulateClose();
+            vi.advanceTimersByTime(1000);
+            capturedSocket!.simulateClose();
+            vi.advanceTimersByTime(2000);
+            expect(callCount).toBe(3);
+
+            capturedSocket!.simulateMessage('{"type":"game_state_sync"}');
+
+            capturedSocket!.simulateClose();
+            vi.advanceTimersByTime(1000);
+            expect(callCount).toBe(3);          // le délai reste 4 s
+
+            vi.advanceTimersByTime(3000);
+            expect(callCount).toBe(4);
+        });
+        it("should keep the reconnection delay growing when the hub sends a message that is not JSON", () => {
+            service.connect();
+
+            capturedSocket!.simulateClose();
+            vi.advanceTimersByTime(1000);
+            capturedSocket!.simulateClose();
+            vi.advanceTimersByTime(2000);
+            expect(callCount).toBe(3);
+
+            capturedSocket!.simulateMessage('not json');
+
+            capturedSocket!.simulateClose();
+            vi.advanceTimersByTime(1000);
+
+            expect(callCount).toBe(3);
         });
         it("should send the current token on reconnection", () => {
             service.connect();

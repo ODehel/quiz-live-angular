@@ -34,6 +34,7 @@ export class WebSocketService {
 
     websocket.onmessage = (event) => {
       this._messages$.next(event.data);
+      if (this.isAuthSuccess(event.data)) this.attempt = 0;
     };
     websocket.onclose = async (event) => {
       if (event.code === 4004) {
@@ -48,6 +49,14 @@ export class WebSocketService {
     websocket.onopen = () => {
       websocket.send(JSON.stringify({ type: 'auth', token: this.tokenProvider.getToken() }));
     };
+  }
+
+  private isAuthSuccess(data: string): boolean {
+    try {
+      return JSON.parse(data).type === 'auth_success';
+    } catch {
+      return false;
+    }
   }
 
   private backOffDelay(attempt: number): number {

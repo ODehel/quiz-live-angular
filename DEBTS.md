@@ -92,19 +92,20 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `fix(websocket): send the auth message once the socket is open`
 
-- **`attempt` n'est jamais remis à zéro** 🟠 : après une connexion réussie suivie d'une coupure, le backoff repart du dernier délai atteint au lieu de 1 s (CA-9 : « 1 s, 2 s, 4 s… »). Aucun test ne le verrouille. À traiter avec la réception de `auth_success` (CA-8), seul signal fiable d'une connexion aboutie : `onopen` ne prouve pas l'authentification.
+- **`attempt` n'est jamais remis à zéro** 🟠 : après une connexion réussie suivie d'une coupure, le backoff repart du dernier délai atteint au lieu de 1 s (CA-9 : « 1 s, 2 s, 4 s… »). Aucun test ne le verrouille. À traiter avec la réception de `auth_success` (CA-8), seul signal fiable d'une connexion aboutie : `onopen` ne prouve pas l'authentification. Depuis le câblage, le défaut est atteignable : après une reprise, la coupure suivante attendrait le dernier délai (jusqu'à 30 s) dès la première tentative (conséquence du code, non observée).
 - **Un `refresh()` rejeté dans `onclose` (code `4002`) n'est pas capturé** 🟠 : la promesse du gestionnaire est rejetée sans `catch`, et aucune reconnexion n'est armée. À reprendre avec CA-15 (3 tentatives à 5 s, puis fermeture et reconnexion complète).
-- **Le service n'a jamais tourné sur un vrai `WebSocket`** 🟠 : seul `FakeSocket` l'exerce. Le défaut corrigé ici (envoi avant ouverture, `InvalidStateError` constaté sous Node 22) en était la preuve. Le service est câblé depuis `feat(websocket): connect to the hub once the session is ready` : le smoke test réel (navigateur et hub) reste à faire.
 
 ## Mesurées pendant `feat(websocket): connect to the hub once the session is ready`
 
 - **`ErrorNavigator` factice** 🟠 : `app.config.ts` passe `{ goToError: () => { } }`. Un code `4004` (session remplacée) arrête la reconnexion sans rien afficher. À remplacer par la session B (variante d'erreur propre au WebSocket, voir la note de la décision #14 sur le texte « connexion perdue »).
 - **Une exception synchrone de `new WebSocket(...)` empêche le démarrage** 🟠 : `connect()` est appelé dans l'initialiseur sans `try/catch`. Une `wsUrl` invalide (valeur de production mal injectée, par exemple) ferait échouer le démarrage de l'application au lieu de la seule socket.
+- **Les codes de fermeture `4002` et `4004` n'ont jamais été observés sur un vrai hub** 🟡 : le smoke test du 2026-11-07 a couvert l'ouverture, la coupure et la reprise, pas l'expiration du token (`JWT_EXPIRATION_TIME` court côté hub) ni le remplacement de session (deux connexions du même compte).
 - **Trois doublures de socket dans les specs** 🟡 : `FakeSocket` (`websocket.service.spec.ts`), `FakeSocket` (`app.config.websocket.spec.ts`) et `InertSocket` (`app.config.spec.ts`). À mutualiser dans une aide de test partagée si une quatrième apparaît.
 - **Le build de production n'a pas été exécuté** 🟡 : le téléchargement des polices Google est refusé (403) depuis l'environnement de session ; la valeur de production de `wsUrl` n'est vérifiée que par `tsc`.
 
 ## Levées
 
+- ~~Le service n'a jamais tourné sur un vrai `WebSocket`~~ : observé le 2026-11-07 au navigateur sur le hub réel (smoke test d'Olivier de `feat(websocket): connect to the hub once the session is ready`) : `101` sur `ws://localhost:3000/ws`, trame `auth` puis `auth_success`, reprise après coupure (5 tentatives en échec puis connexion, token réutilisé sans nouveau `POST /api/v1/token`). Les codes `4002` et `4004` n'ont pas été provoqués (voir l'entrée dédiée).
 - ~~Forme d'`environment` ≠ spec (`wsUrl` absent, CA-6)~~ : `wsUrl` ajouté aux deux environnements (`feat(websocket): connect to the hub once the session is ready`, décision #19).
 - ~~`WebSocketService` non câblé~~ : fourni par `app.config.ts` et connecté une fois la session prête (décision #19) ; le chemin « vraie socket » reste à observer (voir l'entrée « jamais tourné sur un vrai `WebSocket` »).
 - ~~`AuthService` incomplet vs spec (`getToken()`, `isReady`, `refresh()` absents)~~ : `getToken()` et `isReady()` existaient déjà (l'entrée était périmée) ; `refresh()` ajouté (`chore(authentication): refresh the session token on demand`, décision #17).

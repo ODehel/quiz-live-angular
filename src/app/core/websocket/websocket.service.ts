@@ -1,8 +1,7 @@
-import { Signal } from "@angular/core";
 import { Observable, Subject } from "rxjs";
 
 export interface TokenProvider {
-  readonly token: Signal<string | null>;
+  getToken(): string | null;
   refresh(): Promise<void>;
 }
 
@@ -45,7 +44,7 @@ export class WebSocketService {
       this.attempt++;
     };
 
-    websocket.send(JSON.stringify({ type: 'auth', token: this.tokenProvider.token() }));
+    websocket.send(JSON.stringify({ type: 'auth', token: this.tokenProvider.getToken() }));
   }
 
   private backOffDelay(attempt: number): number {

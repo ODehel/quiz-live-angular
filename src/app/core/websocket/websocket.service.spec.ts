@@ -1,4 +1,3 @@
-import { signal, WritableSignal } from '@angular/core';
 import { SocketLike, WebSocketService } from './websocket.service';
 
 class FakeSocket implements SocketLike {
@@ -31,7 +30,7 @@ describe("WebSocket service", () => {
     let capturedSocket: FakeSocket | undefined;
     let service: WebSocketService;
     let fakeTokenProvider: {
-        token: WritableSignal<string>;
+        getToken: ReturnType<typeof vi.fn<() => string | null>>;
         refresh: ReturnType<typeof vi.fn<() => Promise<void>>>;
     };
     let fakeErrorNavigator: { goToError: ReturnType<typeof vi.fn<() => void>> };
@@ -45,7 +44,10 @@ describe("WebSocket service", () => {
                 callCount++;
             }
         };
-        fakeTokenProvider = { token: signal('fake-jwt'), refresh: vi.fn<() => Promise<void>>() };
+        fakeTokenProvider = {
+            getToken: vi.fn<() => string | null>(() => 'fake-jwt'),
+            refresh: vi.fn<() => Promise<void>>()
+        };
         fakeErrorNavigator = { goToError: vi.fn<() => void>() };
         service = new WebSocketService(ctor, 'ws://test/ws', fakeTokenProvider, fakeErrorNavigator);
     });
@@ -122,7 +124,7 @@ describe("WebSocket service", () => {
         });
         it("should send the current token on reconnection", () => {
             service.connect();
-            fakeTokenProvider.token.set('refreshed-jwt');
+            fakeTokenProvider.getToken.mockReturnValue('refreshed-jwt');
 
             capturedSocket!.simulateClose();
             vi.advanceTimersByTime(1000);
@@ -143,7 +145,7 @@ describe("WebSocket service", () => {
             fakeTokenProvider.refresh = vi.fn(() =>
                 new Promise<void>((resolve) => {
                     resolveRefresh = () => {
-                        fakeTokenProvider.token.set('refreshed-jwt');
+                        fakeTokenProvider.getToken.mockReturnValue('refreshed-jwt');
                         resolve();
                     };
                 })

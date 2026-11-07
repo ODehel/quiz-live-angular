@@ -22,15 +22,23 @@ export class AuthService {
 
     async initialize(): Promise<void> {
         try {
-            const response = await firstValueFrom(this.http.post<{ token: string }>("/api/v1/token",
-                {
-                    username: environment.username,
-                    password: environment.password
-                }).pipe(timeout(TOKEN_REQUEST_TIMEOUT_MS)));
-            this._token.set(response.token);
+            await this.obtainToken();
         } catch (error) {
             this.reportFailure(error);
         }
+    }
+
+    async refresh(): Promise<void> {
+        await this.obtainToken();
+    }
+
+    private async obtainToken(): Promise<void> {
+        const response = await firstValueFrom(this.http.post<{ token: string }>("/api/v1/token",
+            {
+                username: environment.username,
+                password: environment.password
+            }).pipe(timeout(TOKEN_REQUEST_TIMEOUT_MS)));
+        this._token.set(response.token);
     }
 
     private reportFailure(error: unknown): void {

@@ -18,7 +18,7 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 
 ## Mesurées pendant `chore(authentication): expose the session token and its readiness`
 
-- **`isReady()` = présence du token** 🟠 : `true` dès qu'un token est stocké, `false` avant et après un échec. Au refresh (CA-12 à CA-16), un token expiré resterait « prêt » ; à retravailler avec le CA-5 (`authGuard`).
+- **`isReady()` = présence du token** 🟠 : `true` dès qu'un token est stocké, `false` avant et après un échec. Au refresh (CA-12 à CA-16), un token expiré resterait « prêt » ; à retravailler avec le CA-5 (`authGuard`). `refresh()` (ajouté) n'y change rien : un refresh en échec laisse le token courant et `isReady()` intacts (décision #17).
 
 ## Mesurées pendant `chore(authentication): attach the session token to every request`
 
@@ -77,7 +77,6 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **`engines` racine non discriminant** 🟠.
 - **Forme d'`environment` ≠ spec** 🟠 : `wsUrl` absent (CA-6).
 - **`WebSocketService` non câblé** 🟠 : jamais injecté hors specs.
-- **`AuthService` incomplet vs spec** 🟠 : `getToken()`, `isReady`, `refresh()` absents (CA-2, CA-11).
 - **Code de fermeture `4004` hors US** 🟠 : `goToError` testé mais non spécifié dans US-ANG-001.
 - **Fixture d'auth en camelCase** 🟠 : format du hub (`expires_in`, `token_type`) à confronter à la spec.
 - **Indentation des `it.each` de `confirm-dialog.spec.ts`** 🟠.
@@ -87,12 +86,16 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **Poste d'Olivier parfois en retard sur `main`** 🟠 : discipline `git pull --ff-only` après chaque fusion.
 - **Entre dépôts** 🟠 : `ADMIN_PASSWORD=dev-password` du `.env` local du hub ; preuve du hub faite sous Node 22 alors qu'il exige `>=26 <27`. Les dettes du hub vivent dans le `DEBTS.md` du hub.
 
-## Mesurées pendant `chore(websocket): align the token port with the authentication service`
+## Mesurées pendant `chore(authentication): refresh the session token on demand`
 
-- **`AuthService` n'a pas `refresh()`, que le port `TokenProvider` exige** 🟠 : la lecture du token est alignée (`getToken()`, décision #16), mais `AuthService` ne satisfait toujours pas le port (CA-11, CA-12). Aucun test ne prouve la compatibilité : l'alignement de `getToken()` tient à la convention, pas au compilateur. À prouver (injecter `AuthService` comme `TokenProvider`) quand `refresh()` sera ajouté.
+- **Appels concurrents à `refresh()` non dédoublonnés** 🟠 : chaque appel émet son propre `POST /api/v1/token`. Un `4002` et un `token_expiring_soon` proches (CA-11, CA-12) en lanceraient deux, le dernier arrivé gagnant. À trancher avec CA-12 (partager la requête en vol, ou laisser faire).
+- **Un `refresh()` en échec ne touche ni au token ni à `isReady()`** 🟠 : choix d'Olivier (décision #17). L'appelant reçoit l'erreur ; rien n'invalide un token que le serveur a déjà refusé (voir l'entrée sur `isReady()`). À reprendre avec CA-15.
+- **Le spec d'`AuthService` importe le port du WebSocket** 🟠 : la preuve de compatibilité (`const provider: TokenProvider = service`) place un import `core/authentication` → `core/websocket` dans un spec. Sans effet en prod ; si le port migre ou est scindé, la preuve suit.
 
 ## Levées
 
+- ~~`AuthService` incomplet vs spec (`getToken()`, `isReady`, `refresh()` absents)~~ : `getToken()` et `isReady()` existaient déjà (l'entrée était périmée) ; `refresh()` ajouté (`chore(authentication): refresh the session token on demand`, décision #17).
+- ~~`AuthService` n'a pas `refresh()`, que le port `TokenProvider` exige~~ : `refresh()` ajouté, compatibilité prouvée au compilateur (`const provider: TokenProvider = service` dans `auth.service.spec.ts`).
 - ~~Le port `TokenProvider` exigeait un signal qu'`AuthService` n'expose plus~~ : le port lit `getToken()` (`chore(websocket): align the token port with the authentication service`, décision #16) ; reste `refresh()` (voir ci-dessus).
 - ~~Refus du guard non observé au navigateur~~ : observé sur le hub réel le 2026-11-05 (smoke test d'Olivier) : après l'échec du démarrage, « Retour à l'accueil » efface l'erreur, `/` mène à `/dashboard`, le guard renvoie vers `/error` (page vide, voir `ErrorPage.goHome()`).
 - ~~`/dashboard` n'est joignable que par son URL~~ : la racine `/` y redirige (`feat(routing): open the dashboard when the application starts at the root`), observé sur le hub réel le 2026-11-05 (smoke test d'Olivier : `/` -> `/dashboard`, titre rendu, POST du token en 200).

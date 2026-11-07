@@ -90,10 +90,6 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **Un `refresh()` en échec ne touche ni au token ni à `isReady()`** 🟠 : choix d'Olivier (décision #17). L'appelant reçoit l'erreur ; rien n'invalide un token que le serveur a déjà refusé (voir l'entrée sur `isReady()`). À reprendre avec CA-15.
 - **Le spec d'`AuthService` importe le port du WebSocket** 🟠 : la preuve de compatibilité (`const provider: TokenProvider = service`) place un import `core/authentication` → `core/websocket` dans un spec. Sans effet en prod ; si le port migre ou est scindé, la preuve suit.
 
-## Mesurées pendant `fix(websocket): send the auth message once the socket is open`
-
-- **Un `refresh()` rejeté dans `onclose` (code `4002`) n'est pas capturé** 🟠 : la promesse du gestionnaire est rejetée sans `catch`, et aucune reconnexion n'est armée. À reprendre avec CA-15 (3 tentatives à 5 s, puis fermeture et reconnexion complète).
-
 ## Mesurées pendant `feat(websocket): connect to the hub once the session is ready`
 
 - **`ErrorNavigator` factice** 🟠 : `app.config.ts` passe `{ goToError: () => { } }`. Un code `4004` (session remplacée) arrête la reconnexion sans rien afficher. À remplacer par la session B (variante d'erreur propre au WebSocket, voir la note de la décision #14 sur le texte « connexion perdue »).
@@ -104,6 +100,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Levées
 
+- ~~Un `refresh()` rejeté dans `onclose` (code `4002`) n'est pas capturé~~ : capturé, la reconnexion repart quand même (`fix(websocket): keep the connection attempts going when the token refresh fails`, décision #21). Verrouillé par un test sous temps simulé ; comportement non observé sur un vrai hub (voir l'entrée ci-dessous).
 - ~~Le service n'a jamais tourné sur un vrai `WebSocket`~~ : observé le 2026-11-07 au navigateur sur le hub réel (smoke test d'Olivier de `feat(websocket): connect to the hub once the session is ready`) : `101` sur `ws://localhost:3000/ws`, trame `auth` puis `auth_success`, reprise après coupure (5 tentatives en échec puis connexion, token réutilisé sans nouveau `POST /api/v1/token`). Les codes `4002` et `4004` n'ont pas été provoqués (voir l'entrée dédiée).
 - ~~Forme d'`environment` ≠ spec (`wsUrl` absent, CA-6)~~ : `wsUrl` ajouté aux deux environnements (`feat(websocket): connect to the hub once the session is ready`, décision #19).
 - ~~`WebSocketService` non câblé~~ : fourni par `app.config.ts` et connecté une fois la session prête (décision #19) ; le chemin « vraie socket » a été observé au smoke test du 2026-11-07 (voir la levée suivante).
@@ -122,3 +119,9 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 - **Le service analyse chaque message entrant pour y lire `auth_success`** 🟡 : `isAuthSuccess` fait un `JSON.parse` par message, en plus de l'émission brute sur `messages$`. Les futurs consommateurs (CA-8, CA-12, CA-14) analyseront le même JSON chacun de leur côté. À mutualiser quand `messages$` sera filtré et typé.
 - **La remise à zéro du délai n'a jamais été observée sur un vrai hub** 🟡 : verrouillée par trois tests sous temps simulé (remise à zéro sur `auth_success`, pas sur un autre message, pas sur un message non JSON), pas au navigateur. Observable avec deux coupures successives après une reprise réussie.
+
+## Mesurées pendant `fix(websocket): keep the connection attempts going when the token refresh fails`
+
+- **Un refresh en échec relance la connexion avec le token expiré** 🟠 : le hub refusera de nouveau (`4002`) et la boucle reconnexion / refus tourne indéfiniment au rythme du backoff (plafonné à 30 s). Les 3 tentatives à 5 s puis la fermeture de CA-15 n'existent pas. À reprendre avec CA-15.
+- **L'échec du refresh est avalé sans trace** 🟡 : le `catch` est vide, rien n'est journalisé ni signalé à l'utilisateur. À reconsidérer avec CA-15.
+- **La reprise après un `refresh()` rejeté n'a jamais été observée sur un vrai hub** 🟡 : test unitaire seulement (choix d'Olivier). Observable avec un `JWT_EXPIRATION_TIME` court côté hub et le hub joignable mais `POST /api/v1/token` en échec.

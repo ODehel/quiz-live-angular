@@ -251,6 +251,15 @@ describe("WebSocket service", () => {
             capturedSocket!.simulateOpen();
             expect(JSON.parse(capturedSocket!.sentMessage!).token).toBe('refreshed-jwt');
         });
+        it("should keep reconnecting when the token refresh fails after a 4002 close", async () => {
+            fakeTokenProvider.refresh.mockRejectedValue(new Error('network down'));
+            service.connect();
+
+            capturedSocket!.simulateClose(4002);
+            await vi.advanceTimersByTimeAsync(1000);
+
+            expect(callCount).toBe(2);
+        });
         it("should navigate to the error page without reconnecting when the server closes with 4004", () => {
             service.connect();
             capturedSocket!.simulateClose(4004);

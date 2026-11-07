@@ -41,7 +41,13 @@ export class WebSocketService {
         this.errorNavigator.goToError();
         return;
       }
-      if (event.code === 4002) await this.tokenProvider.refresh();
+      if (event.code === 4002) {
+        try {
+          await this.tokenProvider.refresh();
+        } catch {
+          // Refresh échoué : on reconnecte quand même, avec le token courant.
+        }
+      }
       setTimeout(() => this.connect(), this.backOffDelay(this.attempt));
       this.attempt++;
     };

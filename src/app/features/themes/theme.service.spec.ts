@@ -27,7 +27,7 @@ describe('ThemeService', () => {
     req.flush({ data: [], page: 1, limit: 100, total: 0, total_pages: 0 });
   });
 
-  it('gives the themes with their id and name, and the total counted by the hub', () => {
+  it('gives the themes with their id, name and dates, and the total counted by the hub', () => {
     let result: unknown;
     service.list().subscribe(list => result = list);
 
@@ -44,8 +44,8 @@ describe('ThemeService', () => {
 
     expect(result).toEqual({
       themes: [
-        { id: 'theme-1', name: 'Géographie' },
-        { id: 'theme-2', name: 'Histoire' },
+        { id: 'theme-1', name: 'Géographie', createdAt: '2026-10-14T09:00:00.000Z', lastUpdatedAt: null },
+        { id: 'theme-2', name: 'Histoire', createdAt: '2026-10-15T09:00:00.000Z', lastUpdatedAt: '2026-11-05T10:00:00.000Z' },
       ],
       total: 12,
     });

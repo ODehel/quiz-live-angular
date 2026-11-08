@@ -189,3 +189,11 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **Noms longs non observés** 🟡 : `overflow-wrap: anywhere` est posé sur le titre de carte, mais aucun thème de 40 caractères (maximum du hub) n'a été affiché.
 - **`CONVENTIONS-TECHNIQUES-ANGULAR.md` décrit un autre code que le dépôt** 🟠 : Jest, fichiers `.component.ts/.html/.css`, classes `…Component`, alors que le code réel utilise Vitest, `dashboard.ts` / `error-page.ts`, des classes sans suffixe et du SCSS. Cette session suit le code réel (`theme-list.ts`, `ThemeList`) ; le document est à aligner dans une session `docs`.
 - **`session-open.ps1` et `session-close.ps1` appellent `npx.cmd` et `npm.cmd`** 🟡 : hors Windows leurs vérifications sont rouges (« tool not found ») alors que le code est bon, constaté en clôturant cette session depuis le bac à sable de Claude ; les vérifications du handoff ont été relevées à la main. À rendre portables (`npx` / `npm` selon le système) si des sessions se déroulent ailleurs que sur le poste d'Olivier.
+
+## Mesurées pendant `feat(themes): show when each theme was created and last renamed`
+
+- **Le jour affiché dépend du fuseau du navigateur** 🟡 : `DatePipe` formate en heure locale ; un thème créé à 23 h 30 UTC s'affiche au lendemain en France. Voulu (c'est le jour que voit l'utilisateur), mais non verrouillé par un test : les fixtures sont à midi UTC pour ne pas dépendre du fuseau de la machine de test.
+- **Style des dates sans test** 🟠 : `.theme-card-date` (SCSS, mono 12 px, `--text-secondary`) et la colonne `.theme-card-body` vérifiés au smoke test seulement, comme le reste de la page.
+- **Une date illisible s'afficherait vide ou en erreur** 🟡 : `created_at` est supposé être un ISO 8601 valide ; une valeur invalide fait lever `DatePipe` à l'affichage. Aucun cas observé, le hub les produit lui-même.
+- **Le smoke test crée un thème « Musique classique »** 🟡 : seul moyen d'obtenir une date de modification avant CA-11 (renommage dans l'interface) ; `-Cleanup` le supprime avec les autres.
+

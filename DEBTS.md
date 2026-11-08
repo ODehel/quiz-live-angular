@@ -128,7 +128,12 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `feat(websocket): refresh the token when the hub announces its expiry`
 
-- **Le nouveau token n'est jamais renvoyé au hub** 🟠 : `token_expiring_soon` déclenche `POST /api/v1/token`, mais sans CA-13 la connexion ouverte garde l'ancien token (pas de `auth_refresh`). Le refresh ne prolonge donc pas la session en cours ; le hub la fermera à l'expiration (`4002`), et la reconnexion repartira alors avec le token rafraîchi. À reprendre avec CA-13.
 - **L'échec du refresh proactif est avalé sans trace** 🟡 : le `catch` est vide, aucune relance (CA-15 prévoit 3 tentatives à 5 s) ni journal. À reprendre avec CA-15.
 - **`token_expiring_soon` n'a jamais été reçu d'un vrai hub** 🟡 : test unitaire seulement (aucun smoke test, voir le handoff). Reste à vérifier que le hub l'émet et sous quelle forme (`JWT_EXPIRATION_TIME` court côté hub).
 - **Les doublures `vi.fn()` masquent les rejets non capturés** 🟡 : `vi.fn()` attache un gestionnaire aux promesses qu'il retourne ; un test sur « pas de rejet non capturé » doit employer une fonction nue (c'est le cas du test « should stay silent… »). Le `refresh` du `beforeEach` est resté un `vi.fn` : un futur test de ce type doit le remplacer, pas s'y fier.
+
+## Mesurées pendant `feat(websocket): send the refreshed token to the hub`
+
+- **Un `send` en échec est avalé comme un refresh en échec** 🟡 : le `catch` de CA-12 couvre aussi l'envoi de `auth_refresh` (socket fermée entre l'annonce et la fin du refresh : rien n'est journalisé ni relancé). La fermeture déclenche déjà la reconnexion, avec le token rafraîchi. À reconsidérer avec CA-15.
+- **Le token renvoyé est relu au retour du refresh, pas celui que ce refresh a obtenu** 🟡 : le port `refresh()` ne retourne rien, `getToken()` donne le dernier token stocké. Avec deux refresh concurrents (voir la dette sur les appels concurrents), le dernier arrivé gagne ; un `getToken()` à `null` serait envoyé tel quel.
+- **`auth_refresh` n'a jamais été reçu d'un vrai hub** 🟡 : test unitaire seulement. Le `auth_success` qui doit le suivre n'est pas exploité (CA-14, aucun timer de refresh n'existe encore). À observer au smoke test avec un `JWT_EXPIRATION_TIME` court côté hub.

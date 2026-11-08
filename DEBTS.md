@@ -170,3 +170,13 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **Texte, icône et couleur de `session-replaced` choisis sans maquette** 🟡 : seul le message est validé par Olivier ; le surtitre « Session remplacée », le titre « Un autre onglet a pris la main », l'icône `app-window` et le ton ambre (comme `connection-lost`) sont des choix de Claude. `docs/quiz-buzzer-error-page.html` et le design system sont muets (même cas que `invalid-credentials`). À compléter dans un commit `docs` dédié.
 - **`error.service.spec.ts` ne couvre pas `invalid-credentials`** 🟡 : la table `it.each` des variantes s'arrête à `game-corrupted` (plus `session-replaced` désormais) ; `invalidCredentials()` n'est testé qu'à travers `AuthService` et la page d'erreur. Test né vert à prouver par mutation quand on l'ajoutera.
 - **Le remplacement de session n'est pas journalisé côté hub** 🟡 : le hub ne laisse aucune trace (`DEBTS.md` du hub, « Remplacement de session silencieux dans les logs »). Le smoke test ne peut donc s'appuyer que sur l'écran du premier onglet, pas sur les logs du hub. Confirmé au smoke test du 2026-11-08 : le journal du hub n'a aucune ligne de remplacement ou de fermeture, seulement `WEBSOCKET_CONNECTED` / `WEBSOCKET_AUTHENTICATED` (`admin_connected` reste à 1).
+
+
+## Mesurées pendant `docs(themes): align the themes list mockup and spec with the hub API`
+
+- **Thème enrichi retiré de la maquette (description, icône choisie, compteurs, répartition par niveau)** 🟠 : le hub ne porte que `name`, `created_at` et `last_updated_at` (US-004, décision #29). À rouvrir si l'on veut ces champs : une US côté hub d'abord (champs `description` et `icon`, compteurs de questions et de quiz), puis la maquette et la spec Angular.
+- **Recherche, filtres et tri de la liste des thèmes retirés** 🟡 : ils dépendaient des compteurs, et la liste est limitée à 100 thèmes sans paramètre de recherche côté hub. À rouvrir avec le thème enrichi ci-dessus.
+- **Une seule icône pour tous les thèmes** 🟡 : `folder-tree`, celle de la navigation, faute d'icône stockée. Les cartes sont distinguées par le seul nom.
+- **Compteurs de la barre latérale (Thèmes 12, Questions 147, Quiz 8, Jingles 23) toujours dans la maquette** 🟡 : le shell n'est pas touché ici, et aucun endpoint ne fournit ces totaux sans charger chaque liste. À trancher dans la session `feat(layout)`.
+- **Dates de la maquette fictives, état vide montré en dessous de la grille** 🟡 : la maquette n'est pas un rendu fidèle du comportement (l'état vide remplace la grille dans l'application).
+

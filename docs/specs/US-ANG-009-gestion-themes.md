@@ -27,7 +27,7 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 | # | Critère | Résultat attendu |
 |---|---|---|
 | CA-1 | Au chargement, `GET /api/v1/themes?page=1&limit=100` est appelé | Tous les thèmes en une seule page — le volume attendu (< 50) ne justifie pas de pagination côté UI |
-| CA-2 | Chaque ligne affiche : nom du thème, date de création | Tri par date décroissante — garanti par le serveur |
+| CA-2 | Chaque carte affiche : une icône générique, le nom du thème, sa date de création et, si `last_updated_at` n'est pas `null`, sa date de dernière modification | Cartes en grille (maquette `docs/quiz-buzzer-themes-list.html`) ; tri par date décroissante — garanti par le serveur |
 | CA-3 | Le total de thèmes est affiché en en-tête | Issu du champ `total` de la réponse serveur |
 | CA-4 | Si la liste est vide, un message d'invitation "Aucun thème — créez votre premier thème" est affiché | Pas de tableau vide |
 
@@ -37,12 +37,12 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 
 | # | Critère | Résultat attendu |
 |---|---|---|
-| CA-5 | Un bouton "Nouveau thème" ouvre un champ de saisie inline ou un dialogue minimal | Le champ reçoit le focus automatiquement à l'ouverture |
+| CA-5 | Un bouton "Nouveau thème" ouvre une modale ne contenant que le champ « Nom du thème » | Le champ reçoit le focus automatiquement à l'ouverture ; ni description ni icône (le hub n'accepte que `name`, voir US-004) |
 | CA-6 | La saisie est validée localement : non vide, commence par une majuscule, entre 3 et 40 caractères | Message d'erreur inline si invalide — aucun appel réseau |
-| CA-7 | Si valide, `POST /api/v1/themes` est appelé avec `{ "name": "<nom>" }` | En cas de `201` : la liste est rechargée, toast "Thème créé", champ fermé |
-| CA-8 | En cas de `409 THEME_ALREADY_EXISTS` : message d'erreur inline "Un thème porte déjà ce nom" | Le champ reste ouvert |
-| CA-9 | La touche `Échap` ferme le champ sans appel réseau | Comportement clavier natif |
-| CA-10 | La touche `Entrée` soumet le formulaire (équivalent au clic sur "Créer") | Comportement clavier natif |
+| CA-7 | Si valide, `POST /api/v1/themes` est appelé avec `{ "name": "<nom>" }` | En cas de `201` : la liste est rechargée, toast "Thème créé", modale fermée |
+| CA-8 | En cas de `409 THEME_ALREADY_EXISTS` : message d'erreur inline "Un thème porte déjà ce nom" | La modale reste ouverte |
+| CA-9 | La touche `Échap` ferme la modale sans appel réseau | Comportement clavier natif |
+| CA-10 | La touche `Entrée` soumet le formulaire (équivalent au clic sur "Créer le thème" ou "Enregistrer") | Comportement clavier natif |
 
 ---
 
@@ -50,12 +50,12 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 
 | # | Critère | Résultat attendu |
 |---|---|---|
-| CA-11 | Un clic sur le nom d'un thème (ou sur le bouton crayon) le place en mode édition inline | Le champ prérempli reçoit le focus — le nom original est conservé comme valeur initiale |
+| CA-11 | Le bouton crayon d'une carte ouvre la même modale qu'à la création, en mode renommage | Titre « Renommer le thème », bouton « Enregistrer » ; le champ prérempli reçoit le focus — le nom original est conservé comme valeur initiale |
 | CA-12 | Les mêmes règles de validation locale qu'à la création s'appliquent | Non vide, majuscule initiale, 3–40 caractères |
-| CA-13 | Si les données sont identiques au nom original (comparaison insensible à la casse), aucun appel réseau n'est émis | Navigation directe vers la sortie du mode édition — conformité avec US-004 CA-22 côté serveur |
+| CA-13 | Si les données sont identiques au nom original (comparaison insensible à la casse), aucun appel réseau n'est émis | La modale se ferme — conformité avec US-004 CA-22 côté serveur |
 | CA-14 | Si modifié, `PUT /api/v1/themes/:id` est appelé avec `{ "name": "<nouveau_nom>" }` | En cas de `200` : la liste est mise à jour localement, toast "Thème renommé" |
-| CA-15 | En cas de `409 THEME_ALREADY_EXISTS` : message d'erreur inline "Un thème porte déjà ce nom" | Le champ reste en mode édition |
-| CA-16 | La touche `Échap` annule l'édition sans appel réseau | Le nom original est restauré |
+| CA-15 | En cas de `409 THEME_ALREADY_EXISTS` : message d'erreur inline "Un thème porte déjà ce nom" | La modale reste ouverte |
+| CA-16 | La touche `Échap` ferme la modale sans appel réseau | Le nom original reste affiché sur la carte |
 
 ---
 
@@ -108,12 +108,12 @@ export class ThemeListComponent {
   protected readonly total     = signal<number>(0);
   protected readonly isLoading = signal(true);
 
-  // État du formulaire de création
+  // État de la modale (création ou renommage)
   protected readonly isCreating  = signal(false);
   protected readonly newName     = signal('');
   protected readonly createError = signal<string | null>(null);
 
-  // État d'édition inline — ID du thème en cours d'édition
+  // Mode renommage de la modale — ID du thème en cours de renommage (null en création)
   protected readonly editingId   = signal<string | null>(null);
   protected readonly editingName = signal('');
   protected readonly editError   = signal<string | null>(null);
@@ -172,8 +172,8 @@ export interface Theme {
 | Inclus | Exclu |
 |---|---|
 | Liste complète des thèmes (sans pagination UI) | Pagination côté UI (YAGNI — volume attendu < 50) |
-| Création inline avec validation locale | Import de thèmes depuis un fichier (YAGNI) |
-| Renommage inline avec détection de non-modification | Fusion de thèmes (YAGNI) |
+| Création par modale (nom seul) avec validation locale | Import de thèmes depuis un fichier (YAGNI) |
+| Renommage par la même modale avec détection de non-modification | Fusion de thèmes (YAGNI) |
 | Suppression avec garde `THEME_HAS_QUESTIONS` | Réaffectation des questions avant suppression (YAGNI) |
 | Mise à jour locale du signal après suppression (sans rechargement) | Navigation vers la liste des questions filtrées par thème (YAGNI) |
 | Tests unitaires et d'intégration (couverture ≥ 70 %) | Déploiement / CI-CD |
@@ -186,9 +186,9 @@ export interface Theme {
 
 La regex complète côté serveur (`/^[\p{Lu}][\p{L}\p{N} '\-]{1,38}[\p{L}\p{N}]$/u`) n'est pas reproduite côté Angular (DRY — un seul point de vérité). Angular valide uniquement : non vide, commence par une majuscule, longueur 3–40. Les contraintes plus fines (caractères autorisés, fin par lettre/chiffre) sont validées par le serveur. Si la validation serveur échoue avec un `400 VALIDATION_ERROR`, un message générique "Nom invalide" est affiché.
 
-### Détection de non-modification en édition
+### Détection de non-modification en renommage
 
-En mode édition, si le nom saisi (après `.trim()`) est identique au nom original (comparaison `.toLowerCase()`), aucun appel REST n'est émis — comportement conforme au CA-22 de l'US-004 serveur qui retournerait `200 OK` sans modifier `last_updated_at`. L'économie de l'appel réseau est préférable (KISS).
+En mode renommage, si le nom saisi (après `.trim()`) est identique au nom original (comparaison `.toLowerCase()`), aucun appel REST n'est émis — comportement conforme au CA-22 de l'US-004 serveur qui retournerait `200 OK` sans modifier `last_updated_at`. L'économie de l'appel réseau est préférable (KISS).
 
 ### Suppression — mise à jour locale vs rechargement
 
@@ -212,6 +212,6 @@ Après une suppression réussie (`204`), la liste est mise à jour localement vi
 
 ---
 
-**Dernière mise à jour** : 2026-03-28
+**Dernière mise à jour** : 2026-11-08
 **Statut** : Implémentée
 **Sprint** : 2

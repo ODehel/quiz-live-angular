@@ -87,7 +87,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 ## Mesurées pendant `chore(authentication): refresh the session token on demand`
 
 - **Appels concurrents à `refresh()` non dédoublonnés** 🟠 : chaque appel émet son propre `POST /api/v1/token`. Un `4002` et un `token_expiring_soon` proches (CA-11, CA-12) en lanceraient deux, le dernier arrivé gagnant. Tranché au CA-12 : on laisse faire (décision #22) ; le cas est désormais atteignable en production et reste ouvert tant que la requête n'est pas partagée.
-- **Un `refresh()` en échec ne touche ni au token ni à `isReady()`** 🟠 : choix d'Olivier (décision #17). L'appelant reçoit l'erreur ; rien n'invalide un token que le serveur a déjà refusé (voir l'entrée sur `isReady()`). À reprendre avec CA-15.
+- **Un `refresh()` en échec ne touche ni au token ni à `isReady()`** 🟠 : choix d'Olivier (décision #17). L'appelant reçoit l'erreur ; rien n'invalide un token que le serveur a déjà refusé (voir l'entrée sur `isReady()`). CA-15 ne l'a pas réglé : après 3 échecs la socket est fermée et la reconnexion repart avec ce même token.
 - **Le spec d'`AuthService` importe le port du WebSocket** 🟠 : la preuve de compatibilité (`const provider: TokenProvider = service`) place un import `core/authentication` → `core/websocket` dans un spec. Sans effet en prod ; si le port migre ou est scindé, la preuve suit.
 
 ## Mesurées pendant `feat(websocket): connect to the hub once the session is ready`
@@ -122,25 +122,34 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `fix(websocket): keep the connection attempts going when the token refresh fails`
 
-- **Un refresh en échec relance la connexion avec le token expiré** 🟠 : le hub refusera de nouveau (`4002`) et la boucle reconnexion / refus tourne indéfiniment au rythme du backoff (plafonné à 30 s). Les 3 tentatives à 5 s puis la fermeture de CA-15 n'existent pas. À reprendre avec CA-15.
+- **Un refresh en échec relance la connexion avec le token expiré** 🟠 : le hub refusera de nouveau (`4002`) et la boucle reconnexion / refus tourne indéfiniment au rythme du backoff (plafonné à 30 s). Les 3 tentatives à 5 s puis la fermeture de CA-15 n'existent que pour le refresh proactif (`token_expiring_soon`) ; ce chemin `4002` n'a toujours aucune borne, la spec ne dit rien pour lui (décision #21).
 - **L'échec du refresh est avalé sans trace** 🟡 : le `catch` est vide, rien n'est journalisé ni signalé à l'utilisateur. À reconsidérer avec CA-15.
 - **La reprise après un `refresh()` rejeté n'a jamais été observée sur un vrai hub** 🟡 : test unitaire seulement (choix d'Olivier). Observable avec un `JWT_EXPIRATION_TIME` court côté hub et le hub joignable mais `POST /api/v1/token` en échec.
 
 ## Mesurées pendant `feat(websocket): refresh the token when the hub announces its expiry`
 
-- **L'échec du refresh proactif est avalé sans trace** 🟡 : le `catch` est vide, aucune relance (CA-15 prévoit 3 tentatives à 5 s) ni journal. À reprendre avec CA-15.
+- **L'échec du refresh proactif est avalé sans trace** 🟡 : les relances existent (CA-15, décision #25) mais rien n'est journalisé ni signalé à l'utilisateur, y compris après la 3e défaillance et la fermeture de la socket.
 - **`token_expiring_soon` n'a jamais été reçu d'un vrai hub** 🟠 : le hub ne l'émet pas (US-021 non implémentée, voir « Mesurées pendant `chore(scripts): add a fake hub…` »). Le seul message reçu en vrai est celui d'un faux hub.
 - **Les doublures `vi.fn()` masquent les rejets non capturés** 🟡 : `vi.fn()` attache un gestionnaire aux promesses qu'il retourne ; un test sur « pas de rejet non capturé » doit employer une fonction nue (c'est le cas du test « should stay silent… »). Le `refresh` du `beforeEach` est resté un `vi.fn` : un futur test de ce type doit le remplacer, pas s'y fier.
 
 ## Mesurées pendant `feat(websocket): send the refreshed token to the hub`
 
-- **Un `send` en échec est avalé comme un refresh en échec** 🟡 : le `catch` de CA-12 couvre aussi l'envoi de `auth_refresh` (socket fermée entre l'annonce et la fin du refresh : rien n'est journalisé ni relancé). La fermeture déclenche déjà la reconnexion, avec le token rafraîchi. À reconsidérer avec CA-15.
+- **Un `send` qui lève est traité comme un refresh en échec** 🟡 : le `catch` couvre aussi l'envoi de `auth_refresh`. Une socket fermée entre l'annonce et la fin du refresh n'envoie plus et ne relance plus (garde `isClosed`, décision #25), mais un `send` qui lèverait sur une socket encore ouverte (`InvalidStateError` pendant la connexion) déclencherait une relance de refresh. Non observé, non testé.
 - **Le token renvoyé est relu au retour du refresh, pas celui que ce refresh a obtenu** 🟡 : le port `refresh()` ne retourne rien, `getToken()` donne le dernier token stocké. Avec deux refresh concurrents (voir la dette sur les appels concurrents), le dernier arrivé gagne ; un `getToken()` à `null` serait envoyé tel quel.
 - **`auth_refresh` n'a jamais été reçu d'un vrai hub** 🟠 : le hub l'ignore une fois la session authentifiée (US-021 non implémentée). Le `auth_success` qui doit le suivre n'est pas exploité (CA-14, aucun timer de refresh n'existe encore).
 
 ## Mesurées pendant `chore(scripts): add a fake hub to smoke-test the token refresh`
 
-- **Le hub n'implémente pas US-021** 🟠 : `ws-route.ts` (hub, `deb5465`) n'émet ni `token_expiring_soon` ni `token_expired` et ne traite pas `auth_refresh` ; la fermeture `4002` n'existe qu'à l'authentification initiale. CA-12, CA-13, CA-14 et CA-16 ne peuvent pas être observés sur un vrai hub avant cette implémentation (session du dépôt `quiz-live-server`). Le handoff précédent supposait le contraire (« hub avec `JWT_EXPIRATION_TIME` court »).
-- **Le faux hub prouve le câblage, pas le hub** 🟡 : `scripts/fake-hub.mjs` joue la lecture de US-021 par Claude (annonce après `auth_success`, `auth_success` en réponse à `auth_refresh`). Il ne couvre ni `TOKEN_MISMATCH`, ni `TOKEN_EXPIRED` avec fermeture `4002`, ni `token_expired`. Écart possible avec le vrai hub non détectable ici.
+- **Le hub n'implémente pas US-021** 🟠 : `ws-route.ts` (hub, `deb5465`) n'émet ni `token_expiring_soon` ni `token_expired` et ne traite pas `auth_refresh` ; la fermeture `4002` n'existe qu'à l'authentification initiale. CA-12, CA-13, CA-14, CA-15 et CA-16 ne peuvent pas être observés sur un vrai hub avant cette implémentation (session du dépôt `quiz-live-server`). Le handoff précédent supposait le contraire (« hub avec `JWT_EXPIRATION_TIME` court »).
+- **Le faux hub prouve le câblage, pas le hub** 🟡 : `scripts/fake-hub.mjs` joue la lecture de US-021 par Claude (annonce après `auth_success`, `auth_success` en réponse à `auth_refresh`). Il ne couvre ni `TOKEN_MISMATCH`, ni `TOKEN_EXPIRED` avec fermeture `4002`, ni `token_expired`. Son verdict `--fail-refresh` (3 tentatives, fermeture 1000, reconnexion) est validé par un client Node jetable, pas par un vrai navigateur avant le smoke test d'Olivier. Écart possible avec le vrai hub non détectable ici.
 - **Le faux hub n'est validé que par un client Node jetable** 🟡 : 5 cas rejoués hors dépôt (nominal, échec voulu, client muet, ancien token, échec voulu avec client nominal) ; le verdict n'est confronté à un navigateur qu'au smoke test d'Olivier.
 - **Un onglet a reçu `token_expiring_soon` sans émettre de `POST`** 🟡 : smoke test du 2026-11-08, scénario `--fail-refresh` : `WS #1` (onglet resté ouvert du scénario précédent, reconnecté avec `fake-token-2`) reçoit l'annonce à 11:13:24 ; le hub ne voit aucun `POST /api/v1/token` avant le rechargement de 11:13:30. Non reproduit ni expliqué (onglet en arrière-plan ? requête perdue par le proxy de dev ? refresh non appelé ?). À rejouer avec un seul onglet, la console d'Edge ouverte, avant de s'appuyer sur CA-12 en conditions réelles.
+
+## Mesurées pendant `feat(websocket): retry the token refresh three times before reconnecting`
+
+- **« Jusqu'à 3 fois » lu comme 3 tentatives au total** 🟠 : CA-15 dit « nouvelle tentative après 5 s, jusqu'à 3 fois » puis « après 3 échecs » ; lecture retenue : 3 appels à `refresh()` (2 relances), fermeture au 3e échec (décision #25). Si Olivier voulait 3 relances (4 appels), c'est une constante (`REFRESH_MAX_ATTEMPTS`) et un test à changer.
+- **Les relances de plusieurs annonces se cumulent** 🟡 : deux `token_expiring_soon` rapprochés lancent deux boucles de relances indépendantes (même cause que l'absence de dédoublonnage, décision #22). Aucun cas observé.
+- **Les minuteries de relance ne sont pas annulées à la fermeture** 🟡 : la garde `isClosed` les neutralise au tir (≤ 5 s après), mais elles gardent la socket fermée en mémoire jusque-là. Négligeable.
+- **La fermeture après 3 échecs repart avec le token courant** 🟠 : le hub refuse un token expiré (`4002`) ; ce `4002` relance un `refresh()` (CA-11) puis une reconnexion : la boucle est bornée par le seul backoff (voir l'entrée sur le refresh en échec au `4002`).
+- **Le code de fermeture 1000 est un choix** 🟡 : le code est libre pour une fermeture volontaire côté client (le hub n'en définit aucun pour ce cas) ; `4000-4999` appartient aux codes applicatifs du hub. Non confirmé côté US-021 / US-ANG-010.
+- **CA-15 n'a pas été observé sur un vrai hub** 🟠 : le smoke test se fait contre le faux hub (voir « Le hub n'implémente pas US-021 »).

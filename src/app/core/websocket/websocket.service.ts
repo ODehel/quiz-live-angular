@@ -13,12 +13,17 @@ export interface SocketLike {
   onmessage: ((event: MessageEvent) => void) | null;
   onclose: ((event: CloseEvent) => void) | null;
   send(message: string): void;
+  close(code?: number, reason?: string): void;
 }
 
 export type WebSocketCtor =new (url: string) => SocketLike;
 
+const REFRESH_MAX_ATTEMPTS = 3;
+const REFRESH_RETRY_DELAY_MS = 5000;
+
 export class WebSocketService {
   private attempt: number = 0;
+  private readonly closedSockets = new WeakSet<SocketLike>();
   private readonly _messages$ = new Subject<string>();
   readonly messages$: Observable<string> = this._messages$.asObservable();
 
@@ -36,12 +41,11 @@ export class WebSocketService {
       this._messages$.next(event.data);
       if (this.isAuthSuccess(event.data)) this.attempt = 0;
       if (this.isTokenExpiringSoon(event.data)) {
-        this.tokenProvider.refresh()
-          .then(() => websocket.send(this.tokenMessage('auth_refresh')))
-          .catch(() => { /* échec ignoré : relances = CA-15 */ });
+        this.refreshAndSend(websocket);
       }
     };
     websocket.onclose = async (event) => {
+      this.closedSockets.add(websocket);
       if (event.code === 4004) {
         this.errorNavigator.goToError();
         return;
@@ -60,6 +64,26 @@ export class WebSocketService {
     websocket.onopen = () => {
       websocket.send(this.tokenMessage('auth'));
     };
+  }
+
+  private refreshAndSend(websocket: SocketLike, attempt: number = 1): void {
+    if (this.isClosed(websocket)) return;
+    this.tokenProvider.refresh()
+      .then(() => {
+        if (!this.isClosed(websocket)) websocket.send(this.tokenMessage('auth_refresh'));
+      })
+      .catch(() => {
+        if (this.isClosed(websocket)) return;
+        if (attempt < REFRESH_MAX_ATTEMPTS) {
+          setTimeout(() => this.refreshAndSend(websocket, attempt + 1), REFRESH_RETRY_DELAY_MS);
+        } else {
+          websocket.close(1000, 'Token refresh failed');
+        }
+      });
+  }
+
+  private isClosed(websocket: SocketLike): boolean {
+    return this.closedSockets.has(websocket);
   }
 
   private tokenMessage(type: 'auth' | 'auth_refresh'): string {

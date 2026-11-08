@@ -8,9 +8,15 @@ class FakeSocket implements SocketLike {
     onclose: ((event: CloseEvent) => void) | null = null;
 
     public sentMessage: string | undefined;
+    public closeCalls = 0;
 
     send(data: string): void {
         this.sentMessage = data;
+    }
+
+    close(code: number = 1000): void {
+        this.closeCalls++;
+        this.simulateClose(code);
     }
 
     simulateOpen(): void {
@@ -305,6 +311,96 @@ describe("WebSocket service", () => {
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(callCount).toBe(2);
+        });
+        it("should retry the token refresh after 5 seconds when it fails after the expiry announcement", async () => {
+            fakeTokenProvider.refresh.mockRejectedValue(new Error('network down'));
+            service.connect();
+
+            capturedSocket!.simulateMessage('{"type":"token_expiring_soon"}');
+            await vi.advanceTimersByTimeAsync(4999);
+            expect(fakeTokenProvider.refresh).toHaveBeenCalledTimes(1);
+
+            await vi.advanceTimersByTimeAsync(1);
+            expect(fakeTokenProvider.refresh).toHaveBeenCalledTimes(2);
+        });
+        it("should send the refreshed token to the hub when a retry of the token refresh succeeds", async () => {
+            fakeTokenProvider.refresh
+                .mockRejectedValueOnce(new Error('network down'))
+                .mockImplementationOnce(async () => { fakeTokenProvider.getToken.mockReturnValue('retried-jwt'); });
+            service.connect();
+            capturedSocket!.simulateOpen();
+
+            capturedSocket!.simulateMessage('{"type":"token_expiring_soon"}');
+            await vi.advanceTimersByTimeAsync(5000);
+
+            expect(JSON.parse(capturedSocket!.sentMessage!)).toEqual({ type: 'auth_refresh', token: 'retried-jwt' });
+        });
+        it("should give up the token refresh after three failed attempts", async () => {
+            fakeTokenProvider.refresh.mockRejectedValue(new Error('network down'));
+            service.connect();
+
+            capturedSocket!.simulateMessage('{"type":"token_expiring_soon"}');
+            await vi.advanceTimersByTimeAsync(60000);
+
+            expect(fakeTokenProvider.refresh).toHaveBeenCalledTimes(3);
+        });
+        it("should close the connection and reconnect once the token refresh has failed three times", async () => {
+            fakeTokenProvider.refresh.mockRejectedValue(new Error('network down'));
+            service.connect();
+            const firstSocket = capturedSocket!;
+
+            firstSocket.simulateMessage('{"type":"token_expiring_soon"}');
+            await vi.advanceTimersByTimeAsync(9999);
+            expect(firstSocket.closeCalls).toBe(0);
+
+            await vi.advanceTimersByTimeAsync(1);
+            expect(firstSocket.closeCalls).toBe(1);
+            expect(callCount).toBe(1);
+
+            await vi.advanceTimersByTimeAsync(1000);
+            expect(callCount).toBe(2);
+        });
+        it("should stop retrying the token refresh once the connection has closed", async () => {
+            fakeTokenProvider.refresh.mockRejectedValue(new Error('network down'));
+            service.connect();
+
+            capturedSocket!.simulateMessage('{"type":"token_expiring_soon"}');
+            await vi.advanceTimersByTimeAsync(1000);
+            capturedSocket!.simulateClose(1006);
+            await vi.advanceTimersByTimeAsync(60000);
+
+            expect(fakeTokenProvider.refresh).toHaveBeenCalledTimes(1);
+        });
+        it("should not send the refreshed token when the connection closed while the refresh was running", async () => {
+            let resolveRefresh!: () => void;
+            fakeTokenProvider.refresh.mockImplementation(() => new Promise<void>((resolve) => { resolveRefresh = resolve; }));
+            service.connect();
+            const firstSocket = capturedSocket!;
+            firstSocket.simulateOpen();
+
+            firstSocket.simulateMessage('{"type":"token_expiring_soon"}');
+            firstSocket.simulateClose(1006);
+            resolveRefresh();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(JSON.parse(firstSocket.sentMessage!).type).toBe('auth');
+        });
+        it("should not close a connection that has already closed when the last refresh attempt fails", async () => {
+            let rejectRefresh!: (reason: Error) => void;
+            fakeTokenProvider.refresh
+                .mockRejectedValueOnce(new Error('network down'))
+                .mockRejectedValueOnce(new Error('network down'))
+                .mockImplementationOnce(() => new Promise<void>((_, reject) => { rejectRefresh = reject; }));
+            service.connect();
+            const firstSocket = capturedSocket!;
+
+            firstSocket.simulateMessage('{"type":"token_expiring_soon"}');
+            await vi.advanceTimersByTimeAsync(10000);
+            firstSocket.simulateClose(1006);
+            rejectRefresh(new Error('network down'));
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(firstSocket.closeCalls).toBe(0);
         });
         it("should navigate to the error page without reconnecting when the server closes with 4004", () => {
             service.connect();

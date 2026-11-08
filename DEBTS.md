@@ -156,5 +156,4 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `docs(decisions): record that the refresh timer lives on the hub`
 
-- **La décision #26 n'a pas été confrontée à la spec US-021 du hub** 🟡 : confirmée par Olivier, mais le dépôt `quiz-live-server` n'était pas joignable pendant la session. À relire à la prochaine session qui touche au hub ou au refresh.
 - **`US-ANG-010` CA-34 parle encore de « nouveau `expires_in` »** 🟡 : le scénario mocké `token_expiring_soon` → `refresh()` → `auth_refresh` → `auth_success` est cohérent avec la décision #26, mais le résultat attendu « nouveau `expires_in` » n'a rien d'observable côté Angular. À reformuler quand CA-34 sera traité.

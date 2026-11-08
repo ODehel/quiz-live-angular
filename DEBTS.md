@@ -157,3 +157,8 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 ## Mesurées pendant `docs(decisions): record that the refresh timer lives on the hub`
 
 - **`US-ANG-010` CA-34 parle encore de « nouveau `expires_in` »** 🟡 : le scénario mocké `token_expiring_soon` → `refresh()` → `auth_refresh` → `auth_success` est cohérent avec la décision #26, mais le résultat attendu « nouveau `expires_in` » n'a rien d'observable côté Angular. À reformuler quand CA-34 sera traité.
+
+## Mesurées pendant `test(websocket): lock the token_expired then 4002 sequence`
+
+- **Un `token_expired` sans fermeture `4002` ne ferait rien côté Angular** 🟠 : CA-16 repose sur la fermeture `4002` que le hub envoie juste après (US-021, décision #27). Si le hub n'implémentait que le message, la socket resterait ouverte avec un token expiré. À reconsidérer quand US-021 sera implémentée côté hub (alors CA-16 sera observable, voir « Le hub n'implémente pas US-021 »).
+- **Le type de commit `test` n'est ajouté que dans ce dépôt** 🟡 : `CLAUDE.md` et `docs/method/WORKFLOW.md` (copie « identique dans chaque dépôt ») divergent désormais de ceux de `quiz-live-server` et `quiz-live-buzzer`. À propager, une session par dépôt.

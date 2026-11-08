@@ -82,6 +82,7 @@ puis supprime le fichier.
   - `fix` : correction d'un comportement incorrect.
   - `chore` : code dormant (pas encore atteignable) ou outillage.
   - `refactor` : comportement inchangé.
+  - `test` : test seul, sans changement de code de production (verrouille un comportement existant).
   - `docs` : documentation seule.
 - **Description** : à l'impératif, décrit la capacité observable, jamais le mécanisme.
 - **Test né vert** = spec test : mutation obligatoire avant commit.

@@ -30,6 +30,15 @@ const VARIANT_CONFIGS: Record<ErrorContext['variant'], ErrorVariantConfig> = {
         ],
         message: "L'application n'a pas pu se connecter au serveur Quiz Buzzer. Les identifiants ne sont pas corrects."
     },
+    "session-replaced": {
+        icon: "app-window",
+        eyebrow: "Session remplacée",
+        titleSegments: [
+            { content: "Un autre onglet a " },
+            { content: "pris la main", colored: true }
+        ],
+        message: "Votre session a été ouverte dans un autre onglet. Fermez celui-ci ou rechargez la page pour reprendre la main."
+    },
     "server-error": {
         icon: "server-crash",
         eyebrow: "Erreur 500 · Serveur",

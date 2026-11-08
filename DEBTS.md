@@ -75,7 +75,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **Écrasement silencieux possible du `environment.ts` local** 🟠.
 - **Build de production dépendant du réseau (fonts), non couvert par la CI** 🟠.
 - **`engines` racine non discriminant** 🟠.
-- **Code de fermeture `4004` hors US** 🟠 : `goToError` testé mais non spécifié dans US-ANG-001.
+- **Code de fermeture `4004` hors critères d'acceptation** 🟠 : le comportement (page d'erreur `session-replaced`, pas de reconnexion) est testé et décidé (#28), mais US-ANG-001 ne le porte que dans ses « Points de vigilance », sans CA numéroté. À formaliser (CA-26) si Olivier le veut.
 - **Fixture d'auth en camelCase** 🟠 : format du hub (`expires_in`, `token_type`) à confronter à la spec.
 - **Indentation des `it.each` de `confirm-dialog.spec.ts`** 🟠.
 - **`data-testid="close"` de `confirm-dialog` conservé** 🟠 : voulu d'après le récap, à confirmer.
@@ -92,7 +92,6 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `feat(websocket): connect to the hub once the session is ready`
 
-- **`ErrorNavigator` factice** 🟠 : `app.config.ts` passe `{ goToError: () => { } }`. Un code `4004` (session remplacée) arrête la reconnexion sans rien afficher. À remplacer par la session B (variante d'erreur propre au WebSocket, voir la note de la décision #14 sur le texte « connexion perdue »).
 - **Une exception synchrone de `new WebSocket(...)` empêche le démarrage** 🟠 : `connect()` est appelé dans l'initialiseur sans `try/catch`. Une `wsUrl` invalide (valeur de production mal injectée, par exemple) ferait échouer le démarrage de l'application au lieu de la seule socket.
 - **Les codes de fermeture `4002` et `4004` n'ont jamais été observés sur un vrai hub** 🟡 : le smoke test du 2026-11-07 a couvert l'ouverture, la coupure et la reprise, pas l'expiration du token (`JWT_EXPIRATION_TIME` court côté hub) ni le remplacement de session (deux connexions du même compte).
 - **Trois doublures de socket dans les specs** 🟡 : `FakeSocket` (`websocket.service.spec.ts`), `FakeSocket` (`app.config.websocket.spec.ts`) et `InertSocket` (`app.config.spec.ts`). À mutualiser dans une aide de test partagée si une quatrième apparaît.
@@ -100,6 +99,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Levées
 
+- ~~`ErrorNavigator` factice~~ : remplacé par `errorService.sessionReplaced()` ; un `4004` affiche la page d'erreur `session-replaced` (`feat(error): explain that the session was taken over by another tab`, décision #28).
 - ~~Un `refresh()` rejeté dans `onclose` (code `4002`) n'est pas capturé~~ : capturé, la reconnexion repart quand même (`fix(websocket): keep the connection attempts going when the token refresh fails`, décision #21). Verrouillé par un test sous temps simulé ; comportement non observé sur un vrai hub (voir l'entrée ci-dessous).
 - ~~Le service n'a jamais tourné sur un vrai `WebSocket`~~ : observé le 2026-11-07 au navigateur sur le hub réel (smoke test d'Olivier de `feat(websocket): connect to the hub once the session is ready`) : `101` sur `ws://localhost:3000/ws`, trame `auth` puis `auth_success`, reprise après coupure (5 tentatives en échec puis connexion, token réutilisé sans nouveau `POST /api/v1/token`). Les codes `4002` et `4004` n'ont pas été provoqués (voir l'entrée dédiée).
 - ~~Forme d'`environment` ≠ spec (`wsUrl` absent, CA-6)~~ : `wsUrl` ajouté aux deux environnements (`feat(websocket): connect to the hub once the session is ready`, décision #19).
@@ -162,3 +162,10 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 - **Un `token_expired` sans fermeture `4002` ne ferait rien côté Angular** 🟠 : CA-16 repose sur la fermeture `4002` que le hub envoie juste après (US-021, décision #27). Si le hub n'implémentait que le message, la socket resterait ouverte avec un token expiré. À reconsidérer quand US-021 sera implémentée côté hub (alors CA-16 sera observable, voir « Le hub n'implémente pas US-021 »).
 - **Le type de commit `test` n'est ajouté que dans ce dépôt** 🟡 : `CLAUDE.md` et `docs/method/WORKFLOW.md` (copie « identique dans chaque dépôt ») divergent désormais de ceux de `quiz-live-server` et `quiz-live-buzzer`. À propager, une session par dépôt.
+
+## Mesurées pendant `feat(error): explain that the session was taken over by another tab`
+
+- **« Retour à l'accueil » mène à un tableau de bord sans socket** 🟠 : session prête, donc `goHome()` efface l'erreur et `/` ouvre `/dashboard`, alors que la socket est fermée (`4004`, aucune reconnexion). L'utilisateur croit avoir repris la main ; le message dit pourtant « rechargez la page ». Le tableau de bord n'utilise pas encore la socket, donc rien ne casse aujourd'hui. Piste : pas de bouton, ou « Recharger la page » pour cette variante (décision de conception non prise). À observer au smoke test.
+- **Texte, icône et couleur de `session-replaced` choisis sans maquette** 🟡 : seul le message est validé par Olivier ; le surtitre « Session remplacée », le titre « Un autre onglet a pris la main », l'icône `app-window` et le ton ambre (comme `connection-lost`) sont des choix de Claude. `docs/quiz-buzzer-error-page.html` et le design system sont muets (même cas que `invalid-credentials`). À compléter dans un commit `docs` dédié.
+- **`error.service.spec.ts` ne couvre pas `invalid-credentials`** 🟡 : la table `it.each` des variantes s'arrête à `game-corrupted` (plus `session-replaced` désormais) ; `invalidCredentials()` n'est testé qu'à travers `AuthService` et la page d'erreur. Test né vert à prouver par mutation quand on l'ajoutera.
+- **Le remplacement de session n'est pas journalisé côté hub** 🟡 : le hub ne laisse aucune trace (`DEBTS.md` du hub, « Remplacement de session silencieux dans les logs »). Le smoke test ne peut donc s'appuyer que sur l'écran du premier onglet, pas sur les logs du hub.

@@ -46,7 +46,8 @@ describe("ErrorPage", () => {
         { variant: 'connection-lost', call: s => s.connectionLost() },
         { variant: 'server-error', call: s => s.serverError() },
         { variant: 'game-corrupted', call: s => s.gameCorrupted() },
-        { variant: 'invalid-credentials', call: s => s.invalidCredentials() }
+        { variant: 'invalid-credentials', call: s => s.invalidCredentials() },
+        { variant: 'session-replaced', call: s => s.sessionReplaced() }
     ])("sets data-variant to '$variant' when error is $variant", async ({ variant, call }) => {
         const service = TestBed.inject(ErrorService)
         call(service);
@@ -60,7 +61,8 @@ describe("ErrorPage", () => {
         { variant: 'connection-lost', call: s => s.connectionLost() },
         { variant: 'server-error', call: s => s.serverError() },
         { variant: 'game-corrupted', call: s => s.gameCorrupted() },
-        { variant: 'invalid-credentials', call: s => s.invalidCredentials() }
+        { variant: 'invalid-credentials', call: s => s.invalidCredentials() },
+        { variant: 'session-replaced', call: s => s.sessionReplaced() }
     ])("gives the $variant screen a variant color so its title stays readable", async ({ call }) => {
         call(TestBed.inject(ErrorService));
         await fixture.whenStable();
@@ -92,7 +94,8 @@ describe("ErrorPage", () => {
         { variant: 'connection-lost', call: s => s.connectionLost(), iconName: "wifi-off" },
         { variant: 'server-error', call: s => s.serverError(), iconName: "server-crash" },
         { variant: 'game-corrupted', call: s => s.gameCorrupted(), iconName: "octagon-alert" },
-        { variant: 'invalid-credentials', call: s => s.invalidCredentials(), iconName: "shield-x" }
+        { variant: 'invalid-credentials', call: s => s.invalidCredentials(), iconName: "shield-x" },
+        { variant: 'session-replaced', call: s => s.sessionReplaced(), iconName: "app-window" }
     ])("renders the main icon when error is $variant", async ({ call, iconName }) => {
         const service = TestBed.inject(ErrorService);
         call(service);
@@ -107,7 +110,8 @@ describe("ErrorPage", () => {
         { variant: 'connection-lost', call: s => s.connectionLost(), content: "Connexion perdue" },
         { variant: 'server-error', call: s => s.serverError(), content: "Erreur 500 · Serveur" },
         { variant: 'game-corrupted', call: s => s.gameCorrupted(), content: "Incident critique" },
-        { variant: 'invalid-credentials', call: s => s.invalidCredentials(), content: "Authentification refusée" }
+        { variant: 'invalid-credentials', call: s => s.invalidCredentials(), content: "Authentification refusée" },
+        { variant: 'session-replaced', call: s => s.sessionReplaced(), content: "Session remplacée" }
     ])("renders the eyebrow when error is $variant", async ({ call, content }) => {
         const service = TestBed.inject(ErrorService);
         call(service);
@@ -121,7 +125,8 @@ describe("ErrorPage", () => {
         { variant: 'connection-lost', call: s => s.connectionLost(), title: "Le hub ne répond plus" },
         { variant: 'server-error', call: s => s.serverError(), title: "Le serveur a rencontré un problème" },
         { variant: 'game-corrupted', call: s => s.gameCorrupted(), title: "Cette partie est corrompue" },
-        { variant: 'invalid-credentials', call: s => s.invalidCredentials(), title: "Identifiants invalides" }
+        { variant: 'invalid-credentials', call: s => s.invalidCredentials(), title: "Identifiants invalides" },
+        { variant: 'session-replaced', call: s => s.sessionReplaced(), title: "Un autre onglet a pris la main" }
     ])("renders the title when error is $variant", async ({ call, title }) => {
         const service = TestBed.inject(ErrorService);
         call(service);
@@ -135,7 +140,8 @@ describe("ErrorPage", () => {
         { variant: 'connection-lost', call: s => s.connectionLost(), message: "L'application n'arrive plus à communiquer avec le serveur Quiz Buzzer. Cela peut être un problème temporaire de réseau ou un redémarrage du hub." },
         { variant: 'server-error', call: s => s.serverError(), message: "Une erreur inattendue s'est produite côté hub. Ce n'est pas un problème lié à votre action — l'incident a été enregistré dans les logs et peut être consulté pour diagnostic." },
         { variant: 'game-corrupted', call: s => s.gameCorrupted(), message: "L'état de la partie « Soirée découverte du monde » est devenu incohérent et ne peut pas être restauré. Cela peut arriver suite à un crash du hub ou une déconnexion prolongée. Les scores enregistrés jusqu'ici sont conservés en sécurité." },
-        { variant: 'invalid-credentials', call : s => s.invalidCredentials(), message: "L'application n'a pas pu se connecter au serveur Quiz Buzzer. Les identifiants ne sont pas corrects." }
+        { variant: 'invalid-credentials', call : s => s.invalidCredentials(), message: "L'application n'a pas pu se connecter au serveur Quiz Buzzer. Les identifiants ne sont pas corrects." },
+        { variant: 'session-replaced', call: s => s.sessionReplaced(), message: "Votre session a été ouverte dans un autre onglet. Fermez celui-ci ou rechargez la page pour reprendre la main." }
     ])("renders the message when error is $variant", async ({ call, message }) => {
         const service = TestBed.inject(ErrorService);
         call(service);

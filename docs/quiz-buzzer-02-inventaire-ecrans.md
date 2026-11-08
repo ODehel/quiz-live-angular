@@ -205,7 +205,7 @@ Gestion du cycle de vie :
 | 3 | Dashboard | `quiz-buzzer-dashboard.html` | Page | Vue d'accueil maître de jeu |
 | 4 | Liste des questions | `quiz-buzzer-questions-list.html` | Page | Cards 3 par ligne, filtres inline + popover |
 | 5 | Liste des quiz | `quiz-buzzer-quiz-list.html` | Page | Cards 3 par ligne avec mini-graph composition |
-| 6 | Liste des thèmes | `quiz-buzzer-themes-list.html` | Page | Cards avec icônes Lucide, modal de création |
+| 6 | Liste des thèmes | `quiz-buzzer-themes-list.html` | Page | Cards (icône générique, nom, dates), modale nom seul pour créer et renommer |
 | 7 | Liste des jingles | `quiz-buzzer-jingles-list.html` | Page | Cards avec waveform SVG, catégories chips |
 | 8 | Formulaire question MCQ | `quiz-buzzer-question-form.html` | Page | 2 colonnes formulaire + aperçu live |
 | 9 | Formulaire question SPEED | `quiz-buzzer-question-form-speed.html` | Page | Variante avec formulations équivalentes |

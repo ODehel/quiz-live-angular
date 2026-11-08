@@ -468,92 +468,6 @@ body {
   justify-content: center;
 }
 
-/* Filtres */
-.filter-bar {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  padding: 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.search-input {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-base);
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  padding: 8px 12px;
-  flex: 1;
-  min-width: 240px;
-  transition: border-color 0.15s ease;
-}
-
-.search-input:focus-within {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px var(--accent-primary-soft);
-}
-
-.search-input svg { width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; }
-
-.search-input input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: 14px;
-  width: 100%;
-}
-
-.search-input input::placeholder { color: var(--text-muted); }
-
-.sort-control {
-  background: var(--bg-base);
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  padding: 8px 12px;
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.15s ease;
-}
-
-.sort-control:hover { border-color: var(--border-strong); }
-.sort-control svg { width: 14px; height: 14px; opacity: 0.6; }
-
-.filter-toggle {
-  display: flex;
-  background: var(--bg-base);
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  padding: 2px;
-}
-
-.filter-toggle button {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 500;
-  padding: 6px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.filter-toggle button.active { background: var(--accent-primary); color: white; }
-.filter-toggle button:hover:not(.active) { background: var(--bg-surface-2); color: var(--text-primary); }
-
 /* ═══════ GRILLE DE CARDS THÈMES ═══════ */
 .cards-grid {
   display: grid;
@@ -594,21 +508,6 @@ body {
 }
 
 .theme-card:hover::before { opacity: 1; }
-
-/* Theme empty (sans questions) */
-.theme-card.empty {
-  border-style: dashed;
-  border-color: var(--border-default);
-  background: var(--bg-base);
-}
-
-.theme-card.empty .theme-icon-wrap {
-  background: var(--bg-surface-2);
-}
-
-.theme-card.empty .theme-icon-wrap svg {
-  opacity: 0.5;
-}
 
 /* Header de card : icône + titre + actions */
 .theme-card-header {
@@ -660,16 +559,6 @@ body {
   margin-bottom: 2px;
 }
 
-.theme-card-description {
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
 .theme-card-actions {
   display: flex;
   gap: 4px;
@@ -706,78 +595,6 @@ body {
 }
 
 .theme-card-action svg { width: 14px; height: 14px; }
-
-/* Stats */
-.theme-card-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 10px 0;
-  border-top: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.theme-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.theme-stat-value {
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-}
-
-.theme-stat-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-}
-
-/* Mini-graph répartition par niveau */
-.theme-distribution {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.theme-distribution-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-}
-
-.level-bar {
-  display: flex;
-  height: 5px;
-  border-radius: 3px;
-  overflow: hidden;
-  background: var(--bg-base);
-}
-
-.level-bar > div { height: 100%; }
-.level-bar > div + div { margin-left: 1px; }
-.level-bar .lvl-1 { background: var(--level-1); }
-.level-bar .lvl-2 { background: var(--level-2); }
-.level-bar .lvl-3 { background: var(--level-3); }
-.level-bar .lvl-4 { background: var(--level-4); }
-.level-bar .lvl-5 { background: var(--level-5); }
-.level-bar > div.empty { background: var(--bg-base); opacity: 0.3; }
-
-/* Empty state pour distribution */
-.distribution-empty {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-style: italic;
-  padding: 4px 0;
-}
 
 /* Footer : date + chip "n quiz" */
 .theme-card-footer {
@@ -885,16 +702,7 @@ body {
   justify-content: space-between;
 }
 
-.field-label-hint {
-  color: var(--text-muted);
-  text-transform: none;
-  letter-spacing: 0;
-  font-family: var(--font-ui);
-  font-size: 12px;
-}
-
-.field-input,
-.field-textarea {
+.field-input {
   background: var(--bg-base);
   border: 1px solid var(--border-default);
   border-radius: 8px;
@@ -907,125 +715,12 @@ body {
   transition: all 0.15s ease;
 }
 
-.field-input:focus,
-.field-textarea:focus {
+.field-input:focus {
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 3px var(--accent-primary-soft);
 }
 
-.field-input::placeholder,
-.field-textarea::placeholder { color: var(--text-muted); }
-
-.field-textarea {
-  min-height: 70px;
-  resize: vertical;
-  font-family: var(--font-ui);
-}
-
-/* Sélecteur d'icônes */
-.icon-picker {
-  background: var(--bg-base);
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.icon-picker-search {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-subtle);
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.icon-picker-search svg { width: 13px; height: 13px; }
-.icon-picker-search input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  flex: 1;
-}
-
-.icon-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 4px;
-  max-height: 180px;
-  overflow-y: auto;
-}
-
-.icon-option {
-  aspect-ratio: 1;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  transition: all 0.15s ease;
-}
-
-.icon-option:hover {
-  background: var(--bg-surface-2);
-  color: var(--text-primary);
-}
-
-.icon-option.selected {
-  background: var(--accent-primary-soft);
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.icon-option svg { width: 18px; height: 18px; }
-
-/* Aperçu */
-.preview-block {
-  background: var(--bg-base);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.preview-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--accent-primary-soft);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent-primary);
-  flex-shrink: 0;
-}
-
-.preview-icon svg { width: 18px; height: 18px; }
-
-.preview-text {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.preview-name {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-top: 2px;
-}
+.field-input::placeholder { color: var(--text-muted); }
 
 .modal-footer {
   padding: 16px 24px;
@@ -1035,6 +730,33 @@ body {
   gap: 8px;
   background: var(--bg-surface);
 }
+/* ═══════ ÉTAT VIDE (CA-4) ═══════ */
+.empty-state {
+  border: 1px dashed var(--border-default);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.empty-state svg { width: 28px; height: 28px; color: var(--text-muted); }
+.empty-state-title { font-family: var(--font-display); font-size: 18px; font-weight: 600; }
+.empty-state-text { color: var(--text-secondary); font-size: 14px; }
+
+.section-note {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.field-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
 
 </style>
 </head>
@@ -1152,7 +874,7 @@ body {
             <h1 class="page-title">Thèmes</h1>
             <span class="page-count">12 au total</span>
           </div>
-          <p class="page-subtitle">Les catégories qui structurent votre catalogue de questions. Chaque question appartient à un thème, et chaque thème peut alimenter plusieurs quiz.</p>
+          <p class="page-subtitle">Les catégories qui structurent votre catalogue de questions. Chaque question appartient à un thème.</p>
         </div>
         <div class="page-actions">
           <button class="btn btn-primary">
@@ -1162,503 +884,205 @@ body {
         </div>
       </div>
 
-      <!-- Filtres -->
-      <div class="filter-bar">
-        <div class="search-input">
-          <i data-lucide="search"></i>
-          <input type="text" placeholder="Rechercher un thème..." value="">
-        </div>
-
-        <div class="filter-toggle">
-          <button class="active">Tous</button>
-          <button>Utilisés</button>
-          <button>Vides</button>
-        </div>
-
-        <div class="sort-control">
-          <i data-lucide="arrow-up-down"></i>
-          Le plus utilisé
-          <i data-lucide="chevron-down"></i>
-        </div>
-      </div>
-
       <!-- ═══════ GRILLE DE THÈMES ═══════ -->
+      <!-- Une carte = ce que fournit le hub : nom, created_at, last_updated_at (absent tant que jamais modifié). -->
       <div class="cards-grid">
 
-        <!-- Géographie — très utilisé -->
         <div class="theme-card">
           <div class="theme-card-header">
-            <div class="theme-icon-wrap"><i data-lucide="globe"></i></div>
+            <div class="theme-icon-wrap"><i data-lucide="folder-tree"></i></div>
             <div class="theme-card-title-block">
               <h3 class="theme-card-title">Géographie</h3>
-              <p class="theme-card-description">Pays, capitales, fleuves, reliefs et frontières du monde entier.</p>
             </div>
             <div class="theme-card-actions">
-              <button class="theme-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="theme-card-action" title="Renommer"><i data-lucide="pencil"></i></button>
               <button class="theme-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
-          <div class="theme-card-stats">
-            <div class="theme-stat">
-              <div class="theme-stat-value">23</div>
-              <div class="theme-stat-label">Questions</div>
-            </div>
-            <div class="theme-stat">
-              <div class="theme-stat-value">5</div>
-              <div class="theme-stat-label">Quiz</div>
-            </div>
-          </div>
-          <div class="theme-distribution">
-            <div class="theme-distribution-label">Répartition par niveau</div>
-            <div class="level-bar">
-              <div class="lvl-1" style="flex: 5;"></div>
-              <div class="lvl-2" style="flex: 7;"></div>
-              <div class="lvl-3" style="flex: 6;"></div>
-              <div class="lvl-4" style="flex: 3;"></div>
-              <div class="lvl-5" style="flex: 2;"></div>
-            </div>
-          </div>
           <div class="theme-card-footer">
-            <span class="theme-card-footer-date">
-              <i data-lucide="clock"></i> Modifié il y a 3j
-            </span>
+            <span class="theme-card-footer-date"><i data-lucide="clock"></i> Créé le 14 oct. 2026</span>
+            <span class="theme-card-footer-date"><i data-lucide="pencil"></i> Modifié le 5 nov. 2026</span>
           </div>
         </div>
-
-        <!-- Histoire -->
         <div class="theme-card">
           <div class="theme-card-header">
-            <div class="theme-icon-wrap"><i data-lucide="landmark"></i></div>
+            <div class="theme-icon-wrap"><i data-lucide="folder-tree"></i></div>
             <div class="theme-card-title-block">
               <h3 class="theme-card-title">Histoire</h3>
-              <p class="theme-card-description">Grands événements, civilisations et personnages historiques.</p>
             </div>
             <div class="theme-card-actions">
-              <button class="theme-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="theme-card-action" title="Renommer"><i data-lucide="pencil"></i></button>
               <button class="theme-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
-          <div class="theme-card-stats">
-            <div class="theme-stat">
-              <div class="theme-stat-value">19</div>
-              <div class="theme-stat-label">Questions</div>
-            </div>
-            <div class="theme-stat">
-              <div class="theme-stat-value">4</div>
-              <div class="theme-stat-label">Quiz</div>
-            </div>
-          </div>
-          <div class="theme-distribution">
-            <div class="theme-distribution-label">Répartition par niveau</div>
-            <div class="level-bar">
-              <div class="lvl-1" style="flex: 2;"></div>
-              <div class="lvl-2" style="flex: 4;"></div>
-              <div class="lvl-3" style="flex: 6;"></div>
-              <div class="lvl-4" style="flex: 5;"></div>
-              <div class="lvl-5" style="flex: 2;"></div>
-            </div>
-          </div>
           <div class="theme-card-footer">
-            <span class="theme-card-footer-date">
-              <i data-lucide="clock"></i> Modifié il y a 1 sem
-            </span>
+            <span class="theme-card-footer-date"><i data-lucide="clock"></i> Créé le 14 oct. 2026</span>
+            <span class="theme-card-footer-date"><i data-lucide="pencil"></i> Modifié le 1 nov. 2026</span>
           </div>
         </div>
-
-        <!-- Musique -->
         <div class="theme-card">
           <div class="theme-card-header">
-            <div class="theme-icon-wrap"><i data-lucide="music"></i></div>
+            <div class="theme-icon-wrap"><i data-lucide="folder-tree"></i></div>
             <div class="theme-card-title-block">
               <h3 class="theme-card-title">Musique</h3>
-              <p class="theme-card-description">Artistes, albums, genres et hits de toutes les époques.</p>
             </div>
             <div class="theme-card-actions">
-              <button class="theme-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="theme-card-action" title="Renommer"><i data-lucide="pencil"></i></button>
               <button class="theme-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
-          <div class="theme-card-stats">
-            <div class="theme-stat">
-              <div class="theme-stat-value">21</div>
-              <div class="theme-stat-label">Questions</div>
-            </div>
-            <div class="theme-stat">
-              <div class="theme-stat-value">3</div>
-              <div class="theme-stat-label">Quiz</div>
-            </div>
-          </div>
-          <div class="theme-distribution">
-            <div class="theme-distribution-label">Répartition par niveau</div>
-            <div class="level-bar">
-              <div class="lvl-1" style="flex: 3;"></div>
-              <div class="lvl-2" style="flex: 5;"></div>
-              <div class="lvl-3" style="flex: 7;"></div>
-              <div class="lvl-4" style="flex: 4;"></div>
-              <div class="lvl-5" style="flex: 2;"></div>
-            </div>
-          </div>
           <div class="theme-card-footer">
-            <span class="theme-card-footer-date">
-              <i data-lucide="clock"></i> Modifié hier
-            </span>
+            <span class="theme-card-footer-date"><i data-lucide="clock"></i> Créé le 15 oct. 2026</span>
+            <span class="theme-card-footer-date"><i data-lucide="pencil"></i> Modifié le 7 nov. 2026</span>
           </div>
         </div>
-
-        <!-- Cinéma -->
         <div class="theme-card">
           <div class="theme-card-header">
-            <div class="theme-icon-wrap"><i data-lucide="clapperboard"></i></div>
+            <div class="theme-icon-wrap"><i data-lucide="folder-tree"></i></div>
             <div class="theme-card-title-block">
               <h3 class="theme-card-title">Cinéma</h3>
-              <p class="theme-card-description">Films cultes, réalisateurs, acteurs et grandes scènes.</p>
             </div>
             <div class="theme-card-actions">
-              <button class="theme-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="theme-card-action" title="Renommer"><i data-lucide="pencil"></i></button>
               <button class="theme-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
-          <div class="theme-card-stats">
-            <div class="theme-stat">
-              <div class="theme-stat-value">18</div>
-              <div class="theme-stat-label">Questions</div>
-            </div>
-            <div class="theme-stat">
-              <div class="theme-stat-value">3</div>
-              <div class="theme-stat-label">Quiz</div>
-            </div>
-          </div>
-          <div class="theme-distribution">
-            <div class="theme-distribution-label">Répartition par niveau</div>
-            <div class="level-bar">
-              <div class="lvl-1" style="flex: 2;"></div>
-              <div class="lvl-2" style="flex: 3;"></div>
-              <div class="lvl-3" style="flex: 5;"></div>
-              <div class="lvl-4" style="flex: 5;"></div>
-              <div class="lvl-5" style="flex: 3;"></div>
-            </div>
-          </div>
           <div class="theme-card-footer">
-            <span class="theme-card-footer-date">
-              <i data-lucide="clock"></i> Modifié il y a 2 sem
-            </span>
+            <span class="theme-card-footer-date"><i data-lucide="clock"></i> Créé le 15 oct. 2026</span>
           </div>
         </div>
-
-        <!-- Sciences -->
         <div class="theme-card">
           <div class="theme-card-header">
-            <div class="theme-icon-wrap"><i data-lucide="flask-conical"></i></div>
+            <div class="theme-icon-wrap"><i data-lucide="folder-tree"></i></div>
             <div class="theme-card-title-block">
               <h3 class="theme-card-title">Sciences</h3>
-              <p class="theme-card-description">Physique, chimie, biologie, espace et découvertes scientifiques.</p>
             </div>
             <div class="theme-card-actions">
-              <button class="theme-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="theme-card-action" title="Renommer"><i data-lucide="pencil"></i></button>
               <button class="theme-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
-          <div class="theme-card-stats">
-            <div class="theme-stat">
-              <div class="theme-stat-value">16</div>
-              <div class="theme-stat-label">Questions</div>
-            </div>
-            <div class="theme-stat">
-              <div class="theme-stat-value">2</div>
-              <div class="theme-stat-label">Quiz</div>
-            </div>
-          </div>
-          <div class="theme-distribution">
-            <div class="theme-distribution-label">Répartition par niveau</div>
-            <div class="level-bar">
-              <div class="lvl-1" style="flex: 1;"></div>
-              <div class="lvl-2" style="flex: 3;"></div>
-              <div class="lvl-3" style="flex: 5;"></div>
-              <div class="lvl-4" style="flex: 4;"></div>
-              <div class="lvl-5" style="flex: 3;"></div>
-            </div>
-          </div>
           <div class="theme-card-footer">
-            <span class="theme-card-footer-date">
-              <i data-lucide="clock"></i> Modifié il y a 5j
-            </span>
+            <span class="theme-card-footer-date"><i data-lucide="clock"></i> Créé le 16 oct. 2026</span>
+            <span class="theme-card-footer-date"><i data-lucide="pencil"></i> Modifié le 3 nov. 2026</span>
           </div>
         </div>
-
-        <!-- Sport -->
         <div class="theme-card">
           <div class="theme-card-header">
-            <div class="theme-icon-wrap"><i data-lucide="trophy"></i></div>
+            <div class="theme-icon-wrap"><i data-lucide="folder-tree"></i></div>
             <div class="theme-card-title-block">
               <h3 class="theme-card-title">Sport</h3>
-              <p class="theme-card-description">Disciplines, champions, compétitions et records.</p>
             </div>
             <div class="theme-card-actions">
-              <button class="theme-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="theme-card-action" title="Renommer"><i data-lucide="pencil"></i></button>
               <button class="theme-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
-          <div class="theme-card-stats">
-            <div class="theme-stat">
-              <div class="theme-stat-value">14</div>
-              <div class="theme-stat-label">Questions</div>
-            </div>
-            <div class="theme-stat">
-              <div class="theme-stat-value">2</div>
-              <div class="theme-stat-label">Quiz</div>
-            </div>
-          </div>
-          <div class="theme-distribution">
-            <div class="theme-distribution-label">Répartition par niveau</div>
-            <div class="level-bar">
-              <div class="lvl-1" style="flex: 4;"></div>
-              <div class="lvl-2" style="flex: 5;"></div>
-              <div class="lvl-3" style="flex: 3;"></div>
-              <div class="lvl-4" style="flex: 1;"></div>
-              <div class="lvl-5" style="flex: 1;"></div>
-            </div>
-          </div>
           <div class="theme-card-footer">
-            <span class="theme-card-footer-date">
-              <i data-lucide="clock"></i> Modifié il y a 1 mois
-            </span>
+            <span class="theme-card-footer-date"><i data-lucide="clock"></i> Créé le 17 oct. 2026</span>
           </div>
         </div>
-
-        <!-- Littérature -->
         <div class="theme-card">
           <div class="theme-card-header">
-            <div class="theme-icon-wrap"><i data-lucide="book-open"></i></div>
+            <div class="theme-icon-wrap"><i data-lucide="folder-tree"></i></div>
             <div class="theme-card-title-block">
               <h3 class="theme-card-title">Littérature</h3>
-              <p class="theme-card-description">Auteurs, œuvres et grands courants littéraires.</p>
             </div>
             <div class="theme-card-actions">
-              <button class="theme-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="theme-card-action" title="Renommer"><i data-lucide="pencil"></i></button>
               <button class="theme-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
-          <div class="theme-card-stats">
-            <div class="theme-stat">
-              <div class="theme-stat-value">11</div>
-              <div class="theme-stat-label">Questions</div>
-            </div>
-            <div class="theme-stat">
-              <div class="theme-stat-value">2</div>
-              <div class="theme-stat-label">Quiz</div>
-            </div>
-          </div>
-          <div class="theme-distribution">
-            <div class="theme-distribution-label">Répartition par niveau</div>
-            <div class="level-bar">
-              <div class="lvl-1" style="flex: 1;"></div>
-              <div class="lvl-2" style="flex: 2;"></div>
-              <div class="lvl-3" style="flex: 4;"></div>
-              <div class="lvl-4" style="flex: 3;"></div>
-              <div class="lvl-5" style="flex: 1;"></div>
-            </div>
-          </div>
           <div class="theme-card-footer">
-            <span class="theme-card-footer-date">
-              <i data-lucide="clock"></i> Modifié il y a 3 sem
-            </span>
+            <span class="theme-card-footer-date"><i data-lucide="clock"></i> Créé le 18 oct. 2026</span>
+            <span class="theme-card-footer-date"><i data-lucide="pencil"></i> Modifié le 29 oct. 2026</span>
           </div>
         </div>
-
-        <!-- Culture G -->
         <div class="theme-card">
           <div class="theme-card-header">
-            <div class="theme-icon-wrap"><i data-lucide="brain"></i></div>
+            <div class="theme-icon-wrap"><i data-lucide="folder-tree"></i></div>
             <div class="theme-card-title-block">
               <h3 class="theme-card-title">Culture G</h3>
-              <p class="theme-card-description">Questions transversales et pluridisciplinaires.</p>
             </div>
             <div class="theme-card-actions">
-              <button class="theme-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="theme-card-action" title="Renommer"><i data-lucide="pencil"></i></button>
               <button class="theme-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
-          <div class="theme-card-stats">
-            <div class="theme-stat">
-              <div class="theme-stat-value">10</div>
-              <div class="theme-stat-label">Questions</div>
-            </div>
-            <div class="theme-stat">
-              <div class="theme-stat-value">2</div>
-              <div class="theme-stat-label">Quiz</div>
-            </div>
-          </div>
-          <div class="theme-distribution">
-            <div class="theme-distribution-label">Répartition par niveau</div>
-            <div class="level-bar">
-              <div class="lvl-1" style="flex: 3;"></div>
-              <div class="lvl-2" style="flex: 4;"></div>
-              <div class="lvl-3" style="flex: 2;"></div>
-              <div class="lvl-4" style="flex: 1;"></div>
-              <div class="empty" style="flex: 0.01;"></div>
-            </div>
-          </div>
           <div class="theme-card-footer">
-            <span class="theme-card-footer-date">
-              <i data-lucide="clock"></i> Modifié il y a 2j
-            </span>
+            <span class="theme-card-footer-date"><i data-lucide="clock"></i> Créé le 20 oct. 2026</span>
           </div>
         </div>
-
-        <!-- Animaux — peu utilisé -->
         <div class="theme-card">
           <div class="theme-card-header">
-            <div class="theme-icon-wrap"><i data-lucide="paw-print"></i></div>
+            <div class="theme-icon-wrap"><i data-lucide="folder-tree"></i></div>
             <div class="theme-card-title-block">
               <h3 class="theme-card-title">Animaux</h3>
-              <p class="theme-card-description">Faune, espèces, comportements et habitats.</p>
             </div>
             <div class="theme-card-actions">
-              <button class="theme-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="theme-card-action" title="Renommer"><i data-lucide="pencil"></i></button>
               <button class="theme-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
-          <div class="theme-card-stats">
-            <div class="theme-stat">
-              <div class="theme-stat-value">4</div>
-              <div class="theme-stat-label">Questions</div>
-            </div>
-            <div class="theme-stat">
-              <div class="theme-stat-value">1</div>
-              <div class="theme-stat-label">Quiz</div>
-            </div>
-          </div>
-          <div class="theme-distribution">
-            <div class="theme-distribution-label">Répartition par niveau</div>
-            <div class="level-bar">
-              <div class="lvl-1" style="flex: 2;"></div>
-              <div class="lvl-2" style="flex: 1;"></div>
-              <div class="lvl-3" style="flex: 1;"></div>
-              <div class="empty" style="flex: 0.01;"></div>
-              <div class="empty" style="flex: 0.01;"></div>
-            </div>
-          </div>
           <div class="theme-card-footer">
-            <span class="theme-card-footer-date">
-              <i data-lucide="clock"></i> Modifié il y a 2 mois
-            </span>
+            <span class="theme-card-footer-date"><i data-lucide="clock"></i> Créé le 22 oct. 2026</span>
           </div>
         </div>
-
-        <!-- Tradition -->
         <div class="theme-card">
           <div class="theme-card-header">
-            <div class="theme-icon-wrap"><i data-lucide="gift"></i></div>
+            <div class="theme-icon-wrap"><i data-lucide="folder-tree"></i></div>
             <div class="theme-card-title-block">
               <h3 class="theme-card-title">Tradition</h3>
-              <p class="theme-card-description">Fêtes, coutumes et rituels du monde entier.</p>
             </div>
             <div class="theme-card-actions">
-              <button class="theme-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="theme-card-action" title="Renommer"><i data-lucide="pencil"></i></button>
               <button class="theme-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
-          <div class="theme-card-stats">
-            <div class="theme-stat">
-              <div class="theme-stat-value">7</div>
-              <div class="theme-stat-label">Questions</div>
-            </div>
-            <div class="theme-stat">
-              <div class="theme-stat-value">2</div>
-              <div class="theme-stat-label">Quiz</div>
-            </div>
-          </div>
-          <div class="theme-distribution">
-            <div class="theme-distribution-label">Répartition par niveau</div>
-            <div class="level-bar">
-              <div class="lvl-1" style="flex: 2;"></div>
-              <div class="lvl-2" style="flex: 3;"></div>
-              <div class="lvl-3" style="flex: 2;"></div>
-              <div class="empty" style="flex: 0.01;"></div>
-              <div class="empty" style="flex: 0.01;"></div>
-            </div>
-          </div>
           <div class="theme-card-footer">
-            <span class="theme-card-footer-date">
-              <i data-lucide="clock"></i> Modifié il y a 4 mois
-            </span>
+            <span class="theme-card-footer-date"><i data-lucide="clock"></i> Créé le 25 oct. 2026</span>
+            <span class="theme-card-footer-date"><i data-lucide="pencil"></i> Modifié le 2 nov. 2026</span>
           </div>
         </div>
-
-        <!-- Pub (variété d'icône) -->
         <div class="theme-card">
           <div class="theme-card-header">
-            <div class="theme-icon-wrap"><i data-lucide="megaphone"></i></div>
+            <div class="theme-icon-wrap"><i data-lucide="folder-tree"></i></div>
             <div class="theme-card-title-block">
               <h3 class="theme-card-title">Publicité</h3>
-              <p class="theme-card-description">Slogans, marques et campagnes mémorables.</p>
             </div>
             <div class="theme-card-actions">
-              <button class="theme-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="theme-card-action" title="Renommer"><i data-lucide="pencil"></i></button>
               <button class="theme-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
-          <div class="theme-card-stats">
-            <div class="theme-stat">
-              <div class="theme-stat-value">3</div>
-              <div class="theme-stat-label">Questions</div>
-            </div>
-            <div class="theme-stat">
-              <div class="theme-stat-value">1</div>
-              <div class="theme-stat-label">Quiz</div>
-            </div>
-          </div>
-          <div class="theme-distribution">
-            <div class="theme-distribution-label">Répartition par niveau</div>
-            <div class="level-bar">
-              <div class="empty" style="flex: 0.01;"></div>
-              <div class="lvl-2" style="flex: 1;"></div>
-              <div class="lvl-3" style="flex: 2;"></div>
-              <div class="empty" style="flex: 0.01;"></div>
-              <div class="empty" style="flex: 0.01;"></div>
-            </div>
-          </div>
           <div class="theme-card-footer">
-            <span class="theme-card-footer-date">
-              <i data-lucide="clock"></i> Modifié il y a 6 mois
-            </span>
+            <span class="theme-card-footer-date"><i data-lucide="clock"></i> Créé le 28 oct. 2026</span>
           </div>
         </div>
-
-        <!-- Politique — vide -->
-        <div class="theme-card empty">
+        <div class="theme-card">
           <div class="theme-card-header">
-            <div class="theme-icon-wrap"><i data-lucide="vote"></i></div>
+            <div class="theme-icon-wrap"><i data-lucide="folder-tree"></i></div>
             <div class="theme-card-title-block">
               <h3 class="theme-card-title">Politique</h3>
-              <p class="theme-card-description">Aucune description.</p>
             </div>
             <div class="theme-card-actions">
-              <button class="theme-card-action" title="Éditer"><i data-lucide="pencil"></i></button>
+              <button class="theme-card-action" title="Renommer"><i data-lucide="pencil"></i></button>
               <button class="theme-card-action danger" title="Supprimer"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
-          <div class="theme-card-stats">
-            <div class="theme-stat">
-              <div class="theme-stat-value">0</div>
-              <div class="theme-stat-label">Questions</div>
-            </div>
-            <div class="theme-stat">
-              <div class="theme-stat-value">0</div>
-              <div class="theme-stat-label">Quiz</div>
-            </div>
-          </div>
-          <div class="theme-distribution">
-            <div class="theme-distribution-label">Répartition par niveau</div>
-            <div class="distribution-empty">Aucune question dans ce thème</div>
-          </div>
           <div class="theme-card-footer">
-            <span class="theme-card-footer-date">
-              <i data-lucide="clock"></i> Créé il y a 2 sem
-            </span>
+            <span class="theme-card-footer-date"><i data-lucide="clock"></i> Créé le 30 oct. 2026</span>
           </div>
         </div>
 
+      </div>
+
+      <!-- ═══════ ÉTAT VIDE (aperçu : aucune carte ci-dessus quand la liste est vide) ═══════ -->
+      <div class="section-note">État vide (CA-4) : affiché à la place de la grille</div>
+      <div class="empty-state">
+        <i data-lucide="folder-tree"></i>
+        <div class="empty-state-text">Aucun thème — créez votre premier thème</div>
+        <button class="btn btn-primary"><i data-lucide="plus"></i> Nouveau thème</button>
       </div>
 
     </div>
@@ -1666,7 +1090,10 @@ body {
 
 </div>
 
-<!-- ═══════ MODAL DE CRÉATION (visible) ═══════ -->
+<!-- ═══════ MODALE (création ; le renommage réutilise la même modale) ═══════ -->
+<!-- Création : titre « Nouveau thème », bouton « Créer le thème ».
+     Renommage (crayon d'une carte) : titre « Renommer le thème », champ prérempli, bouton « Enregistrer ».
+     Le hub n'accepte que { "name" } : pas de description ni d'icône (US-004, UNKNOWN_FIELDS). -->
 <div class="modal-overlay">
   <div class="modal">
 
@@ -1676,79 +1103,11 @@ body {
     </div>
 
     <div class="modal-body">
-
       <div class="field">
         <label class="field-label">Nom du thème</label>
         <input type="text" class="field-input" placeholder="ex : Gastronomie, Technologie..." value="Gastronomie">
+        <div class="field-hint">3 à 40 caractères, commence par une majuscule.</div>
       </div>
-
-      <div class="field">
-        <label class="field-label">
-          Description
-          <span class="field-label-hint">Optionnelle</span>
-        </label>
-        <textarea class="field-textarea" placeholder="Quelques mots pour préciser le périmètre du thème...">Plats, ingrédients, chefs, terroirs et grandes traditions culinaires.</textarea>
-      </div>
-
-      <div class="field">
-        <label class="field-label">
-          Icône
-          <span class="field-label-hint">Choisissez une icône représentative</span>
-        </label>
-
-        <div class="icon-picker">
-          <div class="icon-picker-search">
-            <i data-lucide="search"></i>
-            <input type="text" placeholder="Rechercher une icône (food, kitchen...)">
-          </div>
-          <div class="icon-grid">
-            <button class="icon-option"><i data-lucide="globe"></i></button>
-            <button class="icon-option"><i data-lucide="landmark"></i></button>
-            <button class="icon-option"><i data-lucide="music"></i></button>
-            <button class="icon-option"><i data-lucide="clapperboard"></i></button>
-            <button class="icon-option"><i data-lucide="flask-conical"></i></button>
-            <button class="icon-option"><i data-lucide="trophy"></i></button>
-            <button class="icon-option"><i data-lucide="book-open"></i></button>
-            <button class="icon-option"><i data-lucide="brain"></i></button>
-            <button class="icon-option"><i data-lucide="paw-print"></i></button>
-            <button class="icon-option"><i data-lucide="gift"></i></button>
-            <button class="icon-option"><i data-lucide="megaphone"></i></button>
-            <button class="icon-option"><i data-lucide="vote"></i></button>
-            <button class="icon-option selected"><i data-lucide="utensils"></i></button>
-            <button class="icon-option"><i data-lucide="chef-hat"></i></button>
-            <button class="icon-option"><i data-lucide="wine"></i></button>
-            <button class="icon-option"><i data-lucide="apple"></i></button>
-            <button class="icon-option"><i data-lucide="rocket"></i></button>
-            <button class="icon-option"><i data-lucide="atom"></i></button>
-            <button class="icon-option"><i data-lucide="palette"></i></button>
-            <button class="icon-option"><i data-lucide="film"></i></button>
-            <button class="icon-option"><i data-lucide="compass"></i></button>
-            <button class="icon-option"><i data-lucide="map"></i></button>
-            <button class="icon-option"><i data-lucide="leaf"></i></button>
-            <button class="icon-option"><i data-lucide="plane"></i></button>
-            <button class="icon-option"><i data-lucide="car"></i></button>
-            <button class="icon-option"><i data-lucide="microscope"></i></button>
-            <button class="icon-option"><i data-lucide="tv"></i></button>
-            <button class="icon-option"><i data-lucide="gamepad-2"></i></button>
-            <button class="icon-option"><i data-lucide="theater"></i></button>
-            <button class="icon-option"><i data-lucide="camera"></i></button>
-            <button class="icon-option"><i data-lucide="dumbbell"></i></button>
-            <button class="icon-option"><i data-lucide="bike"></i></button>
-          </div>
-        </div>
-      </div>
-
-      <div class="field">
-        <label class="field-label">Aperçu</label>
-        <div class="preview-block">
-          <div class="preview-icon"><i data-lucide="utensils"></i></div>
-          <div>
-            <div class="preview-text">Aperçu en grille</div>
-            <div class="preview-name">Gastronomie</div>
-          </div>
-        </div>
-      </div>
-
     </div>
 
     <div class="modal-footer">

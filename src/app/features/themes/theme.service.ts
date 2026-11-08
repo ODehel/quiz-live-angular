@@ -5,6 +5,8 @@ import { map, Observable } from 'rxjs';
 export interface Theme {
     id: string;
     name: string;
+    createdAt: string;
+    lastUpdatedAt: string | null;
 }
 
 export interface ThemeList {
@@ -13,7 +15,7 @@ export interface ThemeList {
 }
 
 interface ThemeListResponse {
-    data: { id: string; name: string }[];
+    data: { id: string; name: string; created_at: string; last_updated_at: string | null }[];
     total: number;
 }
 
@@ -25,7 +27,12 @@ export class ThemeService {
         return this.http
             .get<ThemeListResponse>('/api/v1/themes', { params: { page: 1, limit: 100 } })
             .pipe(map(response => ({
-                themes: response.data.map(({ id, name }) => ({ id, name })),
+                themes: response.data.map(({ id, name, created_at, last_updated_at }) => ({
+                    id,
+                    name,
+                    createdAt: created_at,
+                    lastUpdatedAt: last_updated_at
+                })),
                 total: response.total
             })));
     }

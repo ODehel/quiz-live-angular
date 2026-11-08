@@ -11,7 +11,13 @@
                 <div class="theme-icon-wrap">
                     <app-icon name="folder-tree" [size]="22" />
                 </div>
-                <h2 class="theme-card-title" data-testid="theme-name">{{theme.name}}</h2>
+                <div class="theme-card-body">
+                    <h2 class="theme-card-title" data-testid="theme-name">{{theme.name}}</h2>
+                    <p class="theme-card-date" data-testid="theme-created">Créé le {{theme.createdAt | date:'dd/MM/yyyy'}}</p>
+                    @if (theme.lastUpdatedAt) {
+                        <p class="theme-card-date" data-testid="theme-updated">Modifié le {{theme.lastUpdatedAt | date:'dd/MM/yyyy'}}</p>
+                    }
+                </div>
             </article>
         }
     </div>

@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Icon } from '../../shared/ui/icon/icon';
@@ -8,7 +9,7 @@ import { ThemeList as ThemeListData, ThemeService } from './theme.service';
     templateUrl: './theme-list.html',
     styleUrl: './theme-list.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [Icon]
+    imports: [DatePipe, Icon]
 })
 export class ThemeList {
     protected readonly page = signal<ThemeListData | null>(null);

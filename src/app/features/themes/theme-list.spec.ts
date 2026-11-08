@@ -7,9 +7,9 @@ import { ThemeList } from './theme-list';
 
 describe('ThemeList', () => {
   const themes = [
-    { id: 'theme-1', name: 'Géographie' },
-    { id: 'theme-2', name: 'Histoire' },
-    { id: 'theme-3', name: 'Cinéma' },
+    { id: 'theme-1', name: 'Géographie', createdAt: '2026-10-14T12:00:00.000Z', lastUpdatedAt: null },
+    { id: 'theme-2', name: 'Histoire', createdAt: '2026-10-15T12:00:00.000Z', lastUpdatedAt: '2026-11-05T12:00:00.000Z' },
+    { id: 'theme-3', name: 'Cinéma', createdAt: '2026-09-02T12:00:00.000Z', lastUpdatedAt: null },
   ];
 
   const render = (answer: Observable<ThemeListData>) => {
@@ -59,6 +59,26 @@ describe('ThemeList', () => {
 
     const icons = fixture.debugElement.queryAll(By.css('[data-testid="theme-card"] app-icon'));
     expect(icons.map(icon => icon.componentInstance.name())).toEqual(['folder-tree', 'folder-tree', 'folder-tree']);
+  });
+
+  it('shows when each theme was created, as day/month/year', async () => {
+    const fixture = render(of({ themes, total: 3 }));
+
+    await fixture.whenStable();
+
+    const dates = cards(fixture)
+      .map(card => card.querySelector('[data-testid="theme-created"]')?.textContent?.trim());
+    expect(dates).toEqual(['Créé le 14/10/2026', 'Créé le 15/10/2026', 'Créé le 02/09/2026']);
+  });
+
+  it('shows when a theme was last renamed, only if it ever was', async () => {
+    const fixture = render(of({ themes, total: 3 }));
+
+    await fixture.whenStable();
+
+    const dates = cards(fixture)
+      .map(card => card.querySelector('[data-testid="theme-updated"]')?.textContent?.trim());
+    expect(dates).toEqual([undefined, 'Modifié le 05/11/2026', undefined]);
   });
 
   it('shows the total counted by the hub in the header', async () => {

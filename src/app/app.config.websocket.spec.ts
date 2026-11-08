@@ -21,6 +21,8 @@ class FakeSocket implements SocketLike {
   send(message: string): void {
     this.sent.push(message);
   }
+
+  close(): void { }
 }
 
 describe('appConfig WebSocket wiring', () => {

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Faux hub pour le smoke test du refresh du token (US-ANG-001, CA-12 et CA-13).
+// Faux hub pour le smoke test du refresh du token (US-ANG-001, CA-12, CA-13 et CA-15).
 //
 // Il remplace le vrai hub, qui n'implemente pas US-021 (ni `token_expiring_soon`, ni `auth_refresh`).
 // Il prouve le cablage cote Angular (vraie socket, vrai AuthService, vrai intercepteur), PAS le vrai hub :
@@ -7,7 +7,8 @@
 //
 // Usage (depuis la racine du depot, arreter le vrai hub d'abord, il occupe aussi le port 3000) :
 //   node scripts/fake-hub.mjs                    # scenario nominal
-//   node scripts/fake-hub.mjs --fail-refresh     # le 2e POST /api/v1/token echoue (503)
+//   node scripts/fake-hub.mjs --fail-refresh     # tout POST /api/v1/token a partir du 2e echoue (503) : CA-15 attendu =
+//                                                # 3 tentatives, puis fermeture (1000) par le client et reconnexion
 //   options : --port 3000  --expiring-after 10 (s)  --verdict-timeout 20 (s)  --out smoke-test-summary.txt
 //
 // Le script s'arrete tout seul avec un verdict (code 0 = PASS, 1 = FAIL) et ecrit son compte rendu dans --out.
@@ -41,6 +42,7 @@ let lastToken = null; // dernier token emis avec succes
 let connections = 0; // nombre de connexions WebSocket ouvertes
 let expiringSentAt = null;
 let refreshReceived = null; // { token, connection }
+const closeFrames = []; // { connection, code } : trames de fermeture envoyees par le client
 let finished = false;
 
 const verdict = (ok, why) => {
@@ -55,7 +57,11 @@ const evaluate = () => {
   if (failRefresh) {
     if (refreshReceived !== null) return verdict(false, `auth_refresh recu alors que le refresh a echoue (token ${refreshReceived.token})`);
     if (issued < 2) return verdict(false, 'aucun 2e POST /api/v1/token : le client n\'a pas tente de refresh');
-    return verdict(true, 'refresh tente (2e POST en 503) et aucun auth_refresh envoye');
+    if (issued !== 4) return verdict(false, `${issued - 1} tentative(s) de refresh, attendu 3 (CA-15)`);
+    const firstClose = closeFrames.find((frameInfo) => frameInfo.connection === 1);
+    if (firstClose === undefined || firstClose.code !== 1000) return verdict(false, `WS #1 non fermee par le client avec le code 1000 apres 3 echecs (trame recue : ${JSON.stringify(firstClose ?? null)})`);
+    if (connections < 2) return verdict(false, 'aucune reconnexion apres la fermeture (WS #2 jamais ouverte)');
+    return verdict(true, '3 tentatives de refresh en echec, WS #1 fermee par le client (1000), puis reconnexion (WS #2) et aucun auth_refresh envoye');
   }
   if (refreshReceived === null) return verdict(false, 'aucun auth_refresh recu apres token_expiring_soon');
   if (refreshReceived.token !== lastToken) return verdict(false, `auth_refresh porte "${refreshReceived.token}", attendu le dernier token emis "${lastToken}"`);
@@ -137,7 +143,13 @@ server.on('upgrade', (req, socket) => {
       for (let i = 0; i < payload.length; i++) payload[i] ^= mask[i % 4];
       buffer = buffer.subarray(offset + 4 + length);
       if (opcode === 1) onText(payload.toString('utf8'));
-      else if (opcode === 8) { socket.end(Buffer.from([0x88, 0x00])); return; }
+      else if (opcode === 8) {
+        const code = payload.length >= 2 ? payload.readUInt16BE(0) : null;
+        closeFrames.push({ connection, code });
+        log(`WS #${connection} <- trame de fermeture (code ${code})`);
+        socket.end(Buffer.from([0x88, 0x00]));
+        return;
+      }
       else if (opcode === 9) socket.write(Buffer.concat([Buffer.from([0x8a, payload.length]), payload]));
     }
   });

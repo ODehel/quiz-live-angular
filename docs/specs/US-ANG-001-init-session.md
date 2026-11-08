@@ -49,7 +49,7 @@ L'application Angular est l'interface de gestion des parties du maître de jeu. 
 |---|---|---|
 | CA-12 | À la réception de `token_expiring_soon` via WebSocket, `AuthService.refresh()` est appelé silencieusement | Appel à `POST /api/v1/token` en arrière-plan — aucune interruption visible |
 | CA-13 | En cas de succès du refresh, `WebSocketService` envoie `{ "type": "auth_refresh", "token": "<nouveau_token>" }` sur la connexion WebSocket existante | La connexion WebSocket n'est pas interrompue — conforme à l'US-021 |
-| CA-14 | À la réception de `auth_success` après `auth_refresh`, le timer de refresh est réinitialisé | Le nouveau `expires_in` repart de zéro |
+| CA-14 | À la réception de `auth_success` après `auth_refresh`, le timer d'expiration est réinitialisé **côté hub** ; Angular n'a aucun timer à réarmer | Le nouveau `expires_in` repart de zéro côté hub ; côté Angular, le prochain refresh attend le prochain `token_expiring_soon` (décision #26) |
 | CA-15 | En cas d'échec du refresh (réseau indisponible), une nouvelle tentative est effectuée après 5 secondes, jusqu'à 3 fois | Après 3 échecs, la connexion WebSocket est fermée et la reconnexion complète repart depuis CA-9 |
 | CA-16 | À la réception de `token_expired` (serveur a expiré la connexion), `AuthService.refresh()` est appelé puis reconnexion complète | Traitement identique à un code de fermeture `4002` |
 

@@ -6,6 +6,8 @@ import { ErrorPage } from './shared/ui/error-page/error-page';
 import { ErrorService } from './core/error/error.service';
 import { AuthService } from './core/authentication/auth.service';
 import { stubIconIn } from './shared/ui/icon/icon.test-helpers';
+import { ThemeService } from './features/themes/theme.service';
+import { of } from 'rxjs';
 
 describe('routes', () => {
   let sessionReady: boolean;
@@ -17,7 +19,8 @@ describe('routes', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter(routes),
-        { provide: AuthService, useValue: fakeAuthService }
+        { provide: AuthService, useValue: fakeAuthService },
+        { provide: ThemeService, useValue: { list: () => of({ themes: [], total: 0 }) } }
       ],
     });
     stubIconIn(ErrorPage);
@@ -35,6 +38,22 @@ describe('routes', () => {
     sessionReady = false;
 
     await RouterTestingHarness.create('/dashboard');
+
+    expect(TestBed.inject(Router).url).toBe('/error');
+  });
+
+  it('renders the themes page on /themes when the session is ready', async () => {
+    const harness = await RouterTestingHarness.create('/themes');
+
+    const page = (harness.fixture.nativeElement as HTMLElement)
+      .querySelector('[data-testid="themes-title"]');
+    expect(page).not.toBeNull();
+  });
+
+  it('redirects /themes to the error page when the session is not ready', async () => {
+    sessionReady = false;
+
+    await RouterTestingHarness.create('/themes');
 
     expect(TestBed.inject(Router).url).toBe('/error');
   });

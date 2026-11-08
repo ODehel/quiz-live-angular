@@ -42,3 +42,5 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+# Smoke test output (scripts/smoke-*.ps1)
+smoke-test-summary.txt

@@ -36,7 +36,9 @@ export class WebSocketService {
       this._messages$.next(event.data);
       if (this.isAuthSuccess(event.data)) this.attempt = 0;
       if (this.isTokenExpiringSoon(event.data)) {
-        this.tokenProvider.refresh().catch(() => { /* échec ignoré : relances = CA-15 */ });
+        this.tokenProvider.refresh()
+          .then(() => websocket.send(this.tokenMessage('auth_refresh')))
+          .catch(() => { /* échec ignoré : relances = CA-15 */ });
       }
     };
     websocket.onclose = async (event) => {
@@ -56,8 +58,12 @@ export class WebSocketService {
     };
 
     websocket.onopen = () => {
-      websocket.send(JSON.stringify({ type: 'auth', token: this.tokenProvider.getToken() }));
+      websocket.send(this.tokenMessage('auth'));
     };
+  }
+
+  private tokenMessage(type: 'auth' | 'auth_refresh'): string {
+    return JSON.stringify({ type, token: this.tokenProvider.getToken() });
   }
 
   private isAuthSuccess(data: string): boolean {

@@ -126,6 +126,28 @@ describe("WebSocket service", () => {
 
         expect(refreshCalls).toBe(1);
     });
+    it("should send the refreshed token to the hub on the open connection", async () => {
+        service.connect();
+        capturedSocket!.simulateOpen();
+        fakeTokenProvider.refresh.mockImplementation(async () => {
+            fakeTokenProvider.getToken.mockReturnValue('new-jwt');
+        });
+
+        capturedSocket!.simulateMessage('{"type":"token_expiring_soon"}');
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+        expect(JSON.parse(capturedSocket!.sentMessage!)).toEqual({ type: 'auth_refresh', token: 'new-jwt' });
+    });
+    it("should not send a token to the hub when the refresh fails", async () => {
+        service.connect();
+        capturedSocket!.simulateOpen();
+        fakeTokenProvider.refresh.mockImplementation(() => Promise.reject(new Error('network down')));
+
+        capturedSocket!.simulateMessage('{"type":"token_expiring_soon"}');
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+        expect(JSON.parse(capturedSocket!.sentMessage!).type).toBe('auth');
+    });
     describe("under simulated time", () => {
         beforeEach(() => vi.useFakeTimers());
         afterEach(() => vi.useRealTimers());

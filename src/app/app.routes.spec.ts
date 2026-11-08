@@ -7,6 +7,7 @@ import { ErrorService } from './core/error/error.service';
 import { AuthService } from './core/authentication/auth.service';
 import { stubIconIn } from './shared/ui/icon/icon.test-helpers';
 import { ThemeService } from './features/themes/theme.service';
+import { ThemeList } from './features/themes/theme-list';
 import { of } from 'rxjs';
 
 describe('routes', () => {
@@ -24,6 +25,7 @@ describe('routes', () => {
       ],
     });
     stubIconIn(ErrorPage);
+    stubIconIn(ThemeList);
   });
 
   it('renders the dashboard on /dashboard when the session is ready', async () => {

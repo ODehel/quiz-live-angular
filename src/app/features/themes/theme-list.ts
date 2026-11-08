@@ -1,6 +1,8 @@
+import { Dialog } from '@angular/cdk/dialog';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NameDialogComponent, NameDialogOptions } from '../../core/name-dialog/name-dialog';
 import { Icon } from '../../shared/ui/icon/icon';
 import { ThemeList as ThemeListData, ThemeService } from './theme.service';
 
@@ -12,11 +14,17 @@ import { ThemeList as ThemeListData, ThemeService } from './theme.service';
     imports: [DatePipe, Icon]
 })
 export class ThemeList {
+    private readonly dialog = inject(Dialog);
     protected readonly page = signal<ThemeListData | null>(null);
 
     constructor() {
         inject(ThemeService).list()
             .pipe(takeUntilDestroyed())
             .subscribe(page => this.page.set(page));
+    }
+
+    protected openNewThemeDialog(): void {
+        const data: NameDialogOptions = { title: 'Nouveau thème', fieldLabel: 'Nom du thème' };
+        this.dialog.open(NameDialogComponent, { data });
     }
 }

@@ -164,6 +164,25 @@ describe('appConfig', () => {
     expect(card?.querySelector('svg')).not.toBeNull();
   });
 
+  it('draws the plus icon on the new theme button and the cross in its dialog', async () => {
+    startApplication();
+    httpMock.expectOne('/api/v1/token')
+      .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+    await initStatus.donePromise;
+
+    const fixture = TestBed.createComponent(ThemeList);
+    httpMock.expectOne('/api/v1/themes?page=1&limit=100').flush({ data: [], page: 1, limit: 100, total: 0, total_pages: 0 });
+    await fixture.whenStable();
+    const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="new-theme"]');
+    button?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const cross = document.querySelector('.cdk-dialog-container [data-testid="close"]');
+    expect(button?.querySelector('svg')).toBeInstanceOf(SVGElement);
+    expect(cross?.querySelector('svg')).toBeInstanceOf(SVGElement);
+  });
+
   it('does not navigate when the token request succeeds', async () => {
     startApplication();
     httpMock.expectOne('/api/v1/token')

@@ -35,5 +35,6 @@ ouverture ; en cas d'écart, le réel gagne.
 
 ## Conventions de commit
 `feat` (atteignable en prod), `fix` (correction), `chore` (code dormant, outillage),
-`refactor` (comportement inchangé), `docs` (documentation seule).
+`refactor` (comportement inchangé), `test` (test seul, sans code de production),
+`docs` (documentation seule).
 Description à l'impératif, capacité observable, jamais le mécanisme.

@@ -312,6 +312,16 @@ describe("WebSocket service", () => {
 
             expect(callCount).toBe(2);
         });
+        it("should refresh the token once and reconnect once when the hub announces the expiry then closes with 4002", async () => {
+            service.connect();
+
+            capturedSocket!.simulateMessage('{"type":"token_expired"}');
+            capturedSocket!.simulateClose(4002);
+            await vi.advanceTimersByTimeAsync(1000);
+
+            expect(fakeTokenProvider.refresh).toHaveBeenCalledTimes(1);
+            expect(callCount).toBe(2);
+        });
         it("should retry the token refresh after 5 seconds when it fails after the expiry announcement", async () => {
             fakeTokenProvider.refresh.mockRejectedValue(new Error('network down'));
             service.connect();

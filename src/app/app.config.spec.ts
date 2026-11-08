@@ -6,6 +6,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { appConfig } from './app.config';
 import { ErrorService } from './core/error/error.service';
 import { ErrorPage } from './shared/ui/error-page/error-page';
+import { ThemeList } from './features/themes/theme-list';
 import { WEB_SOCKET_CONSTRUCTOR } from './core/websocket/websocket.providers';
 
 // Ces tests ne portent pas sur la socket (voir app.config.websocket.spec.ts) : une doublure inerte évite d'ouvrir une vraie connexion.
@@ -141,6 +142,26 @@ describe('appConfig', () => {
 
     const mainIcon = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="main-icon"]');
     expect(mainIcon?.querySelector('svg')).not.toBeNull();
+  });
+
+  it('draws the generic icon on the theme cards', async () => {
+    startApplication();
+    httpMock.expectOne('/api/v1/token')
+      .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+    await initStatus.donePromise;
+
+    const fixture = TestBed.createComponent(ThemeList);
+    httpMock.expectOne('/api/v1/themes?page=1&limit=100').flush({
+      data: [{ id: 'theme-1', name: 'Géographie', created_at: '2026-10-14T09:00:00.000Z', last_updated_at: null }],
+      page: 1,
+      limit: 100,
+      total: 1,
+      total_pages: 1,
+    });
+    await fixture.whenStable();
+
+    const card = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="theme-card"]');
+    expect(card?.querySelector('svg')).not.toBeNull();
   });
 
   it('does not navigate when the token request succeeds', async () => {

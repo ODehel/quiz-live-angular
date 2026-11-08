@@ -32,6 +32,17 @@
   --variant-glow: var(--semantic-warning-glow);
 }
 
+/* Fond ambiant — session-replaced (ambre, avertissement : un autre onglet a repris la session) */
+[data-testid="error-screen"][data-variant="session-replaced"] {
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 30%, rgba(251, 191, 36, 0.10), transparent 70%),
+    radial-gradient(ellipse 60% 30% at 50% 70%, rgba(251, 191, 36, 0.04), transparent 70%),
+    var(--bg-base);
+  --variant-color: var(--semantic-warning);
+  --variant-soft: var(--semantic-warning-soft);
+  --variant-glow: var(--semantic-warning-glow);
+}
+
 /* Fond ambiant — server-error (rouge, sérieux) */
 [data-testid="error-screen"][data-variant="server-error"] {
   background:

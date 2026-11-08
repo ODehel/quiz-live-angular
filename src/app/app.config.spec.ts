@@ -129,6 +129,20 @@ describe('appConfig', () => {
     expect(homeButton?.querySelector('svg')).not.toBeNull();
   });
 
+  it('draws the icon of the session replaced error', async () => {
+    startApplication();
+    httpMock.expectOne('/api/v1/token')
+      .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+    await initStatus.donePromise;
+    TestBed.inject(ErrorService).sessionReplaced();
+
+    const fixture = TestBed.createComponent(ErrorPage);
+    await fixture.whenStable();
+
+    const mainIcon = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="main-icon"]');
+    expect(mainIcon?.querySelector('svg')).not.toBeNull();
+  });
+
   it('does not navigate when the token request succeeds', async () => {
     startApplication();
     httpMock.expectOne('/api/v1/token')

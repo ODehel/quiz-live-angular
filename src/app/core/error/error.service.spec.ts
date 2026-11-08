@@ -10,7 +10,8 @@ describe("ErrorService", () => {
         { variant: 'not-found', call: s => s.notFound() },
         { variant: 'connection-lost', call: s => s.connectionLost() },
         { variant: 'server-error', call: s => s.serverError() },
-        { variant: 'game-corrupted', call: s => s.gameCorrupted() }
+        { variant: 'game-corrupted', call: s => s.gameCorrupted() },
+        { variant: 'session-replaced', call: s => s.sessionReplaced() }
     ])("stores a '$variant' error", ({ variant, call }) => {
         const service = new ErrorService();
         call(service);

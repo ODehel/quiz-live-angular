@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-07.
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-08.
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -129,11 +129,18 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 ## Mesurées pendant `feat(websocket): refresh the token when the hub announces its expiry`
 
 - **L'échec du refresh proactif est avalé sans trace** 🟡 : le `catch` est vide, aucune relance (CA-15 prévoit 3 tentatives à 5 s) ni journal. À reprendre avec CA-15.
-- **`token_expiring_soon` n'a jamais été reçu d'un vrai hub** 🟡 : test unitaire seulement (aucun smoke test, voir le handoff). Reste à vérifier que le hub l'émet et sous quelle forme (`JWT_EXPIRATION_TIME` court côté hub).
+- **`token_expiring_soon` n'a jamais été reçu d'un vrai hub** 🟠 : le hub ne l'émet pas (US-021 non implémentée, voir « Mesurées pendant `chore(scripts): add a fake hub…` »). Le seul message reçu en vrai est celui d'un faux hub.
 - **Les doublures `vi.fn()` masquent les rejets non capturés** 🟡 : `vi.fn()` attache un gestionnaire aux promesses qu'il retourne ; un test sur « pas de rejet non capturé » doit employer une fonction nue (c'est le cas du test « should stay silent… »). Le `refresh` du `beforeEach` est resté un `vi.fn` : un futur test de ce type doit le remplacer, pas s'y fier.
 
 ## Mesurées pendant `feat(websocket): send the refreshed token to the hub`
 
 - **Un `send` en échec est avalé comme un refresh en échec** 🟡 : le `catch` de CA-12 couvre aussi l'envoi de `auth_refresh` (socket fermée entre l'annonce et la fin du refresh : rien n'est journalisé ni relancé). La fermeture déclenche déjà la reconnexion, avec le token rafraîchi. À reconsidérer avec CA-15.
 - **Le token renvoyé est relu au retour du refresh, pas celui que ce refresh a obtenu** 🟡 : le port `refresh()` ne retourne rien, `getToken()` donne le dernier token stocké. Avec deux refresh concurrents (voir la dette sur les appels concurrents), le dernier arrivé gagne ; un `getToken()` à `null` serait envoyé tel quel.
-- **`auth_refresh` n'a jamais été reçu d'un vrai hub** 🟡 : test unitaire seulement. Le `auth_success` qui doit le suivre n'est pas exploité (CA-14, aucun timer de refresh n'existe encore). À observer au smoke test avec un `JWT_EXPIRATION_TIME` court côté hub.
+- **`auth_refresh` n'a jamais été reçu d'un vrai hub** 🟠 : le hub l'ignore une fois la session authentifiée (US-021 non implémentée). Le `auth_success` qui doit le suivre n'est pas exploité (CA-14, aucun timer de refresh n'existe encore).
+
+## Mesurées pendant `chore(scripts): add a fake hub to smoke-test the token refresh`
+
+- **Le hub n'implémente pas US-021** 🟠 : `ws-route.ts` (hub, `deb5465`) n'émet ni `token_expiring_soon` ni `token_expired` et ne traite pas `auth_refresh` ; la fermeture `4002` n'existe qu'à l'authentification initiale. CA-12, CA-13, CA-14 et CA-16 ne peuvent pas être observés sur un vrai hub avant cette implémentation (session du dépôt `quiz-live-server`). Le handoff précédent supposait le contraire (« hub avec `JWT_EXPIRATION_TIME` court »).
+- **Le faux hub prouve le câblage, pas le hub** 🟡 : `scripts/fake-hub.mjs` joue la lecture de US-021 par Claude (annonce après `auth_success`, `auth_success` en réponse à `auth_refresh`). Il ne couvre ni `TOKEN_MISMATCH`, ni `TOKEN_EXPIRED` avec fermeture `4002`, ni `token_expired`. Écart possible avec le vrai hub non détectable ici.
+- **Le faux hub n'est validé que par un client Node jetable** 🟡 : 5 cas rejoués hors dépôt (nominal, échec voulu, client muet, ancien token, échec voulu avec client nominal) ; le verdict n'est confronté à un navigateur qu'au smoke test d'Olivier.
+- **Un onglet a reçu `token_expiring_soon` sans émettre de `POST`** 🟡 : smoke test du 2026-11-08, scénario `--fail-refresh` : `WS #1` (onglet resté ouvert du scénario précédent, reconnecté avec `fake-token-2`) reçoit l'annonce à 11:13:24 ; le hub ne voit aucun `POST /api/v1/token` avant le rechargement de 11:13:30. Non reproduit ni expliqué (onglet en arrière-plan ? requête perdue par le proxy de dev ? refresh non appelé ?). À rejouer avec un seul onglet, la console d'Edge ouverte, avant de s'appuyer sur CA-12 en conditions réelles.

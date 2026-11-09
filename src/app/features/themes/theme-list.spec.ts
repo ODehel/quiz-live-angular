@@ -1,7 +1,7 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Observable, of, Subject } from 'rxjs';
+import { config as rxjsConfig, Observable, of, Subject, throwError } from 'rxjs';
 import { ThemeNameDialog } from './theme-name-dialog';
 import { stubIconIn } from '../../shared/ui/icon/icon.test-helpers';
 import { ThemeList as ThemeListData, ThemeService } from './theme.service';
@@ -99,6 +99,104 @@ describe('ThemeList', () => {
 
     expect(textOf(fixture, 'theme-total')).toBeUndefined();
   });
+
+  describe('when there is nothing to invite to', () => {
+    const invitation = (fixture: ComponentFixture<ThemeList>) =>
+      element(fixture).querySelector('[data-testid="empty-state-message"], [data-testid="empty-state-new-theme"]');
+
+    it('does not invite to create a first theme when themes exist', async () => {
+      const fixture = render(of({ themes, total: 3 }));
+
+      await fixture.whenStable();
+
+      expect(invitation(fixture)).toBeNull();
+    });
+
+    it('does not invite to create a first theme when there is a single theme', async () => {
+      const fixture = render(of({ themes: themes.slice(0, 1), total: 1 }));
+
+      await fixture.whenStable();
+
+      expect(invitation(fixture)).toBeNull();
+    });
+
+    it('does not claim there is no theme before the hub has answered', async () => {
+      const fixture = render(new Subject<ThemeListData>());
+
+      await fixture.whenStable();
+
+      expect(invitation(fixture)).toBeNull();
+    });
+
+    it('does not claim there is no theme when the list fails to load', async () => {
+      // ThemeList does not handle the error yet (see DEBTS.md): RxJS reports it as unhandled, which this test expects.
+      const reported: unknown[] = [];
+      const previous = rxjsConfig.onUnhandledError;
+      rxjsConfig.onUnhandledError = error => reported.push(error);
+      try {
+        const fixture = render(throwError(() => new Error('hub unreachable')));
+
+        await fixture.whenStable();
+        await new Promise(resolve => setTimeout(resolve));
+
+        expect(reported).toHaveLength(1);
+        expect(invitation(fixture)).toBeNull();
+      } finally {
+        rxjsConfig.onUnhandledError = previous;
+      }
+    });
+  });
+
+  describe('when the hub has no theme', () => {
+    afterEach(() => TestBed.inject(Dialog).closeAll());
+
+    it('offers a "Nouveau thème" button next to the invitation that opens the dialog', async () => {
+      const fixture = render(of({ themes: [], total: 0 }));
+      await fixture.whenStable();
+      const button = element(fixture).querySelector<HTMLButtonElement>('[data-testid="empty-state-new-theme"]');
+
+      button?.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(button?.textContent?.trim()).toBe('Nouveau thème');
+      expect(document.querySelector('.cdk-dialog-container [data-testid="title"]')?.textContent?.trim()).toBe('Nouveau thème');
+    });
+
+    it('invites to create a first theme', async () => {
+      const fixture = render(of({ themes: [], total: 0 }));
+
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'empty-state-message')).toBe('Aucun thème — créez votre premier thème');
+    });
+
+    it('draws the themes icon above the invitation', async () => {
+      const fixture = render(of({ themes: [], total: 0 }));
+
+      await fixture.whenStable();
+
+      const icons = fixture.debugElement.queryAll(By.css('[data-testid="empty-state"] app-icon'));
+      expect(icons.map(icon => icon.componentInstance.name())).toEqual(['folder-tree', 'plus']);
+    });
+
+    it('shows no empty grid of cards', async () => {
+      const fixture = render(of({ themes: [], total: 0 }));
+
+      await fixture.whenStable();
+
+      expect(element(fixture).querySelector('.cards-grid')).toBeNull();
+    });
+
+    it('does not count them in the header, the invitation says it all', async () => {
+      const fixture = render(of({ themes: [], total: 0 }));
+
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'theme-total')).toBeUndefined();
+    });
+  });
+
   describe('new theme dialog', () => {
     const openDialog = () => document.querySelector('.cdk-dialog-container');
     const clickNewTheme = async (fixture: ComponentFixture<ThemeList>) => {

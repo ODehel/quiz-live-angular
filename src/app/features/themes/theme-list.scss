@@ -84,3 +84,26 @@
   color: var(--text-primary);
   overflow-wrap: anywhere;
 }
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 10px 18px;
+  background: var(--accent-primary);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: white;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-primary:hover {
+  background: var(--accent-primary-hover);
+  box-shadow: 0 0 24px var(--accent-primary-glow);
+}

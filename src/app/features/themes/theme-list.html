@@ -3,6 +3,9 @@
     @if (page(); as list) {
         <span class="page-count" data-testid="theme-total">{{list.total}} au total</span>
     }
+    <button class="btn-primary" data-testid="new-theme" (click)="openNewThemeDialog()">
+        <app-icon name="plus" [size]="16" />Nouveau thème
+    </button>
 </header>
 @if (page(); as list) {
     <div class="cards-grid">

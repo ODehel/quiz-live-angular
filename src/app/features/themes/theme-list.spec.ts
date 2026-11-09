@@ -1,6 +1,8 @@
+import { Dialog } from '@angular/cdk/dialog';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Observable, of, Subject } from 'rxjs';
+import { ThemeNameDialog } from './theme-name-dialog';
 import { stubIconIn } from '../../shared/ui/icon/icon.test-helpers';
 import { ThemeList as ThemeListData, ThemeService } from './theme.service';
 import { ThemeList } from './theme-list';
@@ -17,6 +19,7 @@ describe('ThemeList', () => {
       providers: [{ provide: ThemeService, useValue: { list: () => answer } }],
     });
     stubIconIn(ThemeList);
+    stubIconIn(ThemeNameDialog);
     return TestBed.createComponent(ThemeList);
   };
 
@@ -95,5 +98,86 @@ describe('ThemeList', () => {
     await fixture.whenStable();
 
     expect(textOf(fixture, 'theme-total')).toBeUndefined();
+  });
+  describe('new theme dialog', () => {
+    const openDialog = () => document.querySelector('.cdk-dialog-container');
+    const clickNewTheme = async (fixture: ComponentFixture<ThemeList>) => {
+      element(fixture).querySelector<HTMLButtonElement>('[data-testid="new-theme"]')?.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+    };
+
+    afterEach(() => {
+      TestBed.inject(Dialog).closeAll();
+      vi.restoreAllMocks();
+    });
+
+    it('offers a "Nouveau thème" button in the header', async () => {
+      const fixture = render(of({ themes, total: 3 }));
+
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'new-theme')).toBe('Nouveau thème');
+    });
+
+    it('opens no dialog until the button is clicked', async () => {
+      const fixture = render(of({ themes, total: 3 }));
+
+      await fixture.whenStable();
+
+      expect(openDialog()).toBeNull();
+    });
+
+    it('opens a dialog titled "Nouveau thème" when the button is clicked', async () => {
+      const fixture = render(of({ themes, total: 3 }));
+      await fixture.whenStable();
+
+      await clickNewTheme(fixture);
+
+      expect(openDialog()?.querySelector('[data-testid="title"]')?.textContent?.trim()).toBe('Nouveau thème');
+    });
+
+    it('puts the focus on the name field when the dialog opens', async () => {
+      // jsdom has no layout: without a geometry, CDK treats every element as hidden and cannot focus any.
+      vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+      const fixture = render(of({ themes, total: 3 }));
+      await fixture.whenStable();
+
+      await clickNewTheme(fixture);
+
+      expect(document.activeElement).toBe(openDialog()?.querySelector('[data-testid="name-field"]'));
+    });
+
+    it('closes the dialog when Escape is pressed', async () => {
+      const fixture = render(of({ themes, total: 3 }));
+      await fixture.whenStable();
+      await clickNewTheme(fixture);
+
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, bubbles: true }));
+      await fixture.whenStable();
+
+      expect(openDialog()).toBeNull();
+    });
+
+    it('closes the dialog from its cancel button', async () => {
+      const fixture = render(of({ themes, total: 3 }));
+      await fixture.whenStable();
+      await clickNewTheme(fixture);
+
+      openDialog()?.querySelector<HTMLButtonElement>('[data-testid="cancel"]')?.click();
+      await fixture.whenStable();
+
+      expect(openDialog()).toBeNull();
+    });
+
+    it('asks for the name of the theme and nothing else', async () => {
+      const fixture = render(of({ themes, total: 3 }));
+      await fixture.whenStable();
+
+      await clickNewTheme(fixture);
+
+      const fields = Array.from(openDialog()?.querySelectorAll<HTMLInputElement>('input, textarea, select') ?? []);
+      expect(fields.map(field => field.labels?.[0]?.textContent?.trim())).toEqual(['Nom du thème']);
+    });
   });
 });

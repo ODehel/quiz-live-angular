@@ -2,7 +2,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NameDialogComponent, NameDialogOptions } from '../../core/name-dialog/name-dialog';
+import { ThemeNameDialog } from './theme-name-dialog';
 import { Icon } from '../../shared/ui/icon/icon';
 import { ThemeList as ThemeListData, ThemeService } from './theme.service';
 
@@ -24,7 +24,6 @@ export class ThemeList {
     }
 
     protected openNewThemeDialog(): void {
-        const data: NameDialogOptions = { title: 'Nouveau thème', fieldLabel: 'Nom du thème' };
-        this.dialog.open(NameDialogComponent, { data });
+        this.dialog.open(ThemeNameDialog);
     }
 }

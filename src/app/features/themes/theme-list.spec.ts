@@ -2,7 +2,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Observable, of, Subject } from 'rxjs';
-import { NameDialogComponent } from '../../core/name-dialog/name-dialog';
+import { ThemeNameDialog } from './theme-name-dialog';
 import { stubIconIn } from '../../shared/ui/icon/icon.test-helpers';
 import { ThemeList as ThemeListData, ThemeService } from './theme.service';
 import { ThemeList } from './theme-list';
@@ -19,7 +19,7 @@ describe('ThemeList', () => {
       providers: [{ provide: ThemeService, useValue: { list: () => answer } }],
     });
     stubIconIn(ThemeList);
-    stubIconIn(NameDialogComponent);
+    stubIconIn(ThemeNameDialog);
     return TestBed.createComponent(ThemeList);
   };
 

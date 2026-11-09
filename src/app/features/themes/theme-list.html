@@ -1,27 +1,39 @@
 <header class="page-header">
     <h1 class="page-title" data-testid="themes-title">Thèmes</h1>
     @if (page(); as list) {
-        <span class="page-count" data-testid="theme-total">{{list.total}} au total</span>
+        @if (list.themes.length > 0) {
+            <span class="page-count" data-testid="theme-total">{{list.total}} au total</span>
+        }
     }
     <button class="btn-primary" data-testid="new-theme" (click)="openNewThemeDialog()">
         <app-icon name="plus" [size]="16" />Nouveau thème
     </button>
 </header>
 @if (page(); as list) {
-    <div class="cards-grid">
-        @for (theme of list.themes; track theme.id) {
-            <article class="theme-card" data-testid="theme-card">
-                <div class="theme-icon-wrap">
-                    <app-icon name="folder-tree" [size]="22" />
-                </div>
-                <div class="theme-card-body">
-                    <h2 class="theme-card-title" data-testid="theme-name">{{theme.name}}</h2>
-                    <p class="theme-card-date" data-testid="theme-created">Créé le {{theme.createdAt | date:'dd/MM/yyyy'}}</p>
-                    @if (theme.lastUpdatedAt) {
-                        <p class="theme-card-date" data-testid="theme-updated">Modifié le {{theme.lastUpdatedAt | date:'dd/MM/yyyy'}}</p>
-                    }
-                </div>
-            </article>
-        }
-    </div>
+    @if (list.themes.length === 0) {
+        <div class="empty-state" data-testid="empty-state">
+            <app-icon name="folder-tree" [size]="28" />
+            <p class="empty-state-text" data-testid="empty-state-message">Aucun thème — créez votre premier thème</p>
+            <button class="btn-primary" data-testid="empty-state-new-theme" (click)="openNewThemeDialog()">
+                <app-icon name="plus" [size]="16" />Nouveau thème
+            </button>
+        </div>
+    } @else {
+        <div class="cards-grid">
+            @for (theme of list.themes; track theme.id) {
+                <article class="theme-card" data-testid="theme-card">
+                    <div class="theme-icon-wrap">
+                        <app-icon name="folder-tree" [size]="22" />
+                    </div>
+                    <div class="theme-card-body">
+                        <h2 class="theme-card-title" data-testid="theme-name">{{theme.name}}</h2>
+                        <p class="theme-card-date" data-testid="theme-created">Créé le {{theme.createdAt | date:'dd/MM/yyyy'}}</p>
+                        @if (theme.lastUpdatedAt) {
+                            <p class="theme-card-date" data-testid="theme-updated">Modifié le {{theme.lastUpdatedAt | date:'dd/MM/yyyy'}}</p>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+    }
 }

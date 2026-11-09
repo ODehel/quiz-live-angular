@@ -28,8 +28,8 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 |---|---|---|
 | CA-1 | Au chargement, `GET /api/v1/themes?page=1&limit=100` est appelé | Tous les thèmes en une seule page — le volume attendu (< 50) ne justifie pas de pagination côté UI |
 | CA-2 | Chaque carte affiche : une icône générique, le nom du thème, sa date de création et, si `last_updated_at` n'est pas `null`, sa date de dernière modification | Cartes en grille (maquette `docs/quiz-buzzer-themes-list.html`) ; tri par date décroissante — garanti par le serveur |
-| CA-3 | Le total de thèmes est affiché en en-tête | Issu du champ `total` de la réponse serveur |
-| CA-4 | Si la liste est vide, un message d'invitation "Aucun thème — créez votre premier thème" est affiché | Pas de tableau vide |
+| CA-3 | Le total de thèmes est affiché en en-tête dès que la liste en contient au moins un | Issu du champ `total` de la réponse serveur ; masqué quand la liste est vide (CA-4) et tant que le hub n'a pas répondu |
+| CA-4 | Si la liste est vide, un message d'invitation "Aucun thème — créez votre premier thème" est affiché, avec un bouton « Nouveau thème » qui ouvre la même modale que celui de l'en-tête | Pas de tableau vide ; jamais affiché tant que le hub n'a pas répondu ni quand le chargement échoue |
 
 ---
 
@@ -212,6 +212,6 @@ Après une suppression réussie (`204`), la liste est mise à jour localement vi
 
 ---
 
-**Dernière mise à jour** : 2026-11-08
+**Dernière mise à jour** : 2026-11-09
 **Statut** : Implémentée
 **Sprint** : 2

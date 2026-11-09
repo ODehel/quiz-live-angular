@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-08.
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-09.
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -99,6 +99,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Levées
 
+- ~~L'état vide (CA-4) n'est pas encore traité~~ : une liste vide affiche l'invitation et son bouton, et masque « 0 au total » (`feat(themes): invite to create a first theme when there are none`, décision #33) ; jamais affichée avant la réponse du hub ni quand le chargement échoue (tests). Rendu sur le vrai hub à constater (voir l'entrée ci-dessous).
 - ~~`4004` jamais observé sur un vrai hub~~ : observé le 2026-11-08 au navigateur sur le hub réel (smoke test d'Olivier de `feat(error): explain that the session was taken over by another tab`) : un second onglet fait afficher la page `session-replaced` sur le premier, sans reconnexion pendant 40 s (le journal du hub ne montre aucune connexion entre l'ouverture du second onglet et le F5 du premier, ~3 min plus tard) ; un F5 du premier onglet inverse la situation. Aucune erreur en console.
 - ~~`ErrorNavigator` factice~~ : remplacé par `errorService.sessionReplaced()` ; un `4004` affiche la page d'erreur `session-replaced` (`feat(error): explain that the session was taken over by another tab`, décision #28).
 - ~~Un `refresh()` rejeté dans `onclose` (code `4002`) n'est pas capturé~~ : capturé, la reconnexion repart quand même (`fix(websocket): keep the connection attempts going when the token refresh fails`, décision #21). Verrouillé par un test sous temps simulé ; comportement non observé sur un vrai hub (voir l'entrée ci-dessous).
@@ -182,7 +183,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `feat(themes): list the themes by name`
 
-- **Une liste qui ne se charge pas reste muette** 🟠 : `ThemeList` s'abonne sans traiter l'erreur. Hub éteint, `401` ou `500` : la page n'affiche que son titre, l'erreur part au gestionnaire global du navigateur (console) et rien n'explique la panne. Pas d'état « chargement » non plus : le total et les cartes apparaissent à la réponse du hub. À traiter avec l'état vide (CA-4, session suivante) ou avec `ErrorService` : à trancher.
+- **Une liste qui ne se charge pas reste muette** 🟠 : `ThemeList` s'abonne sans traiter l'erreur. Hub éteint, `401` ou `500` : la page n'affiche que son titre, l'erreur part au gestionnaire global du navigateur (console) et rien n'explique la panne. Pas d'état « chargement » non plus : le total et les cartes apparaissent à la réponse du hub. L'état vide (CA-4, `feat(themes): invite to create a first theme when there are none`) ne le traite pas : il n'apparaît jamais sur échec (verrouillé par test), la page reste muette. À traiter avec `ErrorService` : à trancher.
 - **Au-delà de 100 thèmes, le total dépasse le nombre de cartes** 🟡 : `limit=100` fixe (CA-1, plafond du hub) et aucune pagination côté interface ; le total affiché est celui du hub, les cartes s'arrêtent à 100. Hors sujet tant que le volume reste sous 50, comme le dit la spec.
 - **`/themes` hors shell, avec la page réduite à l'essentiel** 🟠 : route à `/themes` (choix d'Olivier) alors que la spec et `ARCHITECTURE-TECHNIQUE-ANGULAR.md` placent la page sous `content/themes` ; ni sidebar ni topbar, ni surtitre « Backoffice · Contenu », ni sous-titre, ni bouton « Nouveau thème » (CA-5, session à venir). À rejoindre avec `feat(layout)`. Le fond est plat (`--bg-base`) : le dégradé ambiant du tableau de bord, déjà recopié dans `dashboard.scss` et `error-page.scss`, n'est pas recopié une troisième fois.
 - **Style de la page sans test** 🟠 : grille, cartes, pastille du total (SCSS) vérifiés au smoke test et à la capture seulement, comme `dashboard`.
@@ -209,4 +210,11 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **La modale n'est pas reliée à son titre pour les lecteurs d'écran** 🟠 : pas d'`aria-labelledby` sur le conteneur CDK (`ariaLabelledBy` non fourni à l'ouverture) ; seule la croix a un `aria-label`.
 - **Indications de la maquette non reprises** 🟡 : placeholder « ex : Gastronomie, Technologie... », aide « 3 à 40 caractères, commence par une majuscule. », `autocomplete` et `spellcheck` du champ. À traiter avec CA-6.
 - **Assertions `not.toBeNull()` sur `?.querySelector` trop permissives** 🟡 : `undefined` n'est pas `null`, donc un élément introuvable passerait (déjà dans `app.config.spec.ts`, ex. `draws the icon of the session replaced error`). Le test ajouté ici utilise `toBeInstanceOf(SVGElement)` ; les existants restent à durcir.
-- **L'état vide (CA-4) n'est pas encore traité** 🟠 : une liste vide affiche « 0 au total », le bouton « Nouveau thème » et aucune invitation ; la session suivante en fait l'invitation, avec ce bouton.
+
+## Mesurées pendant `feat(themes): invite to create a first theme when there are none`
+
+- **Style de l'état vide sans test** 🟠 : boîte aux bords pointillés, centrage, icône grise, bouton recentré (`.empty-state .btn-primary { margin-left: 0 }` : d'après la lecture du CSS, sans cette règle `margin-left: auto` le pousserait à droite ; non observé) : SCSS vérifié au smoke test seulement, comme le reste de la page.
+- **L'invitation n'a jamais été vue sur le vrai hub avant le smoke test d'Olivier** 🟡 : le hub doit être vide, ce que le script `scripts/smoke-themes-empty-state.ps1` prépare (`-ClearThemes` supprime tous les thèmes, à réserver à une base de test). Script écrit sans PowerShell dans le bac à sable de Claude : relu, non exécuté.
+- **Deux boutons « Nouveau thème » à l'écran quand la liste est vide** 🟡 : celui de l'en-tête et celui de l'invitation, `data-testid` distincts (`new-theme`, `empty-state-new-theme`). Voulu par la maquette ; à revoir si le shell déplace l'action.
+- **Le test « liste en échec » dépend de la configuration globale d'RxJS** 🟡 : il remplace `config.onUnhandledError` le temps du test pour absorber l'erreur que `ThemeList` ne traite pas (dette « Une liste qui ne se charge pas reste muette »), et vérifie qu'elle est bien signalée. Dès que la page traitera l'erreur, ce test devra être réécrit autour de ce traitement.
+- **Le message d'invitation est en dur** 🟡 : un seul `<p>` de gabarit, comme les autres textes de la page ; aucun mécanisme de traduction dans le projet.

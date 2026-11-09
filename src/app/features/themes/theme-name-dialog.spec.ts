@@ -52,6 +52,18 @@ describe("Theme Name Dialog", () => {
         });
     });
 
+    describe("Layout", () => {
+        it.each([
+            ["the dialog frame", ":scope"],
+            ["the name field", '[data-testid="name-field"]']
+        ])("counts the padding and border of %s in its width", async (_label, selector) => {
+            const { element } = await createThemeNameDialog();
+
+            const target = selector === ":scope" ? element : element.querySelector<HTMLElement>(selector);
+            expect(getComputedStyle(target as HTMLElement).boxSizing).toBe("border-box");
+        });
+    });
+
     async function createThemeNameDialog() {
         const fakeDialogRef: { close: Mock } = { close: vi.fn() };
         await TestBed.configureTestingModule({

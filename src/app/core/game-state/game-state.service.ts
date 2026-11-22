@@ -19,6 +19,7 @@ export class GameStateService {
         hub.messages$.subscribe(data => {
             const type = messageType(data);
             if (type === 'auth_success') this.requestSync();
+            if (type === 'game_state_sync') this.replaceBuzzers(JSON.parse(data).connected_buzzers);
             if (type === 'buzzer_connected' || type === 'buzzer_disconnected') {
                 const username = usernameOf(data);
                 if (username === undefined) return;
@@ -38,6 +39,11 @@ export class GameStateService {
         );
     }
 
+    private replaceBuzzers(usernames: unknown): void {
+        if (!isStringList(usernames)) return;
+        this.buzzers.update(list => (sameList(list, usernames) ? list : usernames));
+    }
+
     requestSync(): void {
         this.hub.send({ type: 'request_game_state' });
     }
@@ -50,4 +56,12 @@ export class GameStateService {
 function usernameOf(data: string): string | undefined {
     const { username } = JSON.parse(data);
     return typeof username === 'string' ? username : undefined;
+}
+
+function isStringList(value: unknown): value is string[] {
+    return Array.isArray(value) && value.every(item => typeof item === 'string');
+}
+
+function sameList(left: string[], right: string[]): boolean {
+    return left.length === right.length && left.every((item, index) => item === right[index]);
 }

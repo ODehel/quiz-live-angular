@@ -100,7 +100,6 @@ describe('GameStateService', () => {
     });
     it.each([
         '{"type":"auth_success"}',
-        '{"type":"game_state_sync","connected_buzzers":["quiz_buzzer_09"]}',
         '{"type":"buzzer_buzzed","username":"quiz_buzzer_01"}',
         'not json',
     ])('should not change the connected buzzers on %s', (data) => {
@@ -109,6 +108,75 @@ describe('GameStateService', () => {
         incoming.next(data);
 
         expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_01']);
+    });
+    it('should replace the connected buzzers with those of a game_state_sync, in its order', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_02"}');
+
+        incoming.next('{"type":"game_state_sync","connected_buzzers":["quiz_buzzer_03","quiz_buzzer_01"]}');
+
+        expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_03', 'quiz_buzzer_01']);
+    });
+    it('should empty the connected buzzers when a game_state_sync lists none', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+
+        incoming.next('{"type":"game_state_sync","connected_buzzers":[]}');
+
+        expect(service.connectedBuzzers()).toEqual([]);
+    });
+    it('should keep the connected buzzers when a game_state_sync does not carry them', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+
+        incoming.next('{"type":"game_state_sync"}');
+
+        expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_01']);
+    });
+    it.each([
+        '{"type":"game_state_sync","connected_buzzers":null}',
+        '{"type":"game_state_sync","connected_buzzers":"quiz_buzzer_09"}',
+        '{"type":"game_state_sync","connected_buzzers":{"0":"quiz_buzzer_09"}}',
+        '{"type":"game_state_sync","connected_buzzers":[{"username":"quiz_buzzer_09"}]}',
+        '{"type":"game_state_sync","connected_buzzers":["quiz_buzzer_09",42]}',
+        '{"type":"game_state_sync","connected_buzzers":["quiz_buzzer_09",null]}',
+    ])('should reject the whole game_state_sync, leaving the connected buzzers as they are, on %s', (data) => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+        const before = service.connectedBuzzers();
+
+        expect(() => incoming.next(data)).not.toThrow();
+
+        expect(service.connectedBuzzers()).toBe(before);
+    });
+    it('should keep listening after rejecting a game_state_sync', () => {
+        incoming.next('{"type":"game_state_sync","connected_buzzers":[{"username":"quiz_buzzer_09"}]}');
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+
+        expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_01']);
+    });
+    it('should not notify anyone when a game_state_sync lists the buzzers already connected', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_02"}');
+        const before = service.connectedBuzzers();
+
+        incoming.next('{"type":"game_state_sync","connected_buzzers":["quiz_buzzer_01","quiz_buzzer_02"]}');
+
+        expect(service.connectedBuzzers()).toBe(before);
+    });
+    it('should replace the connected buzzers when a game_state_sync lists the same ones in another order', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_02"}');
+
+        incoming.next('{"type":"game_state_sync","connected_buzzers":["quiz_buzzer_02","quiz_buzzer_01"]}');
+
+        expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_02', 'quiz_buzzer_01']);
+    });
+    it('should leave the game state as it is when a game_state_sync carries no game field', () => {
+        service.transitionTo('lobby');
+        const before = service.state();
+
+        incoming.next('{"type":"game_state_sync","connected_buzzers":["quiz_buzzer_01"]}');
+
+        expect(service.state()).toBe(before);
+        expect(service.state().phase).toBe('lobby');
     });
     it('should not notify anyone when the connected buzzers do not change', () => {
         incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');

@@ -51,4 +51,81 @@ describe('GameStateService', () => {
 
         expect(hub.send).not.toHaveBeenCalled();
     });
+    it('should have no connected buzzer initially', () => {
+        expect(service.connectedBuzzers()).toEqual([]);
+    });
+    it('should add a buzzer that connects', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+
+        expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_01']);
+    });
+    it('should add the buzzers that connect at the end of the list, in arrival order', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_02"}');
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_03"}');
+
+        expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_02', 'quiz_buzzer_01', 'quiz_buzzer_03']);
+    });
+    it('should list a buzzer once and keep its rank when its connection is announced again', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_02"}');
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+
+        expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_01', 'quiz_buzzer_02']);
+    });
+    it('should remove only the buzzer that disconnects', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_02"}');
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_03"}');
+
+        incoming.next('{"type":"buzzer_disconnected","username":"quiz_buzzer_02"}');
+
+        expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_01', 'quiz_buzzer_03']);
+    });
+    it('should leave the list as it is, without asking the hub, when a buzzer that is not listed disconnects', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+
+        incoming.next('{"type":"buzzer_disconnected","username":"quiz_buzzer_02"}');
+
+        expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_01']);
+        expect(hub.send).not.toHaveBeenCalled();
+    });
+    it('should put the buzzer at the end of the list when it reconnects after having disconnected', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_02"}');
+        incoming.next('{"type":"buzzer_disconnected","username":"quiz_buzzer_01"}');
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+
+        expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_02', 'quiz_buzzer_01']);
+    });
+    it.each([
+        '{"type":"auth_success"}',
+        '{"type":"game_state_sync","connected_buzzers":["quiz_buzzer_09"]}',
+        '{"type":"buzzer_buzzed","username":"quiz_buzzer_01"}',
+        'not json',
+    ])('should not change the connected buzzers on %s', (data) => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+
+        incoming.next(data);
+
+        expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_01']);
+    });
+    it('should not notify anyone when the connected buzzers do not change', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+        const before = service.connectedBuzzers();
+
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+        incoming.next('{"type":"buzzer_disconnected","username":"quiz_buzzer_02"}');
+
+        expect(service.connectedBuzzers()).toBe(before);
+    });
+    it.each([
+        '{"type":"buzzer_connected"}',
+        '{"type":"buzzer_connected","username":42}',
+        '{"type":"buzzer_connected","username":null}',
+    ])('should not list a buzzer on %s', (data) => {
+        incoming.next(data);
+
+        expect(service.connectedBuzzers()).toEqual([]);
+    });
 });

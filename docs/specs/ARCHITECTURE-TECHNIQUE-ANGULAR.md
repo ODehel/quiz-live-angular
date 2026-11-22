@@ -146,7 +146,13 @@ export type InboundMessage =
   | { type: 'buzzer_connected';      username: string }
   | { type: 'buzzer_disconnected';   username: string }
   | { type: 'game_state_sync';       connected_buzzers: string[];   // usernames (US-ANG-001 CA-30)
-                                     game_id?: string; status?: GameStatus /* + champs de US-019 CA-14 */ };
+                                     game_id?: string; status?: GameStatus;
+                                     question_index?: number; quiz_id?: string;
+                                     participants?: ParticipantState[];
+                                     started_at?: string; time_limit?: number };
+  // Sync complet (US-019 CA-14, US-ANG-001 CA-20) : game_id, status, question_index, quiz_id,
+  // participants et connected_buzzers ; started_at et time_limit seulement pour QUESTION_OPEN
+  // et QUESTION_BUZZED (US-019 CA-11 à CA-13).
   // game_id et status absents : sync partiel, réponse à request_game_state sans partie active (CA-31)
 
 // ── Types partagés ────────────────────────────────────────────────────────────

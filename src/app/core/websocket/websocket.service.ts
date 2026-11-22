@@ -1,4 +1,5 @@
 import { Observable, Subject } from "rxjs";
+import { messageType } from "./message-type";
 
 export interface TokenProvider {
   getToken(): string | null;
@@ -16,6 +17,8 @@ export interface SocketLike {
   close(code?: number, reason?: string): void;
 }
 
+export type OutboundMessage = { readonly type: 'request_game_state' };
+
 export type WebSocketCtor =new (url: string) => SocketLike;
 
 const REFRESH_MAX_ATTEMPTS = 3;
@@ -24,6 +27,7 @@ const REFRESH_RETRY_DELAY_MS = 5000;
 export class WebSocketService {
   private attempt: number = 0;
   private readonly closedSockets = new WeakSet<SocketLike>();
+  private currentSocket!: SocketLike;
   private readonly _messages$ = new Subject<string>();
   readonly messages$: Observable<string> = this._messages$.asObservable();
 
@@ -36,6 +40,7 @@ export class WebSocketService {
 
   connect(): void {
     const websocket = new this.webSocketConstructor(this.wsUrl);
+    this.currentSocket = websocket;
 
     websocket.onmessage = (event) => {
       this._messages$.next(event.data);
@@ -66,6 +71,10 @@ export class WebSocketService {
     };
   }
 
+  send(message: OutboundMessage): void {
+    this.currentSocket.send(JSON.stringify(message));
+  }
+
   private refreshAndSend(websocket: SocketLike, attempt: number = 1): void {
     if (this.isClosed(websocket)) return;
     this.tokenProvider.refresh()
@@ -91,19 +100,11 @@ export class WebSocketService {
   }
 
   private isAuthSuccess(data: string): boolean {
-    return this.messageType(data) === 'auth_success';
+    return messageType(data) === 'auth_success';
   }
 
   private isTokenExpiringSoon(data: string): boolean {
-    return this.messageType(data) === 'token_expiring_soon';
-  }
-
-  private messageType(data: string): unknown {
-    try {
-      return JSON.parse(data).type;
-    } catch {
-      return undefined;
-    }
+    return messageType(data) === 'token_expiring_soon';
   }
 
   private backOffDelay(attempt: number): number {

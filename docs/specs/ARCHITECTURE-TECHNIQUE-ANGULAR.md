@@ -209,7 +209,7 @@ requestSync(): void { this.ws.send({ type: 'request_game_state' }); }
 
 > **Buzzers connectés** : aucun polling (décision #34). Après chaque `auth_success`, `requestSync()` demande
 > la liste initiale ; le hub répond par un `game_state_sync` dont `connected_buzzers` remplace la liste en bloc.
-> Ensuite `buzzer_connected` ajoute le username et `buzzer_disconnected` le retire (le hub les envoie à l'admin,
+> Ensuite `buzzer_connected` ajoute le username s'il est absent (une seule occurrence, ordre inchangé s'il est déjà là) et `buzzer_disconnected` le retire (sans effet s'il est absent ; le hub les envoie à l'admin,
 > US-009 CA-27 et CA-28). Un `game_state_sync` sans champs de partie ne met à jour que la liste des buzzers ;
 > la liste est conservée pendant une coupure de la socket (US-ANG-001 CA-27 à CA-33).
 

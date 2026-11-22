@@ -62,8 +62,8 @@ L'application Angular est l'interface de gestion des parties du maître de jeu. 
 | CA-19 | ⛔ **Bloqué : `GET /api/v1/games` absent du hub (US-010), à rouvrir quand il existe.** Si aucune partie active n'existe, `GameStateService` reste à son état initial | `GameStateService.isActive()` retourne `false` ; `noActiveGameGuard` laisse passer le backoffice |
 | CA-20 | À la réception d'un `game_state_sync` complet (avec `game_id` et `status`, US-019 CA-14), `GameStateService` le traite via `dispatch()` : l'état de la partie et la liste des buzzers sont mis à jour. Deux déclencheurs : le sync immédiat du hub après `auth_success` (reconnexion en cours de partie, US-019 CA-11 — non implémenté côté hub) ou la réponse à `request_game_state` (CA-27) | L'état est restauré depuis le message WebSocket — pas besoin d'un appel REST |
 | CA-27 | À chaque `auth_success` reçu, `GameStateService.requestSync()` envoie `{ "type": "request_game_state" }` sur la socket | La liste initiale des buzzers connectés arrive par `game_state_sync` (US-009 CA-29) ; un buzzer connecté avant l'ouverture d'Angular apparaît. Aucun envoi périodique : pas de polling (décision #34) |
-| CA-28 | À la réception de `buzzer_connected` (`{ "type": "buzzer_connected", "username": "quiz_buzzer_01" }`, US-009 CA-27), `GameStateService` ajoute le username à `connectedBuzzers` | `connectedBuzzers()` contient le username |
-| CA-29 | À la réception de `buzzer_disconnected` (US-009 CA-28), `GameStateService` retire le username de `connectedBuzzers` | `connectedBuzzers()` ne contient plus le username |
+| CA-28 | À la réception de `buzzer_connected` (`{ "type": "buzzer_connected", "username": "quiz_buzzer_01" }`, US-009 CA-27), `GameStateService` ajoute le username à la fin de `connectedBuzzers` s'il n'y figure pas ; s'il y figure déjà, il ne change rien (reconnexion d'un buzzer : le hub n'envoie pas `buzzer_disconnected` pour l'ancienne socket, décision #36) | `connectedBuzzers()` contient le username une seule fois ; son rang est celui de sa première arrivée, un message répété ne le déplace pas |
+| CA-29 | À la réception de `buzzer_disconnected` (US-009 CA-28), `GameStateService` retire le username de `connectedBuzzers` ; si le username n'y figure pas, il ne change rien (décision #36) | `connectedBuzzers()` ne contient plus le username ; pour un username absent, la liste reste identique, sans erreur, sans resynchronisation et sans `request_game_state` |
 | CA-30 | `connected_buzzers` d'un `game_state_sync` est une liste de chaînes (les usernames, US-019 CA-14) ; `GameStateService` la range telle quelle dans `connectedBuzzers: string[]`, en remplaçant la liste précédente en bloc | Le hub envoie aujourd'hui des objets `{ "username": … }` : écart à corriger côté hub (voir `DEBTS.md`), sans effet sur ce critère |
 | CA-31 | Un `game_state_sync` sans champs de partie (ni `game_id` ni `status`, réponse à `request_game_state` sans partie active, US-009 CA-29) ne met à jour que la liste des buzzers | L'état de partie (`gameId`, `status`, participants…) reste intact |
 | CA-32 | `request_game_state` part à chaque `auth_success`, y compris celui qui suit un `auth_refresh` (CA-14) | Un `auth_success` = un envoi : redondant après un refresh, mais idempotent |
@@ -146,7 +146,7 @@ APP_INITIALIZER (bloquant)
            → dispatch() : liste des buzzers toujours ; partie seulement si
              game_id et status sont présents                            (CA-20, CA-30, CA-31)
        → buzzer_connected / buzzer_disconnected
-           → ajoute / retire le username                                (CA-28, CA-29)
+           → ajoute (une seule fois) / retire (sans effet si absent)    (CA-28, CA-29)
        → ⛔ syncInitial() : GET /api/v1/games — bloqué, absent du hub   (CA-17 à CA-19)
 
   4. Router débloqué → navigate('/dashboard')

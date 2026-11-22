@@ -99,6 +99,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Levées
 
+- ~~Le CDC était muet sur `startedAt` et `timeLimit` quand un sync complet n'en porte pas~~ : remis à `null` (`docs(specs): settle what Angular keeps when a full game_state_sync omits started_at and time_limit`, décision #40).
 - ~~`US-ANG-007` CA-23 et `US-ANG-010` CA-14 attendaient un sync `PENDING` que le hub n'envoie pas, et `US-ANG-010` CA-20 contredisait CA-31 et CA-33~~ : tranchés, le CDC du hub fait foi, l'état de partie est conservé (`docs(specs): settle what Angular does when no game_state_sync arrives`, décision #39).
 - ~~L'état vide (CA-4) n'est pas encore traité~~ : une liste vide affiche l'invitation et son bouton, et masque « 0 au total » (`feat(themes): invite to create a first theme when there are none`, décision #33) ; jamais affichée avant la réponse du hub ni quand le chargement échoue (tests). Rendu sur le vrai hub à constater (voir l'entrée ci-dessous).
 - ~~`4004` jamais observé sur un vrai hub~~ : observé le 2026-11-08 au navigateur sur le hub réel (smoke test d'Olivier de `feat(error): explain that the session was taken over by another tab`) : un second onglet fait afficher la page `session-replaced` sur le premier, sans reconnexion pendant 40 s (le journal du hub ne montre aucune connexion entre l'ouverture du second onglet et le F5 du premier, ~3 min plus tard) ; un F5 du premier onglet inverse la situation. Aucune erreur en console.
@@ -260,7 +261,6 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `docs(specs): name the fields of a full game_state_sync`
 
-- **Le CDC est muet sur `startedAt` et `timeLimit` quand un sync complet n'en porte pas** 🟡 : US-019 CA-11 et CA-12 les omettent pour `OPEN`, `QUESTION_TITLE`, `QUESTION_CLOSED`. Faut-il les remettre à `null` ou garder les valeurs précédentes ? Non écrit dans `US-ANG-001` CA-20 (aucune spéculation) ; à trancher avant le code de `dispatch()`.
 - **Les types de `question_index`, `quiz_id`, `started_at` et `time_limit` sont lus dans les exemples JSON d'US-019** 🟡 : le CDC du hub ne les déclare pas (`number`, `string`, chaîne ISO, `number` en secondes d'après l'exemple à 30). Décision #38.
 - **Le handoff du 2026-11-22 (2006) donnait un trou qui n'existait pas** 🟡 : « la clé des participants n'est pas nommée » ; elle l'est dans le CDC du hub (US-019 CA-14). Le trou était l'absence de renvoi nominatif côté spec Angular, comblé par cette session.
 
@@ -269,3 +269,8 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **Une partie terminée ou en erreur pendant une coupure reste affichée** 🟠 : le hub n'envoie aucun sync complet pour `COMPLETED` ni `IN_ERROR` (US-019 CA-15) et le sync partiel ne change que les buzzers (décision #39, `US-ANG-010` CA-20). Levée avec `syncInitial()` quand `GET /api/v1/games` existera (`US-ANG-001` CA-17 à CA-19) ; piste écartée pour l'instant : un indicateur « état périmé » (nouveau comportement visible à spécifier).
 - **Un rechargement de page en `PENDING` ne restaure ni la partie ni ses participants** 🟠 : le lobby tient ses participants de l'état en mémoire, et le WebSocket n'envoie aucun sync `PENDING` (`US-ANG-007` CA-23). Bloqué avec `US-ANG-001` CA-17 à CA-19 (`GET /api/v1/games` et `GET /api/v1/games/:id` absents du hub).
 - **`US-ANG-007` (en-tête « Implémentée », points de vigilance) et `US-ANG-010` (en-tête « Implémentée (Sprint 8) ») n'ont pas été relus ligne à ligne** 🟡 : seuls CA-14, CA-20, CA-23, le tableau des messages et un point de vigilance ont été alignés. D'autres passages parlent peut-être encore d'un sync `PENDING` ou d'un `reset()` après délai.
+
+## Mesurées pendant `docs(specs): settle what Angular keeps when a full game_state_sync omits started_at and time_limit`
+
+- **L'exemple de code de `dispatch()` de `US-ANG-010` garde les valeurs précédentes** 🟠 : `started_at ?? s.startedAt` et `time_limit ?? s.timeLimit` contredisent la décision #40 (remise à `null`). Ce n'est pas un CA et il n'a pas été touché (périmètre figé) ; à aligner, avec le reste de l'exemple, dans la session de code de `dispatch()` ou une session `docs` dédiée.
+- **Un sync complet `QUESTION_OPEN` ou `QUESTION_BUZZED` sans `started_at` ni `time_limit` donnerait aussi `null`** 🟡 : le CDC du hub les promet pour ces deux statuts (US-019 CA-13) ; la règle #40 ne distingue pas ce cas, et le chrono (US-ANG-010 CA-17) n'aurait rien à recalculer. Hub non conforme : non spécifié côté Angular.

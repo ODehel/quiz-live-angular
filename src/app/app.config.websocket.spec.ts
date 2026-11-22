@@ -5,6 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { appConfig } from './app.config';
 import { ErrorService } from './core/error/error.service';
 import { environment } from '../environments/environment';
+import { GameStateService } from './core/game-state/game-state.service';
 import { WEB_SOCKET_CONSTRUCTOR } from './core/websocket/websocket.providers';
 import { SocketLike } from './core/websocket/websocket.service';
 
@@ -146,6 +147,34 @@ describe('appConfig WebSocket wiring', () => {
       await TestBed.inject(ApplicationRef).whenStable();
 
       expect(TestBed.inject(Router).url).toBe('/error');
+    });
+  });
+
+  describe('when the socket closes while buzzers are connected', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it.each([1000, 1006, 4002, 4004])('keeps the connected buzzers when the socket closes with %s', async code => {
+      startApplication();
+      httpMock.expectOne('/api/v1/token')
+        .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+      await initStatus.donePromise;
+      const [socket] = FakeSocket.instances;
+      socket.onopen?.(new Event('open'));
+      ['quiz_buzzer_01', 'quiz_buzzer_02'].forEach(username =>
+        socket.onmessage?.(new MessageEvent('message', {
+          data: JSON.stringify({ type: 'buzzer_connected', username }),
+        })));
+      const gameState = TestBed.inject(GameStateService);
+      const before = gameState.connectedBuzzers();
+
+      socket.onclose?.({ code } as CloseEvent);
+      httpMock.match('/api/v1/token').forEach(request =>
+        request.flush({ token: 'fresh-jwt', expiresIn: 3600, tokenType: 'Bearer' }));
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(before).toEqual(['quiz_buzzer_01', 'quiz_buzzer_02']);
+      expect(gameState.connectedBuzzers()).toEqual(before);
     });
   });
 });

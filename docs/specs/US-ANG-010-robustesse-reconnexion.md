@@ -72,13 +72,13 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 
 | # | Critère | Résultat attendu |
 |---|---|---|
-| CA-14 | À la réception de `game_state_sync` avec `status: 'PENDING'`, `GameStateService.dispatch()` met à jour les participants et les buzzers connectés | L'UI du lobby est automatiquement cohérente — pas de navigation |
+| CA-14 | À la réception d'un `game_state_sync` partiel (sans `game_id` ni `status`, réponse à `request_game_state`) alors que l'état local est `PENDING`, seuls les buzzers connectés sont remplacés (US-ANG-001 CA-31) | Les participants restent ceux de l'état en mémoire ; l'UI du lobby est cohérente — pas de navigation. Le hub n'envoie aucun sync `PENDING` (US-019 CA-15) |
 | CA-15 | À la réception de `game_state_sync` avec `status: 'OPEN'`, le signal est mis à jour avec les participants et les scores cumulés | Si l'écran courant est `/pilot/lobby`, l'`effect()` déclenche la navigation vers `/pilot/play` |
 | CA-16 | À la réception de `game_state_sync` avec `status: 'QUESTION_TITLE'` ou `'QUESTION_CLOSED'`, le signal est mis à jour sans `started_at` ni `time_limit` | L'écran MCQ affiche le titre ou le récapitulatif de correction sans chrono actif |
 | CA-17 | À la réception de `game_state_sync` avec `status: 'QUESTION_OPEN'` ou `'QUESTION_BUZZED'` incluant `started_at` et `time_limit`, le chrono local est recalculé | `remaining = time_limit - (Date.now() - new Date(started_at).getTime()) / 1000` — puis le chrono reprend normalement |
 | CA-18 | À la réception de `game_state_sync` avec `status: 'COMPLETED'`, navigation automatique vers `/pilot/results` | Via `effect()` dans `PlayComponent` |
 | CA-19 | À la réception de `game_state_sync` avec `status: 'IN_ERROR'`, le banner d'erreur bloquant est affiché | Conforme à US-ANG-008 CA-7 |
-| CA-20 | Si aucune partie active n'existe au moment de la reconnexion (`game_state_sync` non reçu), `GameStateService.reset()` est appelé | L'état local est vidé — le maître de jeu est redirigé vers `/dashboard` si l'écran courant est dans `/pilot/*` |
+| CA-20 | Après une reconnexion, l'état de partie n'est pas réinitialisé quand aucun `game_state_sync` complet n'arrive : le hub n'en envoie ni pour `PENDING`, ni pour `IN_ERROR`, ni pour `COMPLETED` (US-019 CA-15), et la réponse partielle à `request_game_state` ne change que les buzzers (US-ANG-001 CA-31, CA-33) | ⛔ **Bloqué : `GET /api/v1/games` absent du hub (US-010), à rouvrir quand il existe.** Détecter qu'une partie a disparu pendant la coupure relève de `GameStateService.syncInitial()` (US-ANG-001 CA-17 à CA-19). D'ici là, une partie terminée ou en erreur pendant la coupure reste affichée |
 
 #### Recalcul du chrono après reconnexion
 
@@ -294,7 +294,7 @@ Le backoff est plafonné à 30 s mais la reconnexion est tentée indéfiniment �
 
 ### `game_state_sync` sans partie active
 
-Si le serveur ne retourne pas de `game_state_sync` après la reconnexion (aucune partie active), l'absence de signal doit être détectée via un timeout de 2 s après `auth_success`, puis `GameStateService.syncInitial()` (GET REST) est appelé — chemin identique à l'`APP_INITIALIZER`.
+Le hub répond toujours à `request_game_state` après la reconnexion (US-ANG-001 CA-27), mais par un sync partiel (sans `game_id`) quand aucun sync complet n'existe : il vaut aussi bien « aucune partie » que « partie `PENDING`, `IN_ERROR` ou `COMPLETED` » (US-019 CA-15). Angular n'en tire donc aucune conclusion sur la partie : pas de délai d'attente, pas de `reset()` (CA-20). La détection d'une partie disparue attend `syncInitial()` (GET REST), bloqué tant que `GET /api/v1/games` n'existe pas.
 
 ### `IN_ERROR` — irréversible côté Angular
 

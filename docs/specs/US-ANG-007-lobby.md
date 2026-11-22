@@ -91,7 +91,7 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 
 | # | Critère | Résultat attendu |
 |---|---|---|
-| CA-23 | Si le WebSocket se reconnecte en `PENDING`, `game_state_sync { status: 'PENDING' }` est reçu | `GameStateService.dispatch()` traite le message — le lobby reste affiché, participants et buzzers resynchronisés |
+| CA-23 | Si le WebSocket se reconnecte en `PENDING`, l'état de partie en mémoire est conservé et la réponse partielle à `request_game_state` (US-ANG-001 CA-27, CA-31) remplace les buzzers connectés | Le lobby reste affiché, participants inchangés, buzzers resynchronisés. Le hub n'envoie aucun sync `PENDING` (US-019 CA-15). Rechargement de page en `PENDING` : ⛔ bloqué, `GET /api/v1/games` absent du hub (US-ANG-001 CA-17 à CA-19) |
 | CA-24 | Si `game_state_sync { status: 'OPEN' }` est reçu pendant le lobby, navigation automatique vers `/pilot/play` | L'`effect()` sur `GameStateService.status()` déclenche la navigation |
 
 ---
@@ -202,7 +202,7 @@ async start(id: string): Promise<Game> {
 
 | Message reçu | Effet côté Angular |
 |---|---|
-| `game_state_sync { status: 'PENDING' }` | Mise à jour des participants et buzzers — lobby inchangé |
+| `game_state_sync` sans `game_id` (réponse à `request_game_state`) | Remplace les buzzers connectés — participants et lobby inchangés |
 | `game_state_sync { status: 'OPEN' }` | Transition vers `/pilot/play` via `effect()` |
 | `auth_success { role: 'buzzer' }` | `GameStateService.addConnectedBuzzer(username)` |
 | Déconnexion buzzer | `GameStateService.removeConnectedBuzzer(username)` |

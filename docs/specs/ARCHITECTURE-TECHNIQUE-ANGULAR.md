@@ -140,6 +140,15 @@ export type SystemSoundId =
   | 'CORRECT_ANSWER' | 'WRONG_ANSWER' | 'TIMER_END'
   | 'GAME_START' | 'GAME_END' | 'WAITING' | 'SUSPENSE';
 
+// ── Messages Serveur → Angular (partielle : seuls les messages de synchronisation de l'état initial) ──
+export type InboundMessage =
+  | { type: 'auth_success';          username: string; role: string; expires_in: number }
+  | { type: 'buzzer_connected';      username: string }
+  | { type: 'buzzer_disconnected';   username: string }
+  | { type: 'game_state_sync';       connected_buzzers: string[];   // usernames (US-ANG-001 CA-30)
+                                     game_id?: string; status?: GameStatus /* + champs de US-019 CA-14 */ };
+  // game_id et status absents : sync partiel, réponse à request_game_state sans partie active (CA-31)
+
 // ── Types partagés ────────────────────────────────────────────────────────────
 export interface ParticipantState {
   order: number;
@@ -194,15 +203,15 @@ readonly canCorrect       = computed(() => {
 });
 readonly connectedBuzzers = computed(() => this._state().connectedBuzzers);
 
-// Polling pour mises à jour des buzzers en temps réel
+// Liste initiale des buzzers : envoyé à chaque auth_success (US-ANG-001 CA-27, CA-32)
 requestSync(): void { this.ws.send({ type: 'request_game_state' }); }
-startPolling(intervalMs = 3_000): void { ... }  // Envoie request_game_state périodiquement
-stopPolling(): void { ... }                       // Arrête le polling
 ```
 
-> **Polling buzzers** : Le serveur n'envoie pas d'événements `buzzer_connected` individuels aux clients admin.
-> Le lobby (3 s) et le dashboard (5 s) appellent `startPolling()` / `stopPolling()` pour recevoir
-> des `game_state_sync` rafraîchis contenant la liste `connected_buzzers` à jour.
+> **Buzzers connectés** : aucun polling (décision #34). Après chaque `auth_success`, `requestSync()` demande
+> la liste initiale ; le hub répond par un `game_state_sync` dont `connected_buzzers` remplace la liste en bloc.
+> Ensuite `buzzer_connected` ajoute le username et `buzzer_disconnected` le retire (le hub les envoie à l'admin,
+> US-009 CA-27 et CA-28). Un `game_state_sync` sans champs de partie ne met à jour que la liste des buzzers ;
+> la liste est conservée pendant une coupure de la socket (US-ANG-001 CA-27 à CA-33).
 
 ---
 
@@ -304,7 +313,7 @@ export const appConfig: ApplicationConfig = {
       await auth.initialize();   // POST /api/v1/token
       if (auth.isReady()) {
         ws.connect();              // Connexion WebSocket + auth
-        await gs.syncInitial();    // GET /api/v1/games (partie active ?)
+        // await gs.syncInitial(); // GET /api/v1/games — bloqué : absent du hub (US-ANG-001 CA-17 à CA-19)
       }
     }),
   ]
@@ -320,16 +329,20 @@ provideAppInitializer
   ├── AuthService.initialize()
   │     └── POST /api/v1/token → token stocké dans signal
   │           → Échec : navigate('/error') — bloquant
-  ├── WebSocketService.connect()
-  │     └── new WebSocket(wsUrl)
-  │           → send { type: 'auth', token }
-  │           → reçoit auth_success
-  │           → reçoit game_state_sync (si partie active)
-  │                 → GameStateService.dispatch() → signal mis à jour
-  └── GameStateService.syncInitial()
-        └── GET /api/v1/games
-              → si partie active : état local initialisé
-              → Router décide la vue initiale depuis dashboard
+  └── WebSocketService.connect()
+        └── new WebSocket(wsUrl)
+              → send { type: 'auth', token }
+              → reçoit auth_success (à chaque fois, y compris après auth_refresh)
+              │     → GameStateService.requestSync() : send { type: 'request_game_state' }
+              → reçoit game_state_sync (réponse à request_game_state, ou sync immédiat
+              │   du hub si partie active, US-019 CA-11)
+              │     → GameStateService.dispatch() : liste des buzzers toujours ;
+              │       partie seulement si game_id et status sont présents
+              → reçoit buzzer_connected / buzzer_disconnected
+                    → GameStateService ajoute / retire le username
+
+  (bloqué) GameStateService.syncInitial() → GET /api/v1/games : absent du hub
+           (US-ANG-001 CA-17 à CA-19)
 ```
 
 ---
@@ -365,4 +378,4 @@ Les sous-composants **ne lisent que des signals computed** et **n'injectent pas 
 
 ---
 
-**Dernière mise à jour** : 2026-03-30
+**Dernière mise à jour** : 2026-11-22

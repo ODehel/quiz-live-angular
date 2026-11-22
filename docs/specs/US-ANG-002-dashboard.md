@@ -24,7 +24,7 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 |---|---|---|
 | CA-1 | Au chargement du composant, `GET /api/v1/games?page=1&limit=4` est appelé pour charger les 4 dernières parties | Tri serveur par date décroissante — les 4 premières entrées de la réponse sont affichées |
 | CA-2 | `GET /api/v1/quizzes` et `GET /api/v1/questions?limit=1` sont appelés en parallèle pour obtenir les compteurs | Appel simultané via `forkJoin` — aucun appel n'attend l'autre |
-| CA-3 | Les 4 métriques affichées sont : buzzers connectés, nombre de quiz, nombre de questions, nombre de parties jouées | Buzzers : depuis `GameStateService.connectedBuzzers()` (signal, temps réel) — les trois autres : depuis les réponses REST |
+| CA-3 | Les 4 métriques affichées sont : buzzers connectés, nombre de quiz, nombre de questions, nombre de parties jouées | Buzzers : depuis `GameStateService.connectedBuzzers()` (signal, temps réel ; liste de chaînes : les usernames, US-ANG-001 CA-30) — les trois autres : depuis les réponses REST |
 | CA-4 | Pendant le chargement, un état de chargement est affiché à la place des métriques et de la liste | Indicateur visuel — pas de skeleton élaboré (KISS) |
 | CA-5 | En cas d'erreur sur un appel REST, les métriques concernées affichent `—` sans bloquer le reste de l'affichage | Chaque appel gère son erreur indépendamment |
 
@@ -35,15 +35,15 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 | CA-6 | Si `GameStateService.isPiloting()` est `true`, la bannière bleue de partie active est affichée avec le nom du quiz, le statut et la progression (`question_index / total`) | `GameStateService.state()` fournit `gameId`, `status`, `questionIndex`, `quizId` |
 | CA-7 | Si `GameStateService.isPiloting()` est `false`, la bannière est absente | Aucun élément résiduel dans le DOM |
 | CA-8 | Le bouton "Reprendre le pilotage" de la bannière navigue vers `/pilot/lobby` si `status === 'PENDING'`, vers `/pilot/play` si `status` est `OPEN` ou un état `QUESTION_*` | Routage conditionnel sur le signal `GameStateService.status()` |
-| CA-9 | La bannière se met à jour en temps réel si une partie est créée ou démarrée depuis un autre onglet | `GameStateService` est mis à jour par `game_state_sync` via WebSocket — le composant réagit via `computed` |
+| CA-9 | La bannière se met à jour en temps réel si une partie est créée ou démarrée depuis un autre onglet | `GameStateService` est mis à jour par `dispatch()` d'un `game_state_sync` complet (US-ANG-001 CA-20 : sync du hub après `auth_success` ou réponse à `request_game_state`) — le composant réagit via `computed`. Un `game_state_sync` sans champs de partie ne touche pas la bannière (US-ANG-001 CA-31) |
 
 ### Compteur de buzzers en temps réel
 
 | # | Critère | Résultat attendu |
 |---|---|---|
-| CA-10 | La métrique "Buzzers connectés" reflète `GameStateService.connectedBuzzers().length` | Mise à jour instantanée sur tout changement du signal — pas de polling |
+| CA-10 | La métrique "Buzzers connectés" reflète `GameStateService.connectedBuzzers().length` | Mise à jour instantanée sur tout changement du signal — aucun polling : liste initiale par `request_game_state`, puis `buzzer_connected` / `buzzer_disconnected` (US-ANG-001 CA-27 à CA-29) |
 | CA-11 | Le sous-titre de la métrique liste les usernames des buzzers connectés, séparés par une virgule, tronqués à 3 noms si plus de 3 | Au-delà : `alice, bob, charlie +2` |
-| CA-12 | La liste des buzzers connectés dans la carte dédiée se met à jour en temps réel | Même source : `GameStateService.connectedBuzzers()` |
+| CA-12 | La liste des buzzers connectés dans la carte dédiée se met à jour en temps réel | Même source : `GameStateService.connectedBuzzers()` (usernames, US-ANG-001 CA-30). Pendant une coupure de la socket, la dernière liste reste affichée et « Reconnexion… » (CA-24) signale qu'elle peut être périmée (US-ANG-001 CA-33) |
 
 ### Liste des dernières parties
 
@@ -222,11 +222,11 @@ readonly isReconnecting = signal(false);
 
 ### Buzzers connectés — source unique de vérité
 
-Le compteur de buzzers ne doit **jamais** être lu depuis la réponse REST `GET /api/v1/games`. Il est exclusivement alimenté par `GameStateService.connectedBuzzers()`, lui-même mis à jour par les messages `auth_success` WebSocket (buzzer connecté) et les événements de déconnexion. Cette distinction est critique : la réponse REST représente l'état persisté, pas l'état temps réel des connexions.
+Le compteur de buzzers ne doit **jamais** être lu depuis la réponse REST `GET /api/v1/games`. Il est exclusivement alimenté par `GameStateService.connectedBuzzers()`, lui-même alimenté par le `game_state_sync` qui répond à `request_game_state` (liste initiale), puis par les événements `buzzer_connected` et `buzzer_disconnected` (US-ANG-001 CA-27 à CA-33). Cette distinction est critique : la réponse REST représente l'état persisté, pas l'état temps réel des connexions.
 
 ### Bannière et `game_state_sync`
 
-La bannière réagit à `GameStateService.isPiloting()` qui est un `computed` dérivé de `GameStateService.status()`. Ce signal est mis à jour lors de chaque `game_state_sync` reçu via WebSocket. Il n'est pas nécessaire d'écouter les événements WebSocket dans `DashboardComponent` — la réactivité est assurée par la chaîne Signal → `computed` → template `@if`.
+La bannière réagit à `GameStateService.isPiloting()` qui est un `computed` dérivé de `GameStateService.status()`. Ce signal est mis à jour lors de chaque `game_state_sync` complet reçu via WebSocket (un sync sans champs de partie ne le modifie pas, US-ANG-001 CA-31). Il n'est pas nécessaire d'écouter les événements WebSocket dans `DashboardComponent` — la réactivité est assurée par la chaîne Signal → `computed` → template `@if`.
 
 ### Accès sans auth à `GET /api/v1/health`
 
@@ -246,6 +246,6 @@ La bannière réagit à `GameStateService.isPiloting()` qui est un `computed` d�
 
 ---
 
-**Dernière mise à jour** : 2026-03-28
+**Dernière mise à jour** : 2026-11-22
 **Statut** : Implémentée — tous les critères d'acceptance couverts par des tests (Sprint 1)
 **Sprint** : 1

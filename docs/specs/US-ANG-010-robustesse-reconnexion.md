@@ -207,8 +207,12 @@ describe('computeRemaining', () => {
 
 ```typescript
 private onGameStateSync(msg: GameStateSyncMessage): void {
+  // Sync complet incomplet ou mal typé, ou connected_buzzers invalide : rejeté en entier,
+  // rien n'est appliqué, aucune exception (US-ANG-001 CA-20, décisions #41 et #42)
+  if (!isValidFullSync(msg)) return;
+
   const { status, game_id, question_index, quiz_id, participants,
-          started_at, time_limit } = msg;
+          connected_buzzers, started_at, time_limit } = msg;
 
   this._state.update(s => ({
     ...s,
@@ -221,8 +225,9 @@ private onGameStateSync(msg: GameStateSyncMessage): void {
       name:             p.name,
       cumulative_score: p.cumulative_score
     })),
-    startedAt:        started_at ?? s.startedAt,
-    timeLimit:        time_limit ?? s.timeLimit,
+    connectedBuzzers: connected_buzzers,
+    startedAt:        started_at ?? null,   // absents : remis à null (décision #40)
+    timeLimit:        time_limit ?? null,
     remainingSeconds: started_at && time_limit
       ? computeRemaining(started_at, time_limit)
       : s.remainingSeconds

@@ -153,7 +153,8 @@ export type InboundMessage =
   // Sync complet (US-019 CA-14, US-ANG-001 CA-20) : game_id, status, question_index, quiz_id,
   // participants et connected_buzzers ; started_at et time_limit seulement pour QUESTION_OPEN
   // et QUESTION_BUZZED (US-019 CA-11 à CA-13).
-  // game_id et status absents : sync partiel, réponse à request_game_state sans partie active (CA-31)
+  // Sync complet incomplet ou mal typé (champ requis absent, type faux, status hors GameStatus) : rejeté en entier (décision #42).
+  // Aucun champ de partie : sync partiel, réponse à request_game_state sans partie active (CA-31)
 
 // ── Types partagés ────────────────────────────────────────────────────────────
 export interface ParticipantState {
@@ -216,7 +217,7 @@ requestSync(): void { this.ws.send({ type: 'request_game_state' }); }
 > **Buzzers connectés** : aucun polling (décision #34). Après chaque `auth_success`, `requestSync()` demande
 > la liste initiale ; le hub répond par un `game_state_sync` dont `connected_buzzers` remplace la liste en bloc.
 > Ensuite `buzzer_connected` ajoute le username s'il est absent (une seule occurrence, ordre inchangé s'il est déjà là) et `buzzer_disconnected` le retire (sans effet s'il est absent ; le hub les envoie à l'admin,
-> US-009 CA-27 et CA-28). Un `game_state_sync` sans champs de partie ne met à jour que la liste des buzzers ;
+> US-009 CA-27 et CA-28). Un `game_state_sync` partiel (aucun champ de partie) ne met à jour que la liste des buzzers, un sync complet dégradé est rejeté en entier (décision #42) ;
 > la liste est conservée pendant une coupure de la socket (US-ANG-001 CA-27 à CA-33).
 
 ---
@@ -342,8 +343,9 @@ provideAppInitializer
               │     → GameStateService.requestSync() : send { type: 'request_game_state' }
               → reçoit game_state_sync (réponse à request_game_state, ou sync immédiat
               │   du hub si partie active, US-019 CA-11)
-              │     → GameStateService.dispatch() : liste des buzzers toujours ;
-              │       partie seulement si game_id et status sont présents
+              │     → GameStateService.dispatch() : sync complet (game_id et status) = partie
+              │       et liste ensemble, rejet entier s'il est incomplet ou mal typé (#42) ;
+              │       sync partiel (aucun champ de partie) = liste seulement
               → reçoit buzzer_connected / buzzer_disconnected
                     → GameStateService ajoute / retire le username
 

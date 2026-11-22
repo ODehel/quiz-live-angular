@@ -77,6 +77,12 @@ describe("WebSocket service", () => {
         capturedSocket!.simulateOpen();
         expect(JSON.parse(capturedSocket!.sentMessage!).type).toBe("auth");
     });
+    it("should send a message on the open connection as JSON", () => {
+        service.connect();
+        capturedSocket!.simulateOpen();
+        service.send({ type: 'request_game_state' });
+        expect(JSON.parse(capturedSocket!.sentMessage!)).toEqual({ type: 'request_game_state' });
+    });
     it("should send the token", () => {
         service.connect();
         capturedSocket!.simulateOpen();
@@ -168,6 +174,18 @@ describe("WebSocket service", () => {
 
             // assertion 2 : maintenant, oui
             expect(callCount).toBe(2);
+        });
+        it("should send on the connection opened by the reconnection", () => {
+            service.connect();
+            const first = capturedSocket!;
+            first.simulateClose();
+            vi.advanceTimersByTime(1000);
+            const second = capturedSocket!;
+
+            service.send({ type: 'request_game_state' });
+
+            expect(first.sentMessage).toBeUndefined();
+            expect(JSON.parse(second.sentMessage!)).toEqual({ type: 'request_game_state' });
         });
         it("should reconnect after exponential delay", () => {
             service.connect();

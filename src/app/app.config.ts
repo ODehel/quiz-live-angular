@@ -7,6 +7,7 @@ import { authInterceptor } from './core/authentication/auth.interceptor';
 import { AuthService } from './core/authentication/auth.service';
 import { ErrorService } from './core/error/error.service';
 import { WEB_SOCKET_CONSTRUCTOR } from './core/websocket/websocket.providers';
+import { GameStateService } from './core/game-state/game-state.service';
 import { WebSocketService } from './core/websocket/websocket.service';
 import { environment } from '../environments/environment';
 
@@ -40,9 +41,11 @@ export const appConfig: ApplicationConfig = {
         );
       }
     },
+    { provide: GameStateService, useFactory: () => new GameStateService(inject(WebSocketService)) },
     provideAppInitializer(async () => {
       const authService = inject(AuthService);
       const webSocketService = inject(WebSocketService);
+      inject(GameStateService);
       await authService.initialize();
       if (authService.isReady()) {
         webSocketService.connect();

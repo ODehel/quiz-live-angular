@@ -84,6 +84,48 @@ describe('appConfig WebSocket wiring', () => {
     expect(socket.sent.map(message => JSON.parse(message))).toEqual([{ type: 'auth', token: 'fake-jwt' }]);
   });
 
+  describe('when the hub accepts the session', () => {
+    const startAndOpenSocket = async () => {
+      startApplication();
+      httpMock.expectOne('/api/v1/token')
+        .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+      await initStatus.donePromise;
+      const [socket] = FakeSocket.instances;
+      socket.onopen?.(new Event('open'));
+      return socket;
+    };
+    const sentTypes = (socket: FakeSocket) => socket.sent.map(message => JSON.parse(message).type);
+
+    it('asks the hub for the game state once', async () => {
+      const socket = await startAndOpenSocket();
+      socket.onmessage?.(new MessageEvent('message', { data: '{"type":"auth_success"}' }));
+
+      expect(sentTypes(socket)).toEqual(['auth', 'request_game_state']);
+    });
+  });
+
+  describe('when the hub accepts the session again after a token refresh', () => {
+    it('asks the hub for the game state again', async () => {
+      startApplication();
+      httpMock.expectOne('/api/v1/token')
+        .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+      await initStatus.donePromise;
+      const [socket] = FakeSocket.instances;
+      const receive = (type: string) =>
+        socket.onmessage?.(new MessageEvent('message', { data: JSON.stringify({ type }) }));
+      socket.onopen?.(new Event('open'));
+      receive('auth_success');
+      receive('token_expiring_soon');
+      httpMock.expectOne('/api/v1/token')
+        .flush({ token: 'fresh-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+      await TestBed.inject(ApplicationRef).whenStable();
+      receive('auth_success');
+
+      expect(socket.sent.map(message => JSON.parse(message).type))
+        .toEqual(['auth', 'request_game_state', 'auth_refresh', 'request_game_state']);
+    });
+  });
+
   describe('when the hub closes the socket because another tab took the session', () => {
     const startAndCloseWith4004 = async () => {
       startApplication();

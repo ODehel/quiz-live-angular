@@ -24,6 +24,13 @@ describe('appConfig WebSocket wiring', () => {
   const startApplication = () => {
     startWiredApplication();
   };
+  // Le test doit surcharger `WEB_SOCKET_CONSTRUCTOR` par `ClosingFakeSocket` avant de démarrer l'application.
+  const hubClosesWith = (socket: FakeSocket, code: number) => {
+    if (!(socket instanceof ClosingFakeSocket)) {
+      throw new Error('hubClosesWith needs a ClosingFakeSocket: override WEB_SOCKET_CONSTRUCTOR first');
+    }
+    socket.serverClose(code);
+  };
 
   beforeEach(() => {
     FakeSocket.instances = [];
@@ -167,8 +174,8 @@ describe('appConfig WebSocket wiring', () => {
     });
 
     it('restarts the full connection with the current token once the refresh failed three times', async () => {
-      // Seul test du câblage dont la socket enchaîne `onclose` après `close()`, comme un navigateur :
-      // la fermeture vient du service, aucun `onclose` n'est appelé à la main (voir DEBTS.md).
+      // La socket enchaîne `onclose` après `close()`, comme un navigateur : la fermeture vient du service,
+      // aucun `onclose` n'est appelé à la main (voir DEBTS.md).
       TestBed.overrideProvider(WEB_SOCKET_CONSTRUCTOR, { useValue: ClosingFakeSocket });
       const socket = await startAndAnnounceExpiry();
       await failRefresh();
@@ -203,8 +210,9 @@ describe('appConfig WebSocket wiring', () => {
         .flush({ token: 'fresh-jwt', expiresIn: 3600, tokenType: 'Bearer' });
       await vi.advanceTimersByTimeAsync(0);
     };
+    // La fermeture `4002` est décidée par le hub : la socket enchaîne `onclose` sans `close()` du service.
     const closeWith4002AndAnswerRefresh = async (socket: FakeSocket) => {
-      socket.onclose?.({ code: 4002 } as CloseEvent);
+      hubClosesWith(socket, 4002);
       await answerRefresh();
     };
     const sentMessages = (socket: FakeSocket) => socket.sent.map(message => JSON.parse(message));
@@ -221,6 +229,7 @@ describe('appConfig WebSocket wiring', () => {
     });
 
     it('requests a single new token and reconnects once when the hub then closes with 4002', async () => {
+      TestBed.overrideProvider(WEB_SOCKET_CONSTRUCTOR, { useValue: ClosingFakeSocket });
       const socket = await startAndAnnounceExpired();
 
       await closeWith4002AndAnswerRefresh(socket);
@@ -228,11 +237,13 @@ describe('appConfig WebSocket wiring', () => {
       await vi.advanceTimersByTimeAsync(60_000);
 
       httpMock().expectNone('/api/v1/token');
+      expect(socket.closes).toEqual([]);
       expect(FakeSocket.instances).toHaveLength(2);
       expect(TestBed.inject(ErrorService).currentError()).toBeNull();
     });
 
     it('authenticates the second socket with the new token', async () => {
+      TestBed.overrideProvider(WEB_SOCKET_CONSTRUCTOR, { useValue: ClosingFakeSocket });
       const socket = await startAndAnnounceExpired();
       await closeWith4002AndAnswerRefresh(socket);
       await vi.advanceTimersByTimeAsync(1000);
@@ -244,9 +255,10 @@ describe('appConfig WebSocket wiring', () => {
     });
 
     it('waits for the new token before reconnecting, even when the token request is slow', async () => {
+      TestBed.overrideProvider(WEB_SOCKET_CONSTRUCTOR, { useValue: ClosingFakeSocket });
       const socket = await startAndAnnounceExpired();
 
-      socket.onclose?.({ code: 4002 } as CloseEvent);
+      hubClosesWith(socket, 4002);
       await vi.advanceTimersByTimeAsync(5000);
       expect(FakeSocket.instances).toHaveLength(1);
       await answerRefresh();
@@ -287,6 +299,7 @@ describe('appConfig WebSocket wiring', () => {
     afterEach(() => vi.useRealTimers());
 
     it.each([1000, 1006, 4002, 4004])('keeps the connected buzzers when the socket closes with %s', async code => {
+      TestBed.overrideProvider(WEB_SOCKET_CONSTRUCTOR, { useValue: ClosingFakeSocket });
       const socket = await startAndOpenSocket();
       ['quiz_buzzer_01', 'quiz_buzzer_02'].forEach(username =>
         socket.onmessage?.(new MessageEvent('message', {
@@ -295,7 +308,7 @@ describe('appConfig WebSocket wiring', () => {
       const gameState = TestBed.inject(GameStateService);
       const before = gameState.connectedBuzzers();
 
-      socket.onclose?.({ code } as CloseEvent);
+      hubClosesWith(socket, code);
       httpMock().match('/api/v1/token').forEach(request =>
         request.flush({ token: 'fresh-jwt', expiresIn: 3600, tokenType: 'Bearer' }));
       await vi.advanceTimersByTimeAsync(1000);
@@ -387,11 +400,12 @@ describe('appConfig WebSocket wiring', () => {
       afterEach(() => vi.useRealTimers());
 
       it.each([1000, 1006, 4002])('replaces the connected buzzers kept through the close %s with those of the next game_state_sync', async code => {
+        TestBed.overrideProvider(WEB_SOCKET_CONSTRUCTOR, { useValue: ClosingFakeSocket });
         const first = await startAndOpenSocket();
         ['quiz_buzzer_01', 'quiz_buzzer_02'].forEach(username =>
           receive(first, { type: 'buzzer_connected', username }));
         const gameState = TestBed.inject(GameStateService);
-        first.onclose?.({ code } as CloseEvent);
+        hubClosesWith(first, code);
         httpMock().match('/api/v1/token').forEach(request =>
           request.flush({ token: 'fresh-jwt', expiresIn: 3600, tokenType: 'Bearer' }));
         await vi.advanceTimersByTimeAsync(1000);

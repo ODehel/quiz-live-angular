@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-23 (`test(authentication): prove the 4004 close on the wired socket`).
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-23 (`docs(authentication): specify the client behavior after a 4004 close`).
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -75,7 +75,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **Écrasement silencieux possible du `environment.ts` local** 🟠.
 - **Build de production dépendant du réseau (fonts), non couvert par la CI** 🟠.
 - **`engines` racine non discriminant** 🟠.
-- **Code de fermeture `4004` hors critères d'acceptation** 🟠 : le comportement (page d'erreur `session-replaced`, pas de reconnexion) est testé et décidé (#28), mais US-ANG-001 ne le porte que dans ses « Points de vigilance », sans CA numéroté. À formaliser (CA-26) si Olivier le veut.
+- ~~Code de fermeture `4004` hors critères d'acceptation~~ : formalisé en CA-26 de `US-ANG-001` (décision #45).
 - **Fixture d'auth en camelCase** 🟠 : format du hub (`expires_in`, `token_type`) à confronter à la spec.
 - **Indentation des `it.each` de `confirm-dialog.spec.ts`** 🟠.
 - **`data-testid="close"` de `confirm-dialog` conservé** 🟠 : voulu d'après le récap, à confirmer.
@@ -349,7 +349,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `test(authentication): prove the 4004 close on the wired socket`
 
-- **Un `close()` du service sur `4004` serait invisible** 🟡 : mutant « le service appelle `close(4004)` avant de signaler l'erreur » : 0 test en échec. La socket est déjà fermée par le hub, `ClosingFakeSocket` rejouerait `onclose(4004)` et l'erreur serait signalée deux fois, sans effet observable. Aucune assertion `closes` vide ajoutée : ni la décision #28 ni la spec ne disent si le client doit appeler `close()` après un `4004` (contrairement au `4002`, où `closes` vide est asserté). Mutant « `serverClose()` passe par `close()` » : tué par les tests du `4002`, pas par ceux du `4004`.
-- **Un `refresh()` ou un `POST /api/v1/token` sur `4004` ne seraient pas vus** 🟡 : mutant « `refresh()` appelé sur `4004` » : 0 test en échec. La décision #28 et la spec (« erreur non-retry ») interdisent la reconnexion, pas une demande de token ; aucune assertion ajoutée faute de CDC. À trancher si Olivier veut l'interdire (le test d'absence de reconnexion ne la couvre pas).
+- **Un `close()` du service sur `4004` serait invisible** 🟠 : mutant « le service appelle `close(4004)` avant de signaler l'erreur » : 0 test en échec. Le CA-26 (décision #45) interdit désormais l'appel : l'assertion `closes` vide après un `4004` reste à écrire (session `test(authentication)`), le mutant est alors tuable.
+- **Un `refresh()` ou un `POST /api/v1/token` sur `4004` ne seraient pas vus** 🟠 : mutant « `refresh()` appelé sur `4004` » : 0 test en échec. Le CA-26 (décision #45) interdit toute demande de token : l'assertion d'absence de `POST /api/v1/token` après un `4004` reste à écrire (session `test(authentication)`).
 - **L'absence de reconnexion est prouvée sur 60 s simulées** 🟡 : `does not reconnect to the hub` laisse passer 60 s sous temps simulé (même fenêtre que les tests du `4002`) ; une reconnexion au-delà (backoff plafonné à 30 s) ne serait pas vue. Observé sur le hub réel : aucune reconnexion pendant 40 s (smoke test du 2026-11-08).
 - **Le temps simulé n'est posé que dans le test d'absence de reconnexion** 🟡 : les deux autres tests du `describe` gardent le temps réel (`whenStable()` s'y bloque sous temps simulé : 5 s d'attente, test en échec au 1er essai) ; l'`afterEach` du `describe` rend le temps réel dans tous les cas.

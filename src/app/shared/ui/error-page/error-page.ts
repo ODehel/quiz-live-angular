@@ -4,6 +4,7 @@ import { Icon } from "../icon/icon";
 import { Router } from "@angular/router";
 import { VariantConfigurationService } from "./variant-configuration.service";
 import { AuthService } from "../../../core/authentication/auth.service";
+import { PAGE_RELOADER } from "../../../core/page/page-reloader";
 
 export interface TitleSegment {
     content: string;
@@ -29,7 +30,19 @@ export class ErrorPage {
     private readonly variantConfigurationService = inject(VariantConfigurationService);
     private readonly router = inject(Router);
     private readonly authService = inject(AuthService);
+    private readonly pageReloader = inject(PAGE_RELOADER);
     readonly error = this.errorService.currentError;
+
+    reloadsOnClick(variant: ErrorContext['variant']): boolean {
+        return variant === 'session-replaced';
+    }
+
+    onBarButtonClick(variant: ErrorContext['variant']): void {
+        if (this.reloadsOnClick(variant))
+            this.pageReloader.reloadFromRoot();
+        else
+            this.goHome();
+    }
 
     goHome(): void {
         if (this.authService.isReady())

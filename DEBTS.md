@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-23 (`docs(authentication): specify the client behavior after a 4004 close`).
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-23 (`test(authentication): prove the client neither closes nor asks for a token after a 4004 close`).
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -349,7 +349,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `test(authentication): prove the 4004 close on the wired socket`
 
-- **Un `close()` du service sur `4004` serait invisible** 🟠 : mutant « le service appelle `close(4004)` avant de signaler l'erreur » : 0 test en échec. Le CA-26 (décision #45) interdit désormais l'appel : l'assertion `closes` vide après un `4004` reste à écrire (session `test(authentication)`), le mutant est alors tuable.
-- **Un `refresh()` ou un `POST /api/v1/token` sur `4004` ne seraient pas vus** 🟠 : mutant « `refresh()` appelé sur `4004` » : 0 test en échec. Le CA-26 (décision #45) interdit toute demande de token : l'assertion d'absence de `POST /api/v1/token` après un `4004` reste à écrire (session `test(authentication)`).
+- ~~Un `close()` du service sur `4004` serait invisible~~ : verrouillé (CA-26, décision #45). `does not close the socket itself` (câblage, `socket.closes` vide après 60 s simulées) et `should not close the socket when the server closes with 4004` (service, `closeCalls` à 0) : mutant « le service appelle `close(4004)` avant de signaler l'erreur » (M6) tué par les deux (`test(authentication): prove the client neither closes nor asks for a token after a 4004 close`).
+- ~~Un `refresh()` ou un `POST /api/v1/token` sur `4004` ne seraient pas vus~~ : verrouillé (CA-26, décision #45). `does not ask for a new token` (câblage, `expectNone('/api/v1/token')` après 60 s simulées) et `should not ask for a new token when the server closes with 4004` (service, `refresh` jamais appelé) : mutant « `refresh()` appelé sur `4004` » (M10) tué par les deux, y compris sa variante différée de 5 s. Prouvé sur une fausse socket seulement.
 - **L'absence de reconnexion est prouvée sur 60 s simulées** 🟡 : `does not reconnect to the hub` laisse passer 60 s sous temps simulé (même fenêtre que les tests du `4002`) ; une reconnexion au-delà (backoff plafonné à 30 s) ne serait pas vue. Observé sur le hub réel : aucune reconnexion pendant 40 s (smoke test du 2026-11-08).
-- **Le temps simulé n'est posé que dans le test d'absence de reconnexion** 🟡 : les deux autres tests du `describe` gardent le temps réel (`whenStable()` s'y bloque sous temps simulé : 5 s d'attente, test en échec au 1er essai) ; l'`afterEach` du `describe` rend le temps réel dans tous les cas.
+- **Le temps simulé n'est posé que dans le test d'absence de reconnexion** 🟡 : les deux autres tests du `describe` gardent le temps réel (`whenStable()` s'y bloque sous temps simulé : 5 s d'attente, test en échec au 1er essai) ; l'`afterEach` du `describe` rend le temps réel dans tous les cas. Depuis `test(authentication): prove the client neither closes nor asks for a token after a 4004 close`, `does not close the socket itself` et `does not ask for a new token` le posent aussi ; seuls `reports…` et `navigates…` restent en temps réel.

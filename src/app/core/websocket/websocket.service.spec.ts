@@ -403,5 +403,21 @@ describe("WebSocket service", () => {
             expect(callCount).toBe(1);
             expect(fakeErrorNavigator.goToError).toHaveBeenCalled();
         });
+        it("should not close the socket when the server closes with 4004", () => {
+            service.connect();
+            capturedSocket!.simulateClose(4004);
+
+            vi.advanceTimersByTime(30000);
+
+            expect(capturedSocket!.closeCalls).toBe(0);
+        });
+        it("should not ask for a new token when the server closes with 4004", async () => {
+            service.connect();
+            capturedSocket!.simulateClose(4004);
+
+            await vi.advanceTimersByTimeAsync(30000);
+
+            expect(fakeTokenProvider.refresh).not.toHaveBeenCalled();
+        });
     });
 });

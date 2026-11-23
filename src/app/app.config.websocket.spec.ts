@@ -307,6 +307,21 @@ describe('appConfig WebSocket wiring', () => {
       expect(FakeSocket.instances).toEqual([socket]);
     });
 
+    it('does not close the socket itself', async () => {
+      vi.useFakeTimers();
+      const socket = await startAndCloseWith4004();
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      expect(socket.closes).toEqual([]);
+    });
+
+    it('does not ask for a new token', async () => {
+      vi.useFakeTimers();
+      await startAndCloseWith4004();
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      httpMock().expectNone('/api/v1/token');
+    });
   });
 
   describe('when the socket closes while buzzers are connected', () => {

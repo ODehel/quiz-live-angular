@@ -272,12 +272,18 @@ describe('appConfig WebSocket wiring', () => {
   });
 
   describe('when the hub closes the socket because another tab took the session', () => {
+    afterEach(() => vi.useRealTimers());
+
+    // La fermeture `4004` est décidée par le hub : la socket enchaîne `onclose` sans `close()` du service.
     const startAndCloseWith4004 = async () => {
+      TestBed.overrideProvider(WEB_SOCKET_CONSTRUCTOR, { useValue: ClosingFakeSocket });
       startApplication();
       httpMock().expectOne('/api/v1/token')
         .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
       await initStatus().donePromise;
-      FakeSocket.instances[0].onclose?.({ code: 4004 } as CloseEvent);
+      const socket = FakeSocket.instances[0];
+      hubClosesWith(socket, 4004);
+      return socket;
     };
 
     it('reports that the session was replaced', async () => {
@@ -292,6 +298,15 @@ describe('appConfig WebSocket wiring', () => {
 
       expect(TestBed.inject(Router).url).toBe('/error');
     });
+
+    it('does not reconnect to the hub', async () => {
+      vi.useFakeTimers();
+      const socket = await startAndCloseWith4004();
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      expect(FakeSocket.instances).toEqual([socket]);
+    });
+
   });
 
   describe('when the socket closes while buzzers are connected', () => {

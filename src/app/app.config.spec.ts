@@ -8,14 +8,7 @@ import { ErrorService } from './core/error/error.service';
 import { ErrorPage } from './shared/ui/error-page/error-page';
 import { ThemeList } from './features/themes/theme-list';
 import { WEB_SOCKET_CONSTRUCTOR } from './core/websocket/websocket.providers';
-
-// Ces tests ne portent pas sur la socket (voir app.config.websocket.spec.ts) : une doublure inerte évite d'ouvrir une vraie connexion.
-class InertSocket {
-  onopen = null;
-  onmessage = null;
-  onclose = null;
-  send(): void { }
-}
+import { InertSocket } from './core/websocket/websocket.test-helpers';
 
 describe('appConfig', () => {
   let initStatus: ApplicationInitStatus;

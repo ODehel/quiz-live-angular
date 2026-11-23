@@ -1,42 +1,5 @@
-import { SocketLike, WebSocketService } from './websocket.service';
-
-class FakeSocket implements SocketLike {
-    constructor(public readonly url: string) { }
-
-    onopen: (() => void) | null = null;
-    onmessage: ((event: MessageEvent) => void) | null = null;
-    onclose: ((event: CloseEvent) => void) | null = null;
-
-    public sentMessage: string | undefined;
-    public closeCalls = 0;
-
-    send(data: string): void {
-        this.sentMessage = data;
-    }
-
-    close(code: number = 1000): void {
-        this.closeCalls++;
-        this.simulateClose(code);
-    }
-
-    simulateOpen(): void {
-        if (this.onopen !== null) {
-            this.onopen();
-        }
-    }
-
-    simulateMessage(data: string): void {
-        if (this.onmessage !== null) {
-            this.onmessage(new MessageEvent('message', { data }));
-        }
-    }
-
-    simulateClose(code: number = 1000): void {
-        if (this.onclose !== null) {
-            this.onclose(new CloseEvent('close', { code }));
-        }
-    }
-}
+import { WebSocketService } from './websocket.service';
+import { ClosingFakeSocket, FakeSocket } from './websocket.test-helpers';
 
 describe("WebSocket service", () => {
     let callCount: number;
@@ -49,8 +12,9 @@ describe("WebSocket service", () => {
     let fakeErrorNavigator: { goToError: ReturnType<typeof vi.fn<() => void>> };
     beforeEach(() => {
         callCount = 0;
+        FakeSocket.instances = [];
         const register = (socket: FakeSocket): void => { capturedSocket = socket; };
-        const ctor = class extends FakeSocket {
+        const ctor = class extends ClosingFakeSocket {
             constructor(url: string) {
                 super(url);
                 register(this);

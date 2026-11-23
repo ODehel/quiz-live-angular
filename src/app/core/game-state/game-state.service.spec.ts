@@ -1,16 +1,39 @@
-import { Subject } from 'rxjs';
+import { config, Subject } from 'rxjs';
 import { GameStateService } from './game-state.service'
 import { OutboundMessage } from '../websocket/websocket.service';
 
+const fullSync = (changes: Record<string, unknown> = {}): string =>
+    JSON.stringify({
+        type: 'game_state_sync',
+        game_id: 'game-1',
+        status: 'OPEN',
+        question_index: 2,
+        quiz_id: 'quiz-1',
+        participants: [{ order: 1, name: 'Alice', cumulative_score: 30 }],
+        connected_buzzers: ['quiz_buzzer_01'],
+        ...changes,
+    });
+
+const settle = (): Promise<void> => new Promise(resolve => setTimeout(resolve));
+
 describe('GameStateService', () => {
     let service: GameStateService;
+    let unhandledErrors: unknown[];
     let incoming: Subject<string>;
     let hub: { messages$: Subject<string>; send: ReturnType<typeof vi.fn<(message: OutboundMessage) => void>> };
 
     beforeEach(() => {
+        unhandledErrors = [];
+        config.onUnhandledError = error => unhandledErrors.push(error);
         incoming = new Subject<string>();
         hub = { messages$: incoming, send: vi.fn<(message: OutboundMessage) => void>() };
         service = new GameStateService(hub);
+    });
+    afterEach(async () => {
+        await settle();
+        config.onUnhandledError = null;
+
+        expect(unhandledErrors).toEqual([]);
     });
     it('should have setup as initial phase', () => {
         expect(service.state().phase).toBe('setup');
@@ -196,4 +219,189 @@ describe('GameStateService', () => {
 
         expect(service.connectedBuzzers()).toEqual([]);
     });
+    it('should restore the game state from a full game_state_sync', () => {
+        incoming.next(fullSync());
+
+        expect(service.state()).toMatchObject({
+            gameId: 'game-1',
+            status: 'OPEN',
+            questionIndex: 2,
+            quizId: 'quiz-1',
+            participants: [{ order: 1, name: 'Alice', cumulative_score: 30 }],
+        });
+    });
+    it('should replace the game state and the connected buzzers together on a full game_state_sync', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_09"}');
+
+        incoming.next(fullSync({ connected_buzzers: ['quiz_buzzer_02', 'quiz_buzzer_01'] }));
+
+        expect(service.state().gameId).toBe('game-1');
+        expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_02', 'quiz_buzzer_01']);
+    });
+    it.each(['game_id', 'status', 'question_index', 'quiz_id', 'participants', 'connected_buzzers'])(
+        'should reject the whole full game_state_sync when %s is missing',
+        (field) => {
+            incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_09"}');
+            const stateBefore = service.state();
+            const buzzersBefore = service.connectedBuzzers();
+
+            expect(() => incoming.next(fullSync({ [field]: undefined }))).not.toThrow();
+
+            expect(service.state()).toBe(stateBefore);
+            expect(service.connectedBuzzers()).toBe(buzzersBefore);
+        },
+    );
+    it.each<[string, unknown]>([
+        ['game_id', 42],
+        ['game_id', null],
+        ['status', 'RUNNING'],
+        ['status', 'open'],
+        ['status', 3],
+        ['question_index', '2'],
+        ['question_index', null],
+        ['quiz_id', 7],
+        ['participants', 'Alice'],
+        ['participants', { order: 1, name: 'Alice', cumulative_score: 30 }],
+        ['participants', [null]],
+        ['participants', [{ order: '1', name: 'Alice', cumulative_score: 30 }]],
+        ['participants', [{ order: 1, name: 7, cumulative_score: 30 }]],
+        ['participants', [{ order: 1, name: 'Alice', cumulative_score: '30' }]],
+        ['participants', [{ order: 1, name: 'Alice' }]],
+        ['participants', [{ order: 1, name: 'Alice', cumulative_score: 30 }, { order: 2 }]],
+        ['started_at', 1700000000],
+        ['started_at', null],
+        ['time_limit', '30'],
+        ['time_limit', null],
+        ['connected_buzzers', [{ username: 'quiz_buzzer_01' }]],
+        ['connected_buzzers', null],
+    ])(
+        'should reject the whole full game_state_sync when %s is %j',
+        (field, value) => {
+            incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_09"}');
+            const stateBefore = service.state();
+            const buzzersBefore = service.connectedBuzzers();
+
+            expect(() => incoming.next(fullSync({ [field]: value }))).not.toThrow();
+
+            expect(service.state()).toBe(stateBefore);
+            expect(service.connectedBuzzers()).toBe(buzzersBefore);
+        },
+    );
+    it('should have no game and no timer before any game_state_sync', () => {
+        expect(service.state()).toEqual({
+            phase: 'setup',
+            gameId: null,
+            status: null,
+            questionIndex: null,
+            quizId: null,
+            participants: [],
+            startedAt: null,
+            timeLimit: null,
+        });
+    });
+    it('should take the start time and the time limit of a full game_state_sync that carries them', () => {
+        incoming.next(fullSync({ status: 'QUESTION_OPEN', started_at: '2026-11-23T10:00:00.000Z', time_limit: 30 }));
+
+        expect(service.state().startedAt).toBe('2026-11-23T10:00:00.000Z');
+        expect(service.state().timeLimit).toBe(30);
+    });
+    it('should reset the start time and the time limit when a full game_state_sync does not carry them', () => {
+        incoming.next(fullSync({ status: 'QUESTION_OPEN', started_at: '2026-11-23T10:00:00.000Z', time_limit: 30 }));
+
+        incoming.next(fullSync({ status: 'QUESTION_CLOSED' }));
+
+        expect(service.state().startedAt).toBeNull();
+        expect(service.state().timeLimit).toBeNull();
+    });
+    it('should replace the previous game state in full on a full game_state_sync', () => {
+        incoming.next(fullSync());
+
+        incoming.next(
+            fullSync({
+                game_id: 'game-2',
+                status: 'QUESTION_TITLE',
+                question_index: 0,
+                quiz_id: 'quiz-2',
+                participants: [],
+            }),
+        );
+
+        expect(service.state()).toMatchObject({
+            gameId: 'game-2',
+            status: 'QUESTION_TITLE',
+            questionIndex: 0,
+            quizId: 'quiz-2',
+            participants: [],
+        });
+    });
+    it.each(['PENDING', 'OPEN', 'QUESTION_TITLE', 'QUESTION_OPEN', 'QUESTION_BUZZED', 'QUESTION_CLOSED', 'COMPLETED', 'IN_ERROR'])(
+        'should accept the status %s in a full game_state_sync',
+        (status) => {
+            incoming.next(fullSync({ status }));
+
+            expect(service.state().status).toBe(status);
+        },
+    );
+    it.each<[string, unknown]>([
+        ['question_index', 2],
+        ['quiz_id', 'quiz-1'],
+        ['participants', [{ order: 1, name: 'Alice', cumulative_score: 30 }]],
+        ['started_at', '2026-11-23T10:00:00.000Z'],
+        ['time_limit', 30],
+    ])(
+        'should reject the whole game_state_sync that carries %s without game_id nor status, even with valid connected buzzers',
+        (field, value) => {
+            incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_09"}');
+            const stateBefore = service.state();
+            const buzzersBefore = service.connectedBuzzers();
+
+            expect(() =>
+                incoming.next(
+                    JSON.stringify({ type: 'game_state_sync', [field]: value, connected_buzzers: ['quiz_buzzer_01'] }),
+                ),
+            ).not.toThrow();
+
+            expect(service.state()).toBe(stateBefore);
+            expect(service.connectedBuzzers()).toBe(buzzersBefore);
+        },
+    );
+    it('should keep listening after rejecting a full game_state_sync', () => {
+        incoming.next(fullSync({ status: 'RUNNING' }));
+        incoming.next(fullSync({ game_id: 'game-2', connected_buzzers: ['quiz_buzzer_02'] }));
+
+        expect(service.state().gameId).toBe('game-2');
+        expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_02']);
+    });
+    it('should keep the phase when a full game_state_sync restores the game', () => {
+        service.transitionTo('lobby');
+
+        incoming.next(fullSync({ status: 'QUESTION_OPEN' }));
+
+        expect(service.state().phase).toBe('lobby');
+    });
+    it('should keep the restored game when the phase changes', () => {
+        incoming.next(fullSync());
+
+        service.transitionTo('playing');
+
+        expect(service.state()).toMatchObject({ phase: 'playing', gameId: 'game-1', status: 'OPEN' });
+    });
+    it.each([
+        ['game_id', 'game-1'],
+        ['status', 'OPEN'],
+    ])(
+        'should reject the whole game_state_sync that carries %s without the other of game_id and status, even with valid connected buzzers',
+        (field, value) => {
+            incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_09"}');
+            const stateBefore = service.state();
+            const buzzersBefore = service.connectedBuzzers();
+
+            incoming.next(
+                JSON.stringify({ type: 'game_state_sync', [field]: value, connected_buzzers: ['quiz_buzzer_01'] }),
+            );
+
+            expect(service.state()).toBe(stateBefore);
+            expect(service.connectedBuzzers()).toBe(buzzersBefore);
+        },
+    );
 });

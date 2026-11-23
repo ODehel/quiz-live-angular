@@ -51,13 +51,22 @@ export class FakeSocket implements SocketLike {
 
 /**
  * Variante de `FakeSocket` dont `close()` enchaîne `onclose`, comme le fait un navigateur
- * (code 1000 par défaut). Utilisée par la spec du service, qui prouve la reconnexion
- * déclenchée par ses propres fermetures.
+ * (code 1000 par défaut). Utilisée par la spec du service, et par les tests du câblage qui
+ * prouvent une reconnexion : celle qui suit une fermeture du service (`close()`) comme celle
+ * qui suit une fermeture décidée par le hub (`serverClose()`).
  */
 export class ClosingFakeSocket extends FakeSocket {
   override close(code?: number, reason?: string): void {
     super.close(code, reason);
     this.simulateClose(code ?? 1000);
+  }
+
+  /**
+   * Fermeture décidée par le hub (ex. `4002`) : seul `onclose` s'enchaîne. `close()` n'est pas
+   * appelé, donc `closes` reste vide ; tout `close()` du code testé y paraîtrait.
+   */
+  serverClose(code: number): void {
+    this.simulateClose(code);
   }
 }
 

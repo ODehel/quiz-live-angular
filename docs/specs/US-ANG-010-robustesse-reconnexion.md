@@ -35,7 +35,7 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 
 | # | Critère | Résultat attendu |
 |---|---|---|
-| CA-5 | Code `4004` (session replaced — second onglet) : pas de reconnexion, navigation vers `/error` avec message "Cette session a été reprise dans un autre onglet" | Un seul onglet peut piloter une partie à la fois |
+| CA-5 | Code `4004` (session replaced — second onglet) : pas de reconnexion, navigation vers `/error` avec le message de la décision #28 (« Votre session a été ouverte dans un autre onglet. Fermez celui-ci ou rechargez la page pour reprendre la main. »), sans `close()` ni demande de token : voir `US-ANG-001` CA-26 (décision #45) | Un seul onglet peut piloter une partie à la fois |
 | CA-6 | Code `4001` (token invalide — cas non résolvable) : pas de reconnexion, navigation vers `/error` | Le token est structurellement invalide — un refresh ne résoudrait rien |
 
 #### Codes de fermeture nécessitant un refresh avant retry
@@ -127,6 +127,8 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 Voir [CONVENTIONS-TECHNIQUES-ANGULAR.md](CONVENTIONS-TECHNIQUES-ANGULAR.md) pour la stack complète, les principes et les conventions de code.
 
 ### `WebSocketService` — gestion complète des codes de fermeture
+
+> Pour `4004`, le code ci-dessous est indicatif : le CA-26 de `US-ANG-001` et la décision #45 font foi (erreur `session-replaced` via `ErrorService`, pas de `Router.navigate` direct ni de message en dur, aucun `close()`, aucune demande de token).
 
 ```typescript
 private handleClose(code: number): void {

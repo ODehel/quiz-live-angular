@@ -247,6 +247,95 @@ describe('appConfig WebSocket wiring', () => {
     });
   });
 
+  describe('when the hub announces that the token has expired', () => {
+    let unhandledErrors: unknown[];
+
+    beforeEach(() => {
+      unhandledErrors = [];
+      config.onUnhandledError = error => unhandledErrors.push(error);
+      vi.useFakeTimers();
+    });
+    afterEach(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+      vi.useRealTimers();
+      await new Promise(resolve => setTimeout(resolve));
+      config.onUnhandledError = null;
+
+      expect(unhandledErrors).toEqual([]);
+    });
+
+    const startAndAnnounceExpired = async () => {
+      startApplication();
+      httpMock.expectOne('/api/v1/token')
+        .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+      await initStatus.donePromise;
+      const [socket] = FakeSocket.instances;
+      socket.onopen?.(new Event('open'));
+      socket.onmessage?.(new MessageEvent('message', { data: '{"type":"auth_success"}' }));
+      socket.onmessage?.(new MessageEvent('message', { data: '{"type":"token_expired"}' }));
+      return socket;
+    };
+    const answerRefresh = async () => {
+      httpMock.expectOne('/api/v1/token')
+        .flush({ token: 'fresh-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+      await vi.advanceTimersByTimeAsync(0);
+    };
+    const closeWith4002AndAnswerRefresh = async (socket: FakeSocket) => {
+      socket.onclose?.({ code: 4002 } as CloseEvent);
+      await answerRefresh();
+    };
+    const sentMessages = (socket: FakeSocket) => socket.sent.map(message => JSON.parse(message));
+
+    it('does nothing by itself: no token request, no message, no closing, no other socket', async () => {
+      const socket = await startAndAnnounceExpired();
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      httpMock.expectNone('/api/v1/token');
+      expect(sentMessages(socket).map(message => message.type)).toEqual(['auth', 'request_game_state']);
+      expect(socket.closes).toEqual([]);
+      expect(FakeSocket.instances).toEqual([socket]);
+      expect(TestBed.inject(ErrorService).currentError()).toBeNull();
+    });
+
+    it('requests a single new token and reconnects once when the hub then closes with 4002', async () => {
+      const socket = await startAndAnnounceExpired();
+
+      await closeWith4002AndAnswerRefresh(socket);
+      expect(FakeSocket.instances).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      httpMock.expectNone('/api/v1/token');
+      expect(FakeSocket.instances).toHaveLength(2);
+      expect(TestBed.inject(ErrorService).currentError()).toBeNull();
+    });
+
+    it('authenticates the second socket with the new token', async () => {
+      const socket = await startAndAnnounceExpired();
+      await closeWith4002AndAnswerRefresh(socket);
+      await vi.advanceTimersByTimeAsync(1000);
+
+      const second = FakeSocket.instances[1];
+      second.onopen?.(new Event('open'));
+
+      expect(sentMessages(second)).toEqual([{ type: 'auth', token: 'fresh-jwt' }]);
+    });
+
+    it('waits for the new token before reconnecting, even when the token request is slow', async () => {
+      const socket = await startAndAnnounceExpired();
+
+      socket.onclose?.({ code: 4002 } as CloseEvent);
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(FakeSocket.instances).toHaveLength(1);
+      await answerRefresh();
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(FakeSocket.instances).toHaveLength(2);
+      const second = FakeSocket.instances[1];
+      second.onopen?.(new Event('open'));
+      expect(sentMessages(second)).toEqual([{ type: 'auth', token: 'fresh-jwt' }]);
+    });
+  });
+
   describe('when the hub closes the socket because another tab took the session', () => {
     const startAndCloseWith4004 = async () => {
       startApplication();

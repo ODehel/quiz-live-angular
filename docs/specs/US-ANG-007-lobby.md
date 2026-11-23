@@ -202,7 +202,7 @@ async start(id: string): Promise<Game> {
 
 | Message reçu | Effet côté Angular |
 |---|---|
-| `game_state_sync` sans `game_id` (réponse à `request_game_state`) | Remplace les buzzers connectés — participants et lobby inchangés |
+| `game_state_sync` partiel, sans champ de partie (réponse à `request_game_state`) | Remplace les buzzers connectés — participants et lobby inchangés |
 | `game_state_sync { status: 'OPEN' }` | Transition vers `/pilot/play` via `effect()` |
 | `auth_success { role: 'buzzer' }` | `GameStateService.addConnectedBuzzer(username)` |
 | Déconnexion buzzer | `GameStateService.removeConnectedBuzzer(username)` |

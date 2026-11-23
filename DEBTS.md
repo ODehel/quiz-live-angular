@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-23 (`feat(error): reload the app from the root after a session is replaced`).
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-23 (`feat(error): reload the app from the root after a session is replaced`, résultat du smoke test consigné).
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -58,11 +58,18 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 
 ## Mesurées pendant `feat(error): reload the app from the root after a session is replaced`
 
-- **Le chargement réel de `/` n'est pas observé** 🟠 : `BrowserPageReloader` (`window.location.assign('/')`) n'a ni test ni passage au navigateur ; jsdom ne charge pas de page. Les tests prouvent que le clic appelle `PAGE_RELOADER.reloadFromRoot()` une fois, sans `navigate` ni effacement de l'erreur, jamais que le navigateur recharge `/` avec un nouveau token et une nouvelle socket. À constater au smoke test (deux onglets sur le hub réel) ; résultat à consigner par un second commit.
+- ~~Le chargement réel de `/` n'est pas observé~~ : observé le 2026-11-23 au navigateur sur le hub réel (smoke test d'Olivier de `feat(error): reload the app from the root after a session is replaced`) : le clic sur « Recharger la page » charge `/` (marqueur `window.__smoke` perdu), un nouveau `POST /api/v1/token` (200) et une nouvelle authentification WebSocket arrivent au hub, l'onglet 1 affiche `/dashboard`. `BrowserPageReloader` reste sans test automatique (jsdom). Ancien texte : `BrowserPageReloader` (`window.location.assign('/')`) n'a ni test ni passage au navigateur ; jsdom ne charge pas de page. Les tests prouvent que le clic appelle `PAGE_RELOADER.reloadFromRoot()` une fois, sans `navigate` ni effacement de l'erreur, jamais que le navigateur recharge `/` avec un nouveau token et une nouvelle socket. À constater au smoke test (deux onglets sur le hub réel) ; résultat à consigner par un second commit.
 - **Test de l'icône enregistrée = un `svg` présent** 🟡 : `draws the refresh icon on the error page button when the session was replaced` (`app.config.spec.ts`) vérifie la présence d'un `svg`, pas que c'est `refresh-cw` (le nom est vérifié dans `error-page.spec.ts` sur l'`IconStub`). Retirer `RefreshCw` de `app.config.ts` fait échouer ce test et `draws the icon of the session replaced error` (mutation jouée).
 - **`data-testid="home-button"` porte aussi « Recharger la page »** 🟡 : nom devenu trompeur pour cette variante ; conservé (pas d'effet observable, décision #47). À renommer avec un éventuel `ErrorPage` revu.
 - **Le clic « Recharger la page » laisse l'erreur affichée jusqu'au changement de page** 🟡 : voulu (pas de page vide), mais un chargement lent ou un `assign` ignoré laisserait l'utilisateur sur la même page sans retour visible. Non observé.
 - **Aiguillage dans `ErrorPage` par comparaison à `'session-replaced'`** 🟡 : un second cas (autre variante avec action propre) devrait déplacer libellé, icône et action dans `ErrorVariantConfig`.
+
+## Constatées au smoke test de `feat(error): reload the app from the root after a session is replaced` (2026-11-23)
+
+- **Le hub envoie `buzzer_connected` à l'admin quand c'est l'admin qui s'authentifie** 🟠 : constaté par le script (premier client admin, avant sa fermeture `4004`, trame `{"type":"buzzer_connected","username":"admin"}`) ; contre US-009 CA-27 (message envoyé à l'admin quand un buzzer s'authentifie) et CA-17 (ancienne connexion fermée sans message préalable). Lecture du code du hub : `src/websocket/ws-route.ts` l'envoie à l'admin pour tout participant authentifié, sans test du rôle. Entre dépôts : à corriger côté hub (session `fix`). Effet côté Angular (CA-28), non observé : l'admin pourrait s'ajouter à `connectedBuzzers()`. Le smoke test a classé les assertions A06 à A08 « bug du hub » ; elles restent rouges tant que le hub n'est pas corrigé.
+- **Le hub n'émet pas l'événement `HTTP_REQUEST` (US-022 CA-20)** 🟡 : il écrit « incoming request » et « request completed » (`pino-http`). L'assertion B03 du smoke test (compte de lignes `HTTP_REQUEST` pour `POST /api/v1/token`) ne peut donc pas passer ; le constat équivalent (nouveau `POST /api/v1/token` 200 après le clic) a été lu à la main dans l'extrait du hub. Entre dépôts : écart du hub avec son CDC, à trancher côté hub (code ou CDC).
+- **Un F5 sur `/error` affiche une page toute noire** 🟠 : observé le 2026-11-23 au navigateur (hub réel) sur la page `session-replaced` : le rechargement perd l'erreur (état en mémoire), `/error` ne rend rien tant que `currentError` est nul. Confirme l'entrée « `authGuard` redirige vers une page vide… » et la raison de la décision #46 (recharger depuis `/`, jamais `/error`). Hors périmètre de la PR : le bouton « Recharger la page » n'est pas concerné, seul le F5 du navigateur l'est.
+- **Assertion M07 du smoke test trop stricte** 🟡 : elle attendait l'indicateur « Connecté » (US-ANG-002 CA-23) sur `/dashboard`, qui n'a ni barre du haut ni shell (voir « Page `/dashboard` minimale, hors shell »). Non imputable à la PR ; la nouvelle socket est prouvée par B04 et le journal du hub. À rejouer avec l'indicateur quand le shell sera implémenté.
 
 ## Reportées du récap du 2026-10-31 (non revérifiées)
 

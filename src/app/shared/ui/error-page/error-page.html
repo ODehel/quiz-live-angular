@@ -8,9 +8,14 @@
             </div>
             <span class="error-bar-brand-text">Quiz Buzzer</span>
         </div>
-        <button data-testid="home-button" class="bar-btn" (click)="goHome()">
-            <app-icon name="house" [size]="14" />
-            Retour à l'accueil
+        <button data-testid="home-button" class="bar-btn" (click)="onBarButtonClick(err.variant)">
+            @if (reloadsOnClick(err.variant)) {
+                <app-icon name="refresh-cw" [size]="14" />
+                Recharger la page
+            } @else {
+                <app-icon name="house" [size]="14" />
+                Retour à l'accueil
+            }
         </button>
     </div>
     <div class="error-content">

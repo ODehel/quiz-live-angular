@@ -8,19 +8,23 @@ import { Router } from "@angular/router";
 import { Mock } from "vitest";
 import { VariantConfigurationService } from "./variant-configuration.service";
 import { AuthService } from "../../../core/authentication/auth.service";
+import { PAGE_RELOADER } from "../../../core/page/page-reloader";
 
 describe("ErrorPage", () => {
     let fixture: ComponentFixture<ErrorPage>;
     let mockRouter: { navigate: Mock };
     let sessionReady: boolean;
+    let mockReloader: { reloadFromRoot: Mock };
 
     beforeEach(async () => {
         mockRouter = { navigate: vi.fn() };
         sessionReady = true;
+        mockReloader = { reloadFromRoot: vi.fn() };
         await TestBed.configureTestingModule({
             providers: [
                 { provide: Router, useValue: mockRouter },
-                { provide: AuthService, useValue: { isReady: () => sessionReady } }
+                { provide: AuthService, useValue: { isReady: () => sessionReady } },
+                { provide: PAGE_RELOADER, useValue: mockReloader }
             ]
         }).compileComponents();
         stubIconIn(ErrorPage);
@@ -175,7 +179,77 @@ describe("ErrorPage", () => {
         expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
     });
 
-    
+    it("labels the top bar button 'Recharger la page' when the session was replaced", async () => {
+        TestBed.inject(ErrorService).sessionReplaced();
+        await fixture.whenStable();
+        const button: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="home-button"]');
+        expect(button.textContent?.trim()).toBe("Recharger la page");
+    });
+
+    it.each<{ variant: ErrorContext['variant'], call: (s: ErrorService) => void }>([
+        { variant: 'not-found', call: s => s.notFound() },
+        { variant: 'connection-lost', call: s => s.connectionLost() },
+        { variant: 'server-error', call: s => s.serverError() },
+        { variant: 'game-corrupted', call: s => s.gameCorrupted() },
+        { variant: 'invalid-credentials', call: s => s.invalidCredentials() }
+    ])("keeps the label 'Retour à l'accueil' when error is $variant", async ({ call }) => {
+        call(TestBed.inject(ErrorService));
+        await fixture.whenStable();
+        const button: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="home-button"]');
+        expect(button.textContent?.trim()).toBe("Retour à l'accueil");
+    });
+
+    it("reloads the application from the root when the session was replaced and the button is clicked", async () => {
+        TestBed.inject(ErrorService).sessionReplaced();
+        await fixture.whenStable();
+        const button: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="home-button"]');
+        button.click();
+        expect(mockReloader.reloadFromRoot).toHaveBeenCalledTimes(1);
+    });
+
+    it("neither navigates nor clears the error itself when reloading after the session was replaced", async () => {
+        const service = TestBed.inject(ErrorService);
+        service.sessionReplaced();
+        await fixture.whenStable();
+        const button: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="home-button"]');
+        button.click();
+        expect(mockRouter.navigate).not.toHaveBeenCalled();
+        expect(service.currentError()).toEqual({ variant: 'session-replaced' });
+    });
+
+    it.each<{ variant: ErrorContext['variant'], call: (s: ErrorService) => void }>([
+        { variant: 'not-found', call: s => s.notFound() },
+        { variant: 'connection-lost', call: s => s.connectionLost() },
+        { variant: 'server-error', call: s => s.serverError() },
+        { variant: 'game-corrupted', call: s => s.gameCorrupted() },
+        { variant: 'invalid-credentials', call: s => s.invalidCredentials() }
+    ])("does not reload the page when the button is clicked and error is $variant", async ({ call }) => {
+        call(TestBed.inject(ErrorService));
+        await fixture.whenStable();
+        const button: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="home-button"]');
+        button.click();
+        expect(mockReloader.reloadFromRoot).not.toHaveBeenCalled();
+    });
+
+    it("draws a refresh icon on the button when the session was replaced", async () => {
+        TestBed.inject(ErrorService).sessionReplaced();
+        await fixture.whenStable();
+        const icon = fixture.debugElement.query(By.css('[data-testid="home-button"] app-icon'));
+        expect((icon.componentInstance as IconStub).name()).toBe("refresh-cw");
+    });
+
+    it.each<{ variant: ErrorContext['variant'], call: (s: ErrorService) => void }>([
+        { variant: 'not-found', call: s => s.notFound() },
+        { variant: 'connection-lost', call: s => s.connectionLost() },
+        { variant: 'server-error', call: s => s.serverError() },
+        { variant: 'game-corrupted', call: s => s.gameCorrupted() },
+        { variant: 'invalid-credentials', call: s => s.invalidCredentials() }
+    ])("draws a house icon on the button when error is $variant", async ({ call }) => {
+        call(TestBed.inject(ErrorService));
+        await fixture.whenStable();
+        const icon = fixture.debugElement.query(By.css('[data-testid="home-button"] app-icon'));
+        expect((icon.componentInstance as IconStub).name()).toBe("house");
+    });
 });
 
 describe("Tag colors", async () => {

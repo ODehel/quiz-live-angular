@@ -137,6 +137,20 @@ describe('appConfig', () => {
     expect(mainIcon?.querySelector('svg')).not.toBeNull();
   });
 
+  it('draws the refresh icon on the error page button when the session was replaced', async () => {
+    startApplication();
+    httpMock.expectOne('/api/v1/token')
+      .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+    await initStatus.donePromise;
+    TestBed.inject(ErrorService).sessionReplaced();
+
+    const fixture = TestBed.createComponent(ErrorPage);
+    await fixture.whenStable();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="home-button"]');
+    expect(button?.querySelector('svg')).not.toBeNull();
+  });
+
   it('draws the generic icon on the theme cards', async () => {
     startApplication();
     httpMock.expectOne('/api/v1/token')

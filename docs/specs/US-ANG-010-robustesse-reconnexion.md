@@ -72,7 +72,7 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 
 | # | Critère | Résultat attendu |
 |---|---|---|
-| CA-14 | À la réception d'un `game_state_sync` partiel (sans `game_id` ni `status`, réponse à `request_game_state`) alors que l'état local est `PENDING`, seuls les buzzers connectés sont remplacés (US-ANG-001 CA-31) | Les participants restent ceux de l'état en mémoire ; l'UI du lobby est cohérente — pas de navigation. Le hub n'envoie aucun sync `PENDING` (US-019 CA-15) |
+| CA-14 | À la réception d'un `game_state_sync` partiel (aucun champ de partie, réponse à `request_game_state`) alors que l'état local est `PENDING`, seuls les buzzers connectés sont remplacés (US-ANG-001 CA-31) | Les participants restent ceux de l'état en mémoire ; l'UI du lobby est cohérente — pas de navigation. Le hub n'envoie aucun sync `PENDING` (US-019 CA-15) |
 | CA-15 | À la réception de `game_state_sync` avec `status: 'OPEN'`, le signal est mis à jour avec les participants et les scores cumulés | Si l'écran courant est `/pilot/lobby`, l'`effect()` déclenche la navigation vers `/pilot/play` |
 | CA-16 | À la réception de `game_state_sync` avec `status: 'QUESTION_TITLE'` ou `'QUESTION_CLOSED'`, le signal est mis à jour sans `started_at` ni `time_limit` | L'écran MCQ affiche le titre ou le récapitulatif de correction sans chrono actif |
 | CA-17 | À la réception de `game_state_sync` avec `status: 'QUESTION_OPEN'` ou `'QUESTION_BUZZED'` incluant `started_at` et `time_limit`, le chrono local est recalculé | `remaining = time_limit - (Date.now() - new Date(started_at).getTime()) / 1000` — puis le chrono reprend normalement |
@@ -207,8 +207,8 @@ describe('computeRemaining', () => {
 
 ```typescript
 private onGameStateSync(msg: GameStateSyncMessage): void {
-  // Sync complet incomplet ou mal typé, ou connected_buzzers invalide : rejeté en entier,
-  // rien n'est appliqué, aucune exception (US-ANG-001 CA-20, décisions #41 et #42)
+  // Sync complet incomplet ou mal typé, champs de partie sans game_id ni status, ou connected_buzzers
+  // invalide : rejeté en entier, rien n'est appliqué, aucune exception (US-ANG-001 CA-20, décisions #41 à #43)
   if (!isValidFullSync(msg)) return;
 
   const { status, game_id, question_index, quiz_id, participants,
@@ -299,7 +299,7 @@ Le backoff est plafonné à 30 s mais la reconnexion est tentée indéfiniment �
 
 ### `game_state_sync` sans partie active
 
-Le hub répond toujours à `request_game_state` après la reconnexion (US-ANG-001 CA-27), mais par un sync partiel (sans `game_id`) quand aucun sync complet n'existe : il vaut aussi bien « aucune partie » que « partie `PENDING`, `IN_ERROR` ou `COMPLETED` » (US-019 CA-15). Angular n'en tire donc aucune conclusion sur la partie : pas de délai d'attente, pas de `reset()` (CA-20). La détection d'une partie disparue attend `syncInitial()` (GET REST), bloqué tant que `GET /api/v1/games` n'existe pas.
+Le hub répond toujours à `request_game_state` après la reconnexion (US-ANG-001 CA-27), mais par un sync partiel (sans champ de partie) quand aucun sync complet n'existe : il vaut aussi bien « aucune partie » que « partie `PENDING`, `IN_ERROR` ou `COMPLETED` » (US-019 CA-15). Angular n'en tire donc aucune conclusion sur la partie : pas de délai d'attente, pas de `reset()` (CA-20). La détection d'une partie disparue attend `syncInitial()` (GET REST), bloqué tant que `GET /api/v1/games` n'existe pas.
 
 ### `IN_ERROR` — irréversible côté Angular
 

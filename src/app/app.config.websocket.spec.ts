@@ -1,5 +1,6 @@
 import { ApplicationInitStatus, ApplicationRef } from '@angular/core';
 import { Router } from '@angular/router';
+import { config } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { appConfig } from './app.config';
@@ -175,6 +176,137 @@ describe('appConfig WebSocket wiring', () => {
 
       expect(before).toEqual(['quiz_buzzer_01', 'quiz_buzzer_02']);
       expect(gameState.connectedBuzzers()).toEqual(before);
+    });
+  });
+
+  describe('when the wired socket receives game state messages', () => {
+    let unhandledErrors: unknown[];
+
+    beforeEach(() => {
+      unhandledErrors = [];
+      config.onUnhandledError = error => unhandledErrors.push(error);
+    });
+    afterEach(async () => {
+      await new Promise(resolve => setTimeout(resolve));
+      config.onUnhandledError = null;
+
+      expect(unhandledErrors).toEqual([]);
+    });
+
+    const startAndOpenSocket = async () => {
+      startApplication();
+      httpMock.expectOne('/api/v1/token')
+        .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+      await initStatus.donePromise;
+      const [socket] = FakeSocket.instances;
+      socket.onopen?.(new Event('open'));
+      return socket;
+    };
+    const receive = (socket: FakeSocket, message: Record<string, unknown>) =>
+      socket.onmessage?.(new MessageEvent('message', { data: JSON.stringify(message) }));
+    const fullSync = (changes: Record<string, unknown> = {}) => ({
+      type: 'game_state_sync',
+      game_id: 'game-1',
+      status: 'OPEN',
+      question_index: 2,
+      quiz_id: 'quiz-1',
+      participants: [{ order: 1, name: 'Alice', cumulative_score: 30 }],
+      connected_buzzers: ['quiz_buzzer_01', 'quiz_buzzer_02'],
+      ...changes,
+    });
+
+    it('restores the game and the connected buzzers from a full game_state_sync', async () => {
+      const socket = await startAndOpenSocket();
+
+      receive(socket, fullSync());
+
+      const gameState = TestBed.inject(GameStateService);
+      expect(gameState.state()).toMatchObject({
+        gameId: 'game-1',
+        status: 'OPEN',
+        questionIndex: 2,
+        quizId: 'quiz-1',
+        participants: [{ order: 1, name: 'Alice', cumulative_score: 30 }],
+      });
+      expect(gameState.connectedBuzzers()).toEqual(['quiz_buzzer_01', 'quiz_buzzer_02']);
+    });
+
+    it('lists a buzzer that connects once, in arrival order', async () => {
+      const socket = await startAndOpenSocket();
+
+      ['quiz_buzzer_02', 'quiz_buzzer_01', 'quiz_buzzer_02'].forEach(username =>
+        receive(socket, { type: 'buzzer_connected', username }));
+
+      expect(TestBed.inject(GameStateService).connectedBuzzers()).toEqual(['quiz_buzzer_02', 'quiz_buzzer_01']);
+    });
+
+    it('removes a buzzer that disconnects', async () => {
+      const socket = await startAndOpenSocket();
+      ['quiz_buzzer_01', 'quiz_buzzer_02'].forEach(username =>
+        receive(socket, { type: 'buzzer_connected', username }));
+
+      receive(socket, { type: 'buzzer_disconnected', username: 'quiz_buzzer_01' });
+
+      expect(TestBed.inject(GameStateService).connectedBuzzers()).toEqual(['quiz_buzzer_02']);
+    });
+
+    it('leaves the connected buzzers as they are, without asking the hub, when an unlisted buzzer disconnects', async () => {
+      const socket = await startAndOpenSocket();
+      receive(socket, { type: 'buzzer_connected', username: 'quiz_buzzer_01' });
+      const gameState = TestBed.inject(GameStateService);
+      const before = gameState.connectedBuzzers();
+
+      receive(socket, { type: 'buzzer_disconnected', username: 'quiz_buzzer_09' });
+
+      expect(gameState.connectedBuzzers()).toBe(before);
+      expect(socket.sent.map(message => JSON.parse(message).type)).toEqual(['auth']);
+    });
+
+    it('replaces the connected buzzers in bulk with those of a game_state_sync that carries no game', async () => {
+      const socket = await startAndOpenSocket();
+      ['quiz_buzzer_01', 'quiz_buzzer_02'].forEach(username =>
+        receive(socket, { type: 'buzzer_connected', username }));
+
+      receive(socket, { type: 'game_state_sync', connected_buzzers: ['quiz_buzzer_03', 'quiz_buzzer_01'] });
+
+      expect(TestBed.inject(GameStateService).connectedBuzzers()).toEqual(['quiz_buzzer_03', 'quiz_buzzer_01']);
+    });
+
+    it('keeps the game state when a game_state_sync that carries no game changes the connected buzzers', async () => {
+      const socket = await startAndOpenSocket();
+      receive(socket, fullSync());
+      const gameState = TestBed.inject(GameStateService);
+      const before = gameState.state();
+
+      receive(socket, { type: 'game_state_sync', connected_buzzers: ['quiz_buzzer_07'] });
+
+      expect(gameState.state()).toBe(before);
+      expect(gameState.connectedBuzzers()).toEqual(['quiz_buzzer_07']);
+    });
+
+    describe('after the socket closed and the connection resumed', () => {
+      beforeEach(() => vi.useFakeTimers());
+      afterEach(() => vi.useRealTimers());
+
+      it.each([1000, 1006, 4002])('replaces the connected buzzers kept through the close %s with those of the next game_state_sync', async code => {
+        const first = await startAndOpenSocket();
+        ['quiz_buzzer_01', 'quiz_buzzer_02'].forEach(username =>
+          receive(first, { type: 'buzzer_connected', username }));
+        const gameState = TestBed.inject(GameStateService);
+        first.onclose?.({ code } as CloseEvent);
+        httpMock.match('/api/v1/token').forEach(request =>
+          request.flush({ token: 'fresh-jwt', expiresIn: 3600, tokenType: 'Bearer' }));
+        await vi.advanceTimersByTimeAsync(1000);
+        const kept = gameState.connectedBuzzers();
+        const second = FakeSocket.instances[1];
+        second.onopen?.(new Event('open'));
+
+        receive(second, { type: 'game_state_sync', connected_buzzers: ['quiz_buzzer_02', 'quiz_buzzer_03'] });
+
+        expect(FakeSocket.instances).toHaveLength(2);
+        expect(kept).toEqual(['quiz_buzzer_01', 'quiz_buzzer_02']);
+        expect(gameState.connectedBuzzers()).toEqual(['quiz_buzzer_02', 'quiz_buzzer_03']);
+      });
     });
   });
 });

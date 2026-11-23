@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-23 (`refactor(authentication): share the socket doubles and test helpers across the websocket specs`).
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-23 (`test(authentication): prove the close then reconnect chain on the wired socket`).
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -316,7 +316,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `test(authentication): prove the token refresh on the wired socket`
 
-- **`FakeSocket.close()` n'appelle pas `onclose`** 🟡 : la doublure du câblage enregistre l'appel (`closes`, code et motif) mais ne simule pas l'événement qu'un vrai navigateur déclenche après `close()`. Le test de reprise après 3 échecs appelle `onclose({ code: 1000 })` à la main : il prouve que la fermeture 1000 relance la connexion, pas que le service et la socket s'enchaînent seuls. Le lien « `close()` puis `onclose` » reste une hypothèse sur le navigateur.
+- **`FakeSocket.close()` n'appelle pas `onclose`** 🟡 : réduite, pas levée. `FakeSocket` (câblage) enregistre l'appel (`closes`, code et motif) sans simuler l'événement qu'un navigateur déclenche après `close()`. **Prouvé (chemin 1000, CA-15)** : le test de reprise après 3 échecs (`restarts the full connection with the current token once the refresh failed three times`) utilise `ClosingFakeSocket` (`overrideProvider` dans le test seul) : la fermeture `1000` « Token refresh failed » vient du service, `onclose` s'enchaîne sans appel manuel, la 2e socket s'ouvre 1 s après (pas à 999 ms), sans nouveau `POST /api/v1/token`, et envoie `auth` avec le token courant ; retirer `close()`, changer son code ou son motif, la fermer deux fois ou retirer l'enchaînement de la doublure fait échouer ce test. **Reste hypothèse** : qu'un vrai navigateur appelle `onclose` (avec `code`, `reason`, `wasClean`) après `close(1000, …)` ; `ClosingFakeSocket` ne fabrique l'événement qu'avec un `code`. **Reste simulé à la main** : le chemin `4002` (`socket.onclose?.({ code: 4002 })` dans les tests de `token_expired`, de CA-33 et de la 4004), et les autres tests du chemin 1000 qui gardent `FakeSocket` (`keeps the connection open between the failed attempts and gives up after the third` n'asserte que `closes`). Décision d'Olivier du 2026-11-22 respectée : `FakeSocket.close()` n'enchaîne pas, les deux doublures ne sont pas fusionnées.
 - **Le 3e échec du refresh n'est prouvé qu'avec une réponse HTTP 503** 🟡 : un délai de 10 s dépassé (CA-24, `timeout` d'`AuthService`) ou une erreur réseau (statut 0) suivent le même chemin (`refresh()` rejette) mais ne sont pas rejoués au câblage ; avec le délai, les 5 s courent après l'échec (décision #25), donc la relance part 15 s après l'appel. Le CDC ne dit pas à partir de quand courent les 5 s : lecture retenue, déjà celle de la décision #25.
 - **Une réussite à la 3e tentative n'est pas rejouée au câblage** 🟡 : seule la réussite à la 2e tentative est prouvée au câblage (`retries the refresh after 5 s…`) ; la 3e réussie suit la même branche. Non rejoué.
 - **Les tests de refresh fonctionnent sous temps simulé et vident les microtâches à la main** 🟡 : `advanceTimersByTimeAsync(0)` après chaque réponse HTTP ; un futur test oubliant ce vidage verrait la relance partir un cycle trop tard. Aide `answerRefresh` / `failRefresh` locale au `describe`.
@@ -329,6 +329,12 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `refactor(authentication): share the socket doubles and test helpers across the websocket specs`
 
-- **Deux comportements de `close()` coexistent dans l'aide partagée** 🟡 : `FakeSocket` n'enchaîne pas `onclose` (décision d'Olivier : la dette « `FakeSocket.close()` n'appelle pas `onclose` » reste entière) ; `ClosingFakeSocket` l'enchaîne et sert la seule spec du service. Un seul test du service dépend de cet enchaînement (mutant : retirer `simulateClose` dans `ClosingFakeSocket` fait échouer 1 test sur 366).
+- **Deux comportements de `close()` coexistent dans l'aide partagée** 🟡 : `FakeSocket` n'enchaîne pas `onclose` (décision d'Olivier : la dette « `FakeSocket.close()` n'appelle pas `onclose` » n'était pas touchée par ce refactor) ; `ClosingFakeSocket` l'enchaîne et sert la spec du service (puis, depuis `test(authentication): prove the close then reconnect chain on the wired socket`, un test du câblage). Un seul test du service dépend de cet enchaînement (mutant : retirer `simulateClose` dans `ClosingFakeSocket` fait échouer 1 test sur 366).
+
+## Mesurées pendant `test(authentication): prove the close then reconnect chain on the wired socket`
+
+- **Le câblage a maintenant deux doublures de socket selon le test** 🟡 : `FakeSocket` par défaut (`beforeEach`), `ClosingFakeSocket` pour un seul test via `TestBed.overrideProvider(WEB_SOCKET_CONSTRUCTOR, …)` appelé avant le démarrage de l'application ; l'appeler après `startApplication()` serait sans effet. `FakeSocket.instances` reste le registre commun (le constructeur de `FakeSocket` y inscrit aussi les instances de la sous-classe).
+- **La fermeture à 1000 par le service n'est pas jouée pour une erreur de réseau ou un délai de 10 s** 🟡 : voir la dette sur le 3e échec en HTTP 503 seulement ; inchangé.
+
 - **Les aides de test s'appellent `*.test-helpers.ts`, nommage absent de `CONVENTIONS-TECHNIQUES-ANGULAR.md`** 🟡 : choix aligné sur `icon.test-helpers.ts` (seul précédent du dépôt) ; la table de nommage ne cite que `.spec.ts`. À écrire dans la table si Olivier valide ce nom.
 - **Les aides de test sont compilées par `tsconfig.app.json`** 🟡 : ce tsconfig exclut `*.spec.ts` mais pas `*.test-helpers.ts`, et n'a pas `vitest/globals` : `app.config.test-helpers.ts` importe donc `beforeEach`, `afterEach`, `expect`, `vi` depuis `vitest` au lieu d'utiliser les globaux. Rien n'atteint le bundle (aucun import depuis le code de production).

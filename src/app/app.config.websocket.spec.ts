@@ -7,7 +7,7 @@ import { ErrorService } from './core/error/error.service';
 import { environment } from '../environments/environment';
 import { GameStateService } from './core/game-state/game-state.service';
 import { WEB_SOCKET_CONSTRUCTOR } from './core/websocket/websocket.providers';
-import { FakeSocket } from './core/websocket/websocket.test-helpers';
+import { ClosingFakeSocket, FakeSocket } from './core/websocket/websocket.test-helpers';
 import { fullSync as fullSyncMessage } from './core/game-state/game-state.test-helpers';
 import {
   guardAgainstUnhandledErrors,
@@ -167,18 +167,27 @@ describe('appConfig WebSocket wiring', () => {
     });
 
     it('restarts the full connection with the current token once the refresh failed three times', async () => {
+      // Seul test du câblage dont la socket enchaîne `onclose` après `close()`, comme un navigateur :
+      // la fermeture vient du service, aucun `onclose` n'est appelé à la main (voir DEBTS.md).
+      TestBed.overrideProvider(WEB_SOCKET_CONSTRUCTOR, { useValue: ClosingFakeSocket });
       const socket = await startAndAnnounceExpiry();
       await failRefresh();
       await vi.advanceTimersByTimeAsync(5000);
       await failRefresh();
       await vi.advanceTimersByTimeAsync(5000);
-      await failRefresh();
+      expect(socket.closes).toEqual([]);
       expect(FakeSocket.instances).toHaveLength(1);
 
-      socket.onclose?.({ code: 1000 } as CloseEvent);
-      await vi.advanceTimersByTimeAsync(1000);
+      await failRefresh();
+
+      expect(socket.closes).toEqual([{ code: 1000, reason: 'Token refresh failed' }]);
+      expect(FakeSocket.instances).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(999);
+      expect(FakeSocket.instances).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(1);
 
       expect(FakeSocket.instances).toHaveLength(2);
+      httpMock().expectNone('/api/v1/token');
       const second = FakeSocket.instances[1];
       second.onopen?.(new Event('open'));
       expect(sentMessages(second)).toEqual([{ type: 'auth', token: 'fake-jwt' }]);

@@ -1,6 +1,5 @@
 import { ApplicationInitStatus, ApplicationRef } from '@angular/core';
 import { Router } from '@angular/router';
-import { config } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { appConfig } from './app.config';
@@ -8,37 +7,22 @@ import { ErrorService } from './core/error/error.service';
 import { environment } from '../environments/environment';
 import { GameStateService } from './core/game-state/game-state.service';
 import { WEB_SOCKET_CONSTRUCTOR } from './core/websocket/websocket.providers';
-import { SocketLike } from './core/websocket/websocket.service';
-
-class FakeSocket implements SocketLike {
-  static instances: FakeSocket[] = [];
-
-  onopen: ((event: Event) => void) | null = null;
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  onclose: ((event: CloseEvent) => void) | null = null;
-  readonly sent: string[] = [];
-  readonly closes: { code?: number; reason?: string }[] = [];
-
-  constructor(public readonly url: string) {
-    FakeSocket.instances.push(this);
-  }
-
-  send(message: string): void {
-    this.sent.push(message);
-  }
-
-  close(code?: number, reason?: string): void {
-    this.closes.push({ code, reason });
-  }
-}
+import { FakeSocket } from './core/websocket/websocket.test-helpers';
+import { fullSync as fullSyncMessage } from './core/game-state/game-state.test-helpers';
+import {
+  guardAgainstUnhandledErrors,
+  startAndAnnounceExpired,
+  startAndAnnounceExpiry,
+  startAndOpenSocket,
+  startApplication as startWiredApplication,
+} from './app.config.test-helpers';
 
 describe('appConfig WebSocket wiring', () => {
-  let initStatus: ApplicationInitStatus;
-  let httpMock: HttpTestingController;
-
+  // Les aides partagées démarrent l'application elles-mêmes ; `TestBed` rend toujours la même instance.
+  const initStatus = () => TestBed.inject(ApplicationInitStatus);
+  const httpMock = () => TestBed.inject(HttpTestingController);
   const startApplication = () => {
-    initStatus = TestBed.inject(ApplicationInitStatus);
-    httpMock = TestBed.inject(HttpTestingController);
+    startWiredApplication();
   };
 
   beforeEach(() => {
@@ -54,51 +38,36 @@ describe('appConfig WebSocket wiring', () => {
 
   it('opens the WebSocket on the hub once the session is ready', async () => {
     startApplication();
-    httpMock.expectOne('/api/v1/token')
+    httpMock().expectOne('/api/v1/token')
       .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
-    await initStatus.donePromise;
+    await initStatus().donePromise;
 
     expect(FakeSocket.instances.map(socket => socket.url)).toEqual([environment.wsUrl]);
   });
 
   it('does not open the WebSocket when the token request fails', async () => {
     startApplication();
-    httpMock.expectOne('/api/v1/token')
+    httpMock().expectOne('/api/v1/token')
       .flush(null, { status: 401, statusText: 'Unauthorized' });
-    await initStatus.donePromise;
+    await initStatus().donePromise;
 
     expect(FakeSocket.instances).toEqual([]);
   });
 
   it('does not open the WebSocket before the token request is answered', () => {
     startApplication();
-    httpMock.expectOne('/api/v1/token');
+    httpMock().expectOne('/api/v1/token');
 
     expect(FakeSocket.instances).toEqual([]);
   });
 
   it('authenticates the socket with the session token once it is open', async () => {
-    startApplication();
-    httpMock.expectOne('/api/v1/token')
-      .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
-    await initStatus.donePromise;
-
-    const [socket] = FakeSocket.instances;
-    socket.onopen?.(new Event('open'));
+    const socket = await startAndOpenSocket();
 
     expect(socket.sent.map(message => JSON.parse(message))).toEqual([{ type: 'auth', token: 'fake-jwt' }]);
   });
 
   describe('when the hub accepts the session', () => {
-    const startAndOpenSocket = async () => {
-      startApplication();
-      httpMock.expectOne('/api/v1/token')
-        .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
-      await initStatus.donePromise;
-      const [socket] = FakeSocket.instances;
-      socket.onopen?.(new Event('open'));
-      return socket;
-    };
     const sentTypes = (socket: FakeSocket) => socket.sent.map(message => JSON.parse(message).type);
 
     it('asks the hub for the game state once', async () => {
@@ -111,17 +80,12 @@ describe('appConfig WebSocket wiring', () => {
 
   describe('when the hub accepts the session again after a token refresh', () => {
     it('asks the hub for the game state again', async () => {
-      startApplication();
-      httpMock.expectOne('/api/v1/token')
-        .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
-      await initStatus.donePromise;
-      const [socket] = FakeSocket.instances;
+      const socket = await startAndOpenSocket();
       const receive = (type: string) =>
         socket.onmessage?.(new MessageEvent('message', { data: JSON.stringify({ type }) }));
-      socket.onopen?.(new Event('open'));
       receive('auth_success');
       receive('token_expiring_soon');
-      httpMock.expectOne('/api/v1/token')
+      httpMock().expectOne('/api/v1/token')
         .flush({ token: 'fresh-jwt', expiresIn: 3600, tokenType: 'Bearer' });
       await TestBed.inject(ApplicationRef).whenStable();
       receive('auth_success');
@@ -132,40 +96,15 @@ describe('appConfig WebSocket wiring', () => {
   });
 
   describe('when the hub announces that the token is about to expire', () => {
-    let unhandledErrors: unknown[];
+    guardAgainstUnhandledErrors({ simulatedTime: true });
 
-    beforeEach(() => {
-      unhandledErrors = [];
-      config.onUnhandledError = error => unhandledErrors.push(error);
-      vi.useFakeTimers();
-    });
-    afterEach(async () => {
-      await vi.advanceTimersByTimeAsync(0);
-      vi.useRealTimers();
-      await new Promise(resolve => setTimeout(resolve));
-      config.onUnhandledError = null;
-
-      expect(unhandledErrors).toEqual([]);
-    });
-
-    const startAndAnnounceExpiry = async () => {
-      startApplication();
-      httpMock.expectOne('/api/v1/token')
-        .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
-      await initStatus.donePromise;
-      const [socket] = FakeSocket.instances;
-      socket.onopen?.(new Event('open'));
-      socket.onmessage?.(new MessageEvent('message', { data: '{"type":"auth_success"}' }));
-      socket.onmessage?.(new MessageEvent('message', { data: '{"type":"token_expiring_soon"}' }));
-      return socket;
-    };
     const answerRefresh = async (token: string) => {
-      httpMock.expectOne('/api/v1/token')
+      httpMock().expectOne('/api/v1/token')
         .flush({ token, expiresIn: 3600, tokenType: 'Bearer' });
       await vi.advanceTimersByTimeAsync(0);
     };
     const failRefresh = async () => {
-      httpMock.expectOne('/api/v1/token')
+      httpMock().expectOne('/api/v1/token')
         .flush(null, { status: 503, statusText: 'Service Unavailable' });
       await vi.advanceTimersByTimeAsync(0);
     };
@@ -174,7 +113,7 @@ describe('appConfig WebSocket wiring', () => {
     it('requests a new token in the background, without showing any error', async () => {
       await startAndAnnounceExpiry();
 
-      httpMock.expectOne('/api/v1/token');
+      httpMock().expectOne('/api/v1/token');
       expect(TestBed.inject(ErrorService).currentError()).toBeNull();
     });
 
@@ -195,7 +134,7 @@ describe('appConfig WebSocket wiring', () => {
       await failRefresh();
       await vi.advanceTimersByTimeAsync(4999);
 
-      httpMock.expectNone('/api/v1/token');
+      httpMock().expectNone('/api/v1/token');
       expect(sentMessages(socket).map(message => message.type)).toEqual(['auth', 'request_game_state']);
       expect(TestBed.inject(ErrorService).currentError()).toBeNull();
     });
@@ -222,7 +161,7 @@ describe('appConfig WebSocket wiring', () => {
       await failRefresh();
       await vi.advanceTimersByTimeAsync(60_000);
 
-      httpMock.expectNone('/api/v1/token');
+      httpMock().expectNone('/api/v1/token');
       expect(socket.closes).toEqual([{ code: 1000, reason: 'Token refresh failed' }]);
       expect(sentMessages(socket).map(message => message.type)).toEqual(['auth', 'request_game_state']);
     });
@@ -248,35 +187,10 @@ describe('appConfig WebSocket wiring', () => {
   });
 
   describe('when the hub announces that the token has expired', () => {
-    let unhandledErrors: unknown[];
+    guardAgainstUnhandledErrors({ simulatedTime: true });
 
-    beforeEach(() => {
-      unhandledErrors = [];
-      config.onUnhandledError = error => unhandledErrors.push(error);
-      vi.useFakeTimers();
-    });
-    afterEach(async () => {
-      await vi.advanceTimersByTimeAsync(0);
-      vi.useRealTimers();
-      await new Promise(resolve => setTimeout(resolve));
-      config.onUnhandledError = null;
-
-      expect(unhandledErrors).toEqual([]);
-    });
-
-    const startAndAnnounceExpired = async () => {
-      startApplication();
-      httpMock.expectOne('/api/v1/token')
-        .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
-      await initStatus.donePromise;
-      const [socket] = FakeSocket.instances;
-      socket.onopen?.(new Event('open'));
-      socket.onmessage?.(new MessageEvent('message', { data: '{"type":"auth_success"}' }));
-      socket.onmessage?.(new MessageEvent('message', { data: '{"type":"token_expired"}' }));
-      return socket;
-    };
     const answerRefresh = async () => {
-      httpMock.expectOne('/api/v1/token')
+      httpMock().expectOne('/api/v1/token')
         .flush({ token: 'fresh-jwt', expiresIn: 3600, tokenType: 'Bearer' });
       await vi.advanceTimersByTimeAsync(0);
     };
@@ -290,7 +204,7 @@ describe('appConfig WebSocket wiring', () => {
       const socket = await startAndAnnounceExpired();
       await vi.advanceTimersByTimeAsync(60_000);
 
-      httpMock.expectNone('/api/v1/token');
+      httpMock().expectNone('/api/v1/token');
       expect(sentMessages(socket).map(message => message.type)).toEqual(['auth', 'request_game_state']);
       expect(socket.closes).toEqual([]);
       expect(FakeSocket.instances).toEqual([socket]);
@@ -304,7 +218,7 @@ describe('appConfig WebSocket wiring', () => {
       expect(FakeSocket.instances).toHaveLength(1);
       await vi.advanceTimersByTimeAsync(60_000);
 
-      httpMock.expectNone('/api/v1/token');
+      httpMock().expectNone('/api/v1/token');
       expect(FakeSocket.instances).toHaveLength(2);
       expect(TestBed.inject(ErrorService).currentError()).toBeNull();
     });
@@ -339,9 +253,9 @@ describe('appConfig WebSocket wiring', () => {
   describe('when the hub closes the socket because another tab took the session', () => {
     const startAndCloseWith4004 = async () => {
       startApplication();
-      httpMock.expectOne('/api/v1/token')
+      httpMock().expectOne('/api/v1/token')
         .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
-      await initStatus.donePromise;
+      await initStatus().donePromise;
       FakeSocket.instances[0].onclose?.({ code: 4004 } as CloseEvent);
     };
 
@@ -364,12 +278,7 @@ describe('appConfig WebSocket wiring', () => {
     afterEach(() => vi.useRealTimers());
 
     it.each([1000, 1006, 4002, 4004])('keeps the connected buzzers when the socket closes with %s', async code => {
-      startApplication();
-      httpMock.expectOne('/api/v1/token')
-        .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
-      await initStatus.donePromise;
-      const [socket] = FakeSocket.instances;
-      socket.onopen?.(new Event('open'));
+      const socket = await startAndOpenSocket();
       ['quiz_buzzer_01', 'quiz_buzzer_02'].forEach(username =>
         socket.onmessage?.(new MessageEvent('message', {
           data: JSON.stringify({ type: 'buzzer_connected', username }),
@@ -378,7 +287,7 @@ describe('appConfig WebSocket wiring', () => {
       const before = gameState.connectedBuzzers();
 
       socket.onclose?.({ code } as CloseEvent);
-      httpMock.match('/api/v1/token').forEach(request =>
+      httpMock().match('/api/v1/token').forEach(request =>
         request.flush({ token: 'fresh-jwt', expiresIn: 3600, tokenType: 'Bearer' }));
       await vi.advanceTimersByTimeAsync(1000);
 
@@ -388,40 +297,12 @@ describe('appConfig WebSocket wiring', () => {
   });
 
   describe('when the wired socket receives game state messages', () => {
-    let unhandledErrors: unknown[];
+    guardAgainstUnhandledErrors({ simulatedTime: false });
 
-    beforeEach(() => {
-      unhandledErrors = [];
-      config.onUnhandledError = error => unhandledErrors.push(error);
-    });
-    afterEach(async () => {
-      await new Promise(resolve => setTimeout(resolve));
-      config.onUnhandledError = null;
-
-      expect(unhandledErrors).toEqual([]);
-    });
-
-    const startAndOpenSocket = async () => {
-      startApplication();
-      httpMock.expectOne('/api/v1/token')
-        .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
-      await initStatus.donePromise;
-      const [socket] = FakeSocket.instances;
-      socket.onopen?.(new Event('open'));
-      return socket;
-    };
     const receive = (socket: FakeSocket, message: Record<string, unknown>) =>
       socket.onmessage?.(new MessageEvent('message', { data: JSON.stringify(message) }));
-    const fullSync = (changes: Record<string, unknown> = {}) => ({
-      type: 'game_state_sync',
-      game_id: 'game-1',
-      status: 'OPEN',
-      question_index: 2,
-      quiz_id: 'quiz-1',
-      participants: [{ order: 1, name: 'Alice', cumulative_score: 30 }],
-      connected_buzzers: ['quiz_buzzer_01', 'quiz_buzzer_02'],
-      ...changes,
-    });
+    const fullSync = (changes: Record<string, unknown> = {}) =>
+      fullSyncMessage({ connected_buzzers: ['quiz_buzzer_01', 'quiz_buzzer_02'], ...changes });
 
     it('restores the game and the connected buzzers from a full game_state_sync', async () => {
       const socket = await startAndOpenSocket();
@@ -502,7 +383,7 @@ describe('appConfig WebSocket wiring', () => {
           receive(first, { type: 'buzzer_connected', username }));
         const gameState = TestBed.inject(GameStateService);
         first.onclose?.({ code } as CloseEvent);
-        httpMock.match('/api/v1/token').forEach(request =>
+        httpMock().match('/api/v1/token').forEach(request =>
           request.flush({ token: 'fresh-jwt', expiresIn: 3600, tokenType: 'Bearer' }));
         await vi.advanceTimersByTimeAsync(1000);
         const kept = gameState.connectedBuzzers();

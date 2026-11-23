@@ -1,18 +1,9 @@
 import { config, Subject } from 'rxjs';
 import { GameStateService } from './game-state.service'
 import { OutboundMessage } from '../websocket/websocket.service';
+import { fullSync } from './game-state.test-helpers';
 
-const fullSync = (changes: Record<string, unknown> = {}): string =>
-    JSON.stringify({
-        type: 'game_state_sync',
-        game_id: 'game-1',
-        status: 'OPEN',
-        question_index: 2,
-        quiz_id: 'quiz-1',
-        participants: [{ order: 1, name: 'Alice', cumulative_score: 30 }],
-        connected_buzzers: ['quiz_buzzer_01'],
-        ...changes,
-    });
+const fullSyncJson = (changes: Record<string, unknown> = {}): string => JSON.stringify(fullSync(changes));
 
 const settle = (): Promise<void> => new Promise(resolve => setTimeout(resolve));
 
@@ -220,7 +211,7 @@ describe('GameStateService', () => {
         expect(service.connectedBuzzers()).toEqual([]);
     });
     it('should restore the game state from a full game_state_sync', () => {
-        incoming.next(fullSync());
+        incoming.next(fullSyncJson());
 
         expect(service.state()).toMatchObject({
             gameId: 'game-1',
@@ -233,7 +224,7 @@ describe('GameStateService', () => {
     it('should replace the game state and the connected buzzers together on a full game_state_sync', () => {
         incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_09"}');
 
-        incoming.next(fullSync({ connected_buzzers: ['quiz_buzzer_02', 'quiz_buzzer_01'] }));
+        incoming.next(fullSyncJson({ connected_buzzers: ['quiz_buzzer_02', 'quiz_buzzer_01'] }));
 
         expect(service.state().gameId).toBe('game-1');
         expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_02', 'quiz_buzzer_01']);
@@ -245,7 +236,7 @@ describe('GameStateService', () => {
             const stateBefore = service.state();
             const buzzersBefore = service.connectedBuzzers();
 
-            expect(() => incoming.next(fullSync({ [field]: undefined }))).not.toThrow();
+            expect(() => incoming.next(fullSyncJson({ [field]: undefined }))).not.toThrow();
 
             expect(service.state()).toBe(stateBefore);
             expect(service.connectedBuzzers()).toBe(buzzersBefore);
@@ -281,7 +272,7 @@ describe('GameStateService', () => {
             const stateBefore = service.state();
             const buzzersBefore = service.connectedBuzzers();
 
-            expect(() => incoming.next(fullSync({ [field]: value }))).not.toThrow();
+            expect(() => incoming.next(fullSyncJson({ [field]: value }))).not.toThrow();
 
             expect(service.state()).toBe(stateBefore);
             expect(service.connectedBuzzers()).toBe(buzzersBefore);
@@ -300,24 +291,24 @@ describe('GameStateService', () => {
         });
     });
     it('should take the start time and the time limit of a full game_state_sync that carries them', () => {
-        incoming.next(fullSync({ status: 'QUESTION_OPEN', started_at: '2026-11-23T10:00:00.000Z', time_limit: 30 }));
+        incoming.next(fullSyncJson({ status: 'QUESTION_OPEN', started_at: '2026-11-23T10:00:00.000Z', time_limit: 30 }));
 
         expect(service.state().startedAt).toBe('2026-11-23T10:00:00.000Z');
         expect(service.state().timeLimit).toBe(30);
     });
     it('should reset the start time and the time limit when a full game_state_sync does not carry them', () => {
-        incoming.next(fullSync({ status: 'QUESTION_OPEN', started_at: '2026-11-23T10:00:00.000Z', time_limit: 30 }));
+        incoming.next(fullSyncJson({ status: 'QUESTION_OPEN', started_at: '2026-11-23T10:00:00.000Z', time_limit: 30 }));
 
-        incoming.next(fullSync({ status: 'QUESTION_CLOSED' }));
+        incoming.next(fullSyncJson({ status: 'QUESTION_CLOSED' }));
 
         expect(service.state().startedAt).toBeNull();
         expect(service.state().timeLimit).toBeNull();
     });
     it('should replace the previous game state in full on a full game_state_sync', () => {
-        incoming.next(fullSync());
+        incoming.next(fullSyncJson());
 
         incoming.next(
-            fullSync({
+            fullSyncJson({
                 game_id: 'game-2',
                 status: 'QUESTION_TITLE',
                 question_index: 0,
@@ -337,7 +328,7 @@ describe('GameStateService', () => {
     it.each(['PENDING', 'OPEN', 'QUESTION_TITLE', 'QUESTION_OPEN', 'QUESTION_BUZZED', 'QUESTION_CLOSED', 'COMPLETED', 'IN_ERROR'])(
         'should accept the status %s in a full game_state_sync',
         (status) => {
-            incoming.next(fullSync({ status }));
+            incoming.next(fullSyncJson({ status }));
 
             expect(service.state().status).toBe(status);
         },
@@ -366,8 +357,8 @@ describe('GameStateService', () => {
         },
     );
     it('should keep listening after rejecting a full game_state_sync', () => {
-        incoming.next(fullSync({ status: 'RUNNING' }));
-        incoming.next(fullSync({ game_id: 'game-2', connected_buzzers: ['quiz_buzzer_02'] }));
+        incoming.next(fullSyncJson({ status: 'RUNNING' }));
+        incoming.next(fullSyncJson({ game_id: 'game-2', connected_buzzers: ['quiz_buzzer_02'] }));
 
         expect(service.state().gameId).toBe('game-2');
         expect(service.connectedBuzzers()).toEqual(['quiz_buzzer_02']);
@@ -375,12 +366,12 @@ describe('GameStateService', () => {
     it('should keep the phase when a full game_state_sync restores the game', () => {
         service.transitionTo('lobby');
 
-        incoming.next(fullSync({ status: 'QUESTION_OPEN' }));
+        incoming.next(fullSyncJson({ status: 'QUESTION_OPEN' }));
 
         expect(service.state().phase).toBe('lobby');
     });
     it('should keep the restored game when the phase changes', () => {
-        incoming.next(fullSync());
+        incoming.next(fullSyncJson());
 
         service.transitionTo('playing');
 

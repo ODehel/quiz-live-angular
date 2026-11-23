@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-23 (`docs(authentication): specify what the error page shows when no error is set`).
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-23 (`fix(error): redirect to the home when the error page opens without an error`).
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -66,12 +66,18 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 
 ## Constatées au smoke test de `feat(error): reload the app from the root after a session is replaced` (2026-11-23)
 
-- **Un F5 sur `/error` affiche une page toute noire** 🟠 : observé le 2026-11-23 au navigateur (hub réel) sur la page `session-replaced` : le rechargement perd l'erreur (état en mémoire), `/error` ne rend rien tant que `currentError` est nul. Confirme l'entrée « `authGuard` redirige vers une page vide… » et la raison de la décision #46 (recharger depuis `/`, jamais `/error`). Hors périmètre de la PR : le bouton « Recharger la page » n'est pas concerné, seul le F5 du navigateur l'est. Spécifié depuis par le CA-34 de `US-ANG-001` (décision #48) : `/error` sans erreur posée et session prête redirige vers `/`. Code non implémenté : à traiter par une session `fix(error)` suivante.
+- ~~Un F5 sur `/error` affiche une page toute noire~~ : levé (`fix(error): redirect to the home when the error page opens without an error`, CA-34 de `US-ANG-001`, décisions #48 et #49) : `/error` ouvert sans erreur posée et session prête redirige vers `/` (guard de route `errorPageGuard`). Prouvé en jsdom (`app.routes.spec.ts`) ; le F5 réel n'a pas été rejoué au navigateur (voir « Mesurées pendant `fix(error)…` »). Ancien texte : 🟠 : observé le 2026-11-23 au navigateur (hub réel) sur la page `session-replaced` : le rechargement perd l'erreur (état en mémoire), `/error` ne rend rien tant que `currentError` est nul. Confirmait l'entrée « `authGuard` redirige vers une page vide… » et la raison de la décision #46 (recharger depuis `/`, jamais `/error`).
 - **Assertion M07 du smoke test trop stricte** 🟡 : elle attendait l'indicateur « Connecté » (US-ANG-002 CA-23) sur `/dashboard`, qui n'a ni barre du haut ni shell (voir « Page `/dashboard` minimale, hors shell »). Non imputable à la PR ; la nouvelle socket est prouvée par B04 et le journal du hub. À rejouer avec l'indicateur quand le shell sera implémenté.
 
 ## Mesurées pendant `docs(authentication): specify what the error page shows when no error is set`
 
 - **`/error` sans erreur posée et session non prête : comportement non spécifié** 🟠 : le CA-34 (décision #48) ne couvre que la session prête. Quand `isReady()` est faux et qu'aucune erreur n'est posée, `/error` rend toujours une page vide. Rediriger vers `/` y ferait une boucle (guard, `/error`, `/`, `/dashboard`, guard…) ; afficher `connection-lost` par défaut contredirait la décision #13 (option A écartée : un 401 serait affiché « connexion perdue »). Aujourd'hui inatteignable : « session non prête » implique « erreur posée » (voir l'entrée sur `authGuard`). À rouvrir au premier chemin du code qui rend ce cas possible : refresh (CA-12 à CA-16) ou un nouvel appel à `clearError()`.
+
+## Mesurées pendant `fix(error): redirect to the home when the error page opens without an error`
+
+- **Le F5 sur `/error` n'a pas été rejoué au navigateur** 🟡 : la redirection est prouvée par `RouterTestingHarness` (jsdom, `AuthService` doublé) seulement. À constater au smoke test : F5 sur la page `session-replaced` puis URL `/error` saisie à la main, avec le hub réel, doivent mener à `/dashboard`.
+- **Le test de non-redirection (session non prête, sans erreur) fige un comportement non spécifié** 🟡 : `stays on /error without redirecting when no error is set and the session is not ready` (`app.routes.spec.ts`) existe pour interdire la boucle (décision #48 D2), pas parce que la page vide est voulue. Les mutants « le guard ignore `isReady()` » et « le guard redirige vers `/error` » ne rendent pas ce test rouge : ils bouclent et le run ne se termine pas (tués par le délai, pas par une assertion). À remplacer quand D2 sera tranchée (dette « `/error` sans erreur posée et session non prête »).
+- **Le guard `errorPageGuard` contredit la lettre de CA-23** 🟡 : CA-23 dit « accessible sans guard » ; la route `/error` en porte désormais un. Le comportement de CA-23 tient (avec une erreur posée, la page s'affiche session prête ou non : `renders the error page on /error`, `keeps the error page readable after returning home…`), mais le libellé « sans guard » est devenu inexact. À reformuler dans un commit `docs` si Olivier retient le guard (voir décision #49).
 
 ## Reportées du récap du 2026-10-31 (non revérifiées)
 

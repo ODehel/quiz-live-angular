@@ -3,6 +3,7 @@ import { authGuard } from './core/authentication/auth.guard';
 import { Dashboard } from './features/dashboard/dashboard';
 import { Playground } from './features/playground/playground';
 import { ThemeList } from './features/themes/theme-list';
+import { errorPageGuard } from './core/error/error-page.guard';
 import { ErrorPage } from './shared/ui/error-page/error-page';
 
 export const routes: Routes = [
@@ -10,5 +11,5 @@ export const routes: Routes = [
     { path: 'dashboard', component: Dashboard, canActivate: [authGuard] },
     { path: 'themes', component: ThemeList, canActivate: [authGuard] },
     { path: 'playground', component: Playground },
-    { path: 'error', component: ErrorPage }
+    { path: 'error', component: ErrorPage, canActivate: [errorPageGuard] }
 ];

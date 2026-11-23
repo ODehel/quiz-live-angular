@@ -84,6 +84,20 @@ describe('routes', () => {
     expect(page).not.toBeNull();
   });
 
+  it('redirects /error to the dashboard when no error is set and the session is ready', async () => {
+    await RouterTestingHarness.create('/error');
+
+    expect(TestBed.inject(Router).url).toBe('/dashboard');
+  });
+
+  it('stays on /error without redirecting when no error is set and the session is not ready', async () => {
+    sessionReady = false;
+
+    await RouterTestingHarness.create('/error');
+
+    expect(TestBed.inject(Router).url).toBe('/error');
+  });
+
   it('keeps the error page readable after returning home when the session is not ready', async () => {
     sessionReady = false;
     TestBed.inject(ErrorService).connectionLost();

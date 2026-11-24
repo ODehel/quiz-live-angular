@@ -395,4 +395,55 @@ describe('GameStateService', () => {
             expect(service.connectedBuzzers()).toBe(buzzersBefore);
         },
     );
+    it('should not know the connected buzzers before any game_state_sync', () => {
+        expect(service.buzzersKnown()).toBe(false);
+    });
+    it('should know the connected buzzers once a partial game_state_sync carries them', () => {
+        incoming.next('{"type":"game_state_sync","connected_buzzers":["quiz_buzzer_01"]}');
+
+        expect(service.buzzersKnown()).toBe(true);
+    });
+    it('should know the connected buzzers when a game_state_sync lists none', () => {
+        incoming.next('{"type":"game_state_sync","connected_buzzers":[]}');
+
+        expect(service.buzzersKnown()).toBe(true);
+    });
+    it('should know the connected buzzers once a full game_state_sync carries them', () => {
+        incoming.next(fullSyncJson());
+
+        expect(service.buzzersKnown()).toBe(true);
+    });
+    it('should not know the connected buzzers when a game_state_sync does not carry them', () => {
+        incoming.next('{"type":"game_state_sync"}');
+        incoming.next(JSON.stringify({ type: 'game_state_sync', question_index: 1 }));
+
+        expect(service.buzzersKnown()).toBe(false);
+    });
+    it.each([
+        '{"type":"game_state_sync","connected_buzzers":[{"username":"quiz_buzzer_09"}]}',
+        '{"type":"game_state_sync","connected_buzzers":null}',
+        '{"type":"game_state_sync","game_id":"game-1","connected_buzzers":["quiz_buzzer_01"]}',
+        JSON.stringify(fullSync({ status: 'UNKNOWN' })),
+        JSON.stringify(fullSync({ connected_buzzers: [{ username: 'quiz_buzzer_01' }] })),
+    ])('should not know the connected buzzers when the game_state_sync is rejected: %s', (data) => {
+        incoming.next(data);
+
+        expect(service.buzzersKnown()).toBe(false);
+    });
+    it('should not know the connected buzzers when a buzzer connects or disconnects alone', () => {
+        incoming.next('{"type":"buzzer_connected","username":"quiz_buzzer_01"}');
+        incoming.next('{"type":"buzzer_disconnected","username":"quiz_buzzer_01"}');
+
+        expect(service.buzzersKnown()).toBe(false);
+    });
+    it('should keep knowing the connected buzzers after a rejected game_state_sync and after the last buzzer leaves', () => {
+        incoming.next('{"type":"game_state_sync","connected_buzzers":["quiz_buzzer_01"]}');
+
+        incoming.next('{"type":"game_state_sync","connected_buzzers":[{"username":"quiz_buzzer_01"}]}');
+        incoming.next(JSON.stringify(fullSync({ status: 'UNKNOWN' })));
+        incoming.next('{"type":"buzzer_disconnected","username":"quiz_buzzer_01"}');
+        incoming.next('{"type":"game_state_sync"}');
+
+        expect(service.buzzersKnown()).toBe(true);
+    });
 });

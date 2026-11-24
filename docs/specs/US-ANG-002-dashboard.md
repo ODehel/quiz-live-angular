@@ -194,7 +194,7 @@ readonly isDisconnected = signal(false);
 
 ### Liste des buzzers « inconnue » ou « vide »
 
-Le dashboard distingue une liste inconnue (aucun `game_state_sync` portant `connected_buzzers` n'a été accepté, CA-31) d'une liste connue et vide (`0`, CA-32). `GameStateService.connectedBuzzers()` vaut `[]` dans les deux cas : l'information « connue ou non » ne s'y lit pas. Sa forme (signal, valeur `null`, autre) n'est pas observable et n'est pas spécifiée : choix d'implémentation, à trancher à la session du dashboard.
+Le dashboard distingue une liste inconnue (aucun `game_state_sync` portant `connected_buzzers` n'a été accepté, CA-31) d'une liste connue et vide (`0`, CA-32). `GameStateService.connectedBuzzers()` vaut `[]` dans les deux cas : l'information « connue ou non » ne s'y lit pas. Sa forme n'est pas observable : choix d'implémentation, tranché à la session `feat(dashboard): show the connected buzzers on the dashboard` (décision #72) : signal `GameStateService.buzzersKnown`, `false` jusqu'à la première liste de chaînes acceptée, jamais remis à `false`.
 
 ### Appels REST au chargement
 
@@ -290,5 +290,5 @@ Après une reprise du CA-9 dont l'ouverture lève l'exception (US-ANG-001 CA-35)
 ---
 
 **Dernière mise à jour** : 2026-11-24
-**Statut** : Spécifiée, non implémentée (le dashboard n'est qu'une coquille). Bloqués (route absente du hub) : CA-1, CA-13 à CA-16 (`games`, US-010) et CA-25 (`/api/v1/health`, US-020), en entier ; CA-2 (`forkJoin`, `quizzes` US-008), CA-3, CA-4 et CA-5 pour leur part « Quiz », « Parties jouées » et liste. Non bloqué : l'appel `GET /api/v1/questions?limit=1` et la métrique « Questions »
+**Statut** : Partiellement implémentée : `features/dashboard/dashboard.ts` rend le titre, la métrique « Buzzers connectés » (CA-3 part buzzers, CA-10 à CA-12, CA-31, CA-32 ; `GameStateService.buzzersKnown`, décision #72) et la carte « Buzzers » ; le reste est spécifié, non implémenté (autres métriques, bannière, bouton « Nouvelle partie », topbar, état « Déconnecté »). Bloqués (route absente du hub) : CA-1, CA-13 à CA-16 (`games`, US-010) et CA-25 (`/api/v1/health`, US-020), en entier ; CA-2 (`forkJoin`, `quizzes` US-008), CA-3, CA-4 et CA-5 pour leur part « Quiz », « Parties jouées » et liste. Non bloqué : l'appel `GET /api/v1/questions?limit=1` et la métrique « Questions »
 **Sprint** : 1

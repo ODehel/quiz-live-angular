@@ -8,7 +8,8 @@ import { AuthService } from './core/authentication/auth.service';
 import { stubIconIn } from './shared/ui/icon/icon.test-helpers';
 import { ThemeService } from './features/themes/theme.service';
 import { ThemeList } from './features/themes/theme-list';
-import { of } from 'rxjs';
+import { GameStateService } from './core/game-state/game-state.service';
+import { NEVER, of } from 'rxjs';
 
 describe('routes', () => {
   let sessionReady: boolean;
@@ -21,6 +22,7 @@ describe('routes', () => {
       providers: [
         provideRouter(routes),
         { provide: AuthService, useValue: fakeAuthService },
+        { provide: GameStateService, useFactory: () => new GameStateService({ messages$: NEVER, send: () => {} }) },
         { provide: ThemeService, useValue: { list: () => of({ themes: [], total: 0 }) } }
       ],
     });

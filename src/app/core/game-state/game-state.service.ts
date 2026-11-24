@@ -50,6 +50,8 @@ export class GameStateService {
     });
     private readonly buzzers = signal<string[]>([]);
     readonly connectedBuzzers = this.buzzers.asReadonly();
+    private readonly known = signal(false);
+    readonly buzzersKnown = this.known.asReadonly();
 
     constructor(private readonly hub: HubChannel) {
         hub.messages$.subscribe(data => {
@@ -96,6 +98,7 @@ export class GameStateService {
 
     private replaceBuzzers(usernames: unknown): void {
         if (!isStringList(usernames)) return;
+        this.known.set(true);
         this.buzzers.update(list => (sameList(list, usernames) ? list : usernames));
     }
 

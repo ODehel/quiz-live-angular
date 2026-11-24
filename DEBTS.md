@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-23 (`docs(authentication): reword the error page access criterion`).
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-24 (`docs(websocket): specify what happens when the hub address is invalid`).
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -115,9 +115,14 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 
 ## Mesurées pendant `feat(websocket): connect to the hub once the session is ready`
 
-- **Une exception synchrone de `new WebSocket(...)` empêche le démarrage** 🟠 : `connect()` est appelé dans l'initialiseur sans `try/catch`. Une `wsUrl` invalide (valeur de production mal injectée, par exemple) ferait échouer le démarrage de l'application au lieu de la seule socket.
+- **Une exception synchrone de `new WebSocket(...)` empêche le démarrage** 🟠 : spécifiée (CA-35 de `US-ANG-001`, décisions #51 à #53), code à faire (`fix(websocket): show the error page when the hub address is invalid`). Ancien texte : `connect()` est appelé dans l'initialiseur sans `try/catch`. Une `wsUrl` invalide (valeur de production mal injectée, par exemple) ferait échouer le démarrage de l'application au lieu de la seule socket. Vaut aussi pour la reprise `setTimeout(() => this.connect(), …)` du CA-9.
 - **Le code de fermeture `4002` n'a jamais été observé sur un vrai hub** 🟡 : le smoke test du 2026-11-07 a couvert l'ouverture, la coupure et la reprise, pas l'expiration du token (le hub n'émet `4002` qu'à l'authentification initiale, voir « Le hub n'implémente pas US-021 »). `4004` : observé le 2026-11-08 (voir « Levées »).
 - **Le build de production n'a pas été exécuté** 🟡 : le téléchargement des polices Google est refusé (403) depuis l'environnement de session ; la valeur de production de `wsUrl` n'est vérifiée que par `tsc`.
+
+## Mesurées pendant `docs(websocket): specify what happens when the hub address is invalid`
+
+- **« Retour à l'accueil » après l'erreur de CA-35 ouvre le dashboard sans socket** 🟠 : choix d'Olivier (décision #54), le bouton reste inchangé pour cette cause. Le clic efface l'erreur et mène à `/` puis au dashboard, alors qu'aucune socket n'est ouverte et qu'aucune tentative ne suit. Même effet que la dette de #28 que #46 a levée pour `session-replaced`. Non corrigé ici.
+- **`send()` sans socket courante après un échec d'ouverture** 🟠 : constaté dans `websocket.service.ts` : `currentSocket` est déclaré `!` et n'est affecté qu'après le retour de `new this.webSocketConstructor(...)`. Si ce premier appel lève (démarrage), `currentSocket` n'est jamais défini et `send()` lève un `TypeError` ; si l'exception vient d'une reprise, `currentSocket` reste la socket précédente, déjà fermée. Aujourd'hui `send()` n'est appelé qu'à `auth_success` (`GameStateService.requestSync()`), donc le cas est inatteignable ; il le deviendra avec un appelant sur un dashboard sans socket (dette ci-dessus). À traiter avec le code de CA-35 ou avec cet appelant.
 
 ## Levées
 

@@ -230,6 +230,6 @@ La validation locale utilise `.toLowerCase()` pour être cohérente avec la vali
 
 ---
 
-**Dernière mise à jour** : 2026-03-28
-**Statut** : Implémentée (Sprint 4)
+**Dernière mise à jour** : 2026-11-24
+**Statut** : Spécifiée, non implémentée (vérifié dans `src/app` le 2026-11-24, `aef383d`) : ni `GameService`, `GameListComponent`, `GameCreateComponent`, `StatusBadgeComponent` ni `PaginatorComponent`, aucune route des parties. `GameStateService` (`src/app/core/game-state/game-state.service.ts`) existe mais n'a ni `isPiloting()` ni `initFromGame()`, que la spec cite. Existe aussi `ConfirmDialogComponent` (`src/app/core/confirmation/`), que seul `features/playground` appelle.
 **Sprint** : 4

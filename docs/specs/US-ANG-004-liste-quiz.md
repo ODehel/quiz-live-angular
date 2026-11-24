@@ -199,6 +199,6 @@ La route est ajoutée comme enfant de `content` avec le même guard `noActiveGam
 
 ---
 
-**Dernière mise à jour** : 2026-03-28
-**Statut** : Implémentée (Sprint 3)
+**Dernière mise à jour** : 2026-11-24
+**Statut** : Spécifiée, non implémentée (vérifié dans `src/app` le 2026-11-24, `aef383d`) : ni `QuizService`, `QuizListComponent`, `PaginatorComponent` ni `noActiveGameGuard`, aucune route des quiz ; l'US dépend de `QuestionService` (`US-ANG-003`), lui-même absent. Existe seulement `ConfirmDialogComponent` (`src/app/core/confirmation/`), que la spec cite et que seul `features/playground` appelle.
 **Sprint** : 3

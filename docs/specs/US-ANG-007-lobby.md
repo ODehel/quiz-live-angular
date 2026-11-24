@@ -252,6 +252,6 @@ L'association entre le N-ième participant et le N-ième buzzer est une conventi
 
 ---
 
-**Dernière mise à jour** : 2026-03-28
-**Statut** : Implémentée — 26 tests, couverture 94.59% statements / 98.48% lines
+**Dernière mise à jour** : 2026-11-24
+**Statut** : Spécifiée, non implémentée (vérifié dans `src/app` le 2026-11-24, `aef383d`) : ni `LobbyComponent`, `PilotShellComponent`, `activeGameGuard`, `QuizService` ni `GameService`, aucune route `/pilot/*`. Existe sans écran, dans `GameStateService` (`src/app/core/game-state/game-state.service.ts`, testé par `game-state.service.spec.ts` et `app.config.websocket.spec.ts`) : la liste des buzzers connectés (`connectedBuzzers()`) et la restauration de `state()` par un `game_state_sync` complet. `status()`, `isPiloting()`, `reset()`, `addConnectedBuzzer()` et `removeConnectedBuzzer()`, cités par la spec, n'y existent pas sous ces noms.
 **Sprint** : 5

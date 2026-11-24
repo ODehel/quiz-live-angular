@@ -37,7 +37,11 @@ export const appConfig: ApplicationConfig = {
           inject(WEB_SOCKET_CONSTRUCTOR),
           environment.wsUrl,
           inject(AuthService),
-          { goToError: () => errorService.sessionReplaced() }
+          {
+            goToError: cause => cause === 'connection-lost'
+              ? errorService.connectionLost()
+              : errorService.sessionReplaced()
+          }
         );
       }
     },

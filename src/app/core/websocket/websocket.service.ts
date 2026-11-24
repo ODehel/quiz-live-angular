@@ -6,8 +6,10 @@ export interface TokenProvider {
   refresh(): Promise<void>;
 }
 
+export type ErrorCause = 'session-replaced' | 'connection-lost';
+
 export interface ErrorNavigator {
-  goToError(): void;
+  goToError(cause: ErrorCause): void;
 }
 export interface SocketLike {
   onopen: ((event: Event) => void) | null;
@@ -27,7 +29,7 @@ const REFRESH_RETRY_DELAY_MS = 5000;
 export class WebSocketService {
   private attempt: number = 0;
   private readonly closedSockets = new WeakSet<SocketLike>();
-  private currentSocket!: SocketLike;
+  private currentSocket?: SocketLike;
   private readonly _messages$ = new Subject<string>();
   readonly messages$: Observable<string> = this._messages$.asObservable();
 
@@ -39,7 +41,15 @@ export class WebSocketService {
   ) { }
 
   connect(): void {
-    const websocket = new this.webSocketConstructor(this.wsUrl);
+    let websocket: SocketLike;
+    try {
+      websocket = new this.webSocketConstructor(this.wsUrl);
+    } catch {
+      // Cause permanente (adresse invalide) : page d'erreur, aucune reprise.
+      this.currentSocket = undefined;
+      this.errorNavigator.goToError('connection-lost');
+      return;
+    }
     this.currentSocket = websocket;
 
     websocket.onmessage = (event) => {
@@ -52,7 +62,7 @@ export class WebSocketService {
     websocket.onclose = async (event) => {
       this.closedSockets.add(websocket);
       if (event.code === 4004) {
-        this.errorNavigator.goToError();
+        this.errorNavigator.goToError('session-replaced');
         return;
       }
       if (event.code === 4002) {
@@ -72,7 +82,7 @@ export class WebSocketService {
   }
 
   send(message: OutboundMessage): void {
-    this.currentSocket.send(JSON.stringify(message));
+    this.currentSocket?.send(JSON.stringify(message));
   }
 
   private refreshAndSend(websocket: SocketLike, attempt: number = 1): void {

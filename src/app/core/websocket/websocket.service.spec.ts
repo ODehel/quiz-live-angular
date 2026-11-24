@@ -124,6 +124,72 @@ describe("WebSocket service", () => {
 
         expect(JSON.parse(capturedSocket!.sentMessage!).type).toBe('auth');
     });
+    describe("when opening the socket throws", () => {
+        let openAttempts: number;
+        let failNextOpenings: boolean;
+        let failingService: WebSocketService;
+        const sockets: ClosingFakeSocket[] = [];
+        beforeEach(() => {
+            vi.useFakeTimers();
+            openAttempts = 0;
+            failNextOpenings = true;
+            sockets.length = 0;
+            const ctor = class extends ClosingFakeSocket {
+                constructor(url: string) {
+                    openAttempts++;
+                    if (failNextOpenings) throw new TypeError('invalid url');
+                    super(url);
+                    sockets.push(this);
+                }
+            };
+            failingService = new WebSocketService(ctor, 'not a url', fakeTokenProvider, fakeErrorNavigator);
+        });
+        afterEach(() => vi.useRealTimers());
+        it("should not let the exception out of connect()", () => {
+            expect(() => failingService.connect()).not.toThrow();
+        });
+        it("should report the connection error to the error page", () => {
+            failingService.connect();
+
+            expect(fakeErrorNavigator.goToError).toHaveBeenCalledTimes(1);
+            expect(fakeErrorNavigator.goToError).toHaveBeenCalledWith('connection-lost');
+        });
+        it("should not try to open the socket again", async () => {
+            failingService.connect();
+
+            await vi.advanceTimersByTimeAsync(120000);
+
+            expect(openAttempts).toBe(1);
+        });
+        it("should report the connection error and stop when the reconnection throws", async () => {
+            failNextOpenings = false;
+            failingService.connect();
+            failNextOpenings = true;
+            sockets[0].simulateClose(1006);
+
+            await vi.advanceTimersByTimeAsync(120000);
+
+            expect(fakeErrorNavigator.goToError).toHaveBeenCalledTimes(1);
+            expect(fakeErrorNavigator.goToError).toHaveBeenCalledWith('connection-lost');
+            expect(openAttempts).toBe(2);
+        });
+        it("should not send on the closed socket of before when the reconnection throws", async () => {
+            failNextOpenings = false;
+            failingService.connect();
+            failNextOpenings = true;
+            sockets[0].simulateClose(1006);
+            await vi.advanceTimersByTimeAsync(1000);
+
+            failingService.send({ type: 'request_game_state' });
+
+            expect(sockets[0].sent).toEqual([]);
+        });
+        it("should ignore send() when no socket was ever opened", () => {
+            failingService.connect();
+
+            expect(() => failingService.send({ type: 'request_game_state' })).not.toThrow();
+        });
+    });
     describe("under simulated time", () => {
         beforeEach(() => vi.useFakeTimers());
         afterEach(() => vi.useRealTimers());
@@ -401,7 +467,7 @@ describe("WebSocket service", () => {
             vi.advanceTimersByTime(30000);
 
             expect(callCount).toBe(1);
-            expect(fakeErrorNavigator.goToError).toHaveBeenCalled();
+            expect(fakeErrorNavigator.goToError).toHaveBeenCalledWith('session-replaced');
         });
         it("should not close the socket when the server closes with 4004", () => {
             service.connect();

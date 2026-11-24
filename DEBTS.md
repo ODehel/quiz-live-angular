@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-23 (`fix(error): redirect to the home when the error page opens without an error`).
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-23 (`docs(authentication): reword the error page access criterion`).
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -77,7 +77,7 @@ Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mi
 
 - **Le F5 sur `/error` n'a pas été rejoué au navigateur** 🟡 : la redirection est prouvée par `RouterTestingHarness` (jsdom, `AuthService` doublé) seulement. À constater au smoke test : F5 sur la page `session-replaced` puis URL `/error` saisie à la main, avec le hub réel, doivent mener à `/dashboard`.
 - **Le test de non-redirection (session non prête, sans erreur) fige un comportement non spécifié** 🟡 : `stays on /error without redirecting when no error is set and the session is not ready` (`app.routes.spec.ts`) existe pour interdire la boucle (décision #48 D2), pas parce que la page vide est voulue. Les mutants « le guard ignore `isReady()` » et « le guard redirige vers `/error` » ne rendent pas ce test rouge : ils bouclent et le run ne se termine pas (tués par le délai, pas par une assertion). À remplacer quand D2 sera tranchée (dette « `/error` sans erreur posée et session non prête »).
-- **Le guard `errorPageGuard` contredit la lettre de CA-23** 🟡 : CA-23 dit « accessible sans guard » ; la route `/error` en porte désormais un. Le comportement de CA-23 tient (avec une erreur posée, la page s'affiche session prête ou non : `renders the error page on /error`, `keeps the error page readable after returning home…`), mais le libellé « sans guard » est devenu inexact. À reformuler dans un commit `docs` si Olivier retient le guard (voir décision #49).
+- ~~Le guard `errorPageGuard` contredit la lettre de CA-23~~ : levé (`docs(authentication): reword the error page access criterion`, décision #50) : CA-23 est reformulé (avec une erreur posée, `/error` s'affiche sans dépendre de `isReady()` ; la redirection du CA-34 ne vaut que sans erreur posée et session prête) et ne dit plus « sans guard ». Ancien texte : 🟡 : CA-23 disait « accessible sans guard » ; la route `/error` en porte désormais un. Le comportement de CA-23 tenait (`renders the error page on /error`, `keeps the error page readable after returning home…`).
 
 ## Reportées du récap du 2026-10-31 (non revérifiées)
 

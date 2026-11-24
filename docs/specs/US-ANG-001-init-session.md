@@ -36,12 +36,13 @@ L'application Angular est l'interface de gestion des parties du maître de jeu. 
 
 | # | Critère | Résultat attendu |
 |---|---|---|
-| CA-6 | Après obtention du token, `WebSocketService` établit une connexion WebSocket vers `environment.wsUrl` | Connexion sur `ws://<serverUrl>/ws` |
+| CA-6 | Après obtention du token, `WebSocketService` établit une connexion WebSocket vers `environment.wsUrl` | Connexion sur `ws://<serverUrl>/ws` ; si l'ouverture elle-même lève une exception, voir CA-35 |
 | CA-7 | Le premier message envoyé est `{ "type": "auth", "token": "<JWT>" }` | Conforme au protocole US-009 |
 | CA-8 | À la réception de `auth_success`, `WebSocketService` émet le message sur `messages$` | `GameStateService` reçoit le signal et peut s'initialiser |
-| CA-9 | Si la connexion WebSocket échoue ou est perdue, `WebSocketService` tente de se reconnecter automatiquement avec un backoff exponentiel | Délais : 1 s, 2 s, 4 s, 8 s… jusqu'à 30 s maximum — reprise indéfinie |
+| CA-9 | Si la connexion WebSocket échoue ou est perdue, `WebSocketService` tente de se reconnecter automatiquement avec un backoff exponentiel | Délais : 1 s, 2 s, 4 s, 8 s… jusqu'à 30 s maximum — reprise indéfinie. Ne couvre pas l'exception levée à l'ouverture de la socket : aucune reprise dans ce cas (CA-35) |
 | CA-10 | À chaque reconnexion, le premier message envoyé est `{ "type": "auth", "token": "<token_courant>" }` | Le token courant est lu depuis `AuthService.getToken()` au moment de la reconnexion |
 | CA-11 | Si le code de fermeture WebSocket est `4002` (token expiré côté serveur), `WebSocketService` appelle `AuthService.refresh()` avant de reconnecter | Nouveau token obtenu avant d'envoyer le message d'auth |
+| CA-35 | Si l'ouverture de la socket lève une exception (`new WebSocket(...)` échoue de façon synchrone, par exemple avec une `wsUrl` invalide), l'application signale l'erreur `connection-lost` (`ErrorService.connectionLost()`) et navigue vers `/error` (CA-3). Aucune reprise automatique : ni nouvelle tentative, ni backoff (CA-9), la cause étant permanente. La règle vaut pour tous les appels d'ouverture de la socket : celui du démarrage et celui de la reprise du CA-9 ; dans les deux cas, page d'erreur puis plus aucune tentative. La page réutilise la variante `connection-lost` du CA-25 : pas de nouvelle variante, pas de nouveau texte. Le bouton de la barre du haut reste « Retour à l'accueil » pour cette cause (CA-26 : seule la variante `session-replaced` change) | L'exception n'empêche pas l'application de démarrer : l'utilisateur voit la page d'erreur « connexion perdue » et aucune autre socket n'est ouverte. **Spécifié, non implémenté** : le code vient dans la session `fix(websocket): show the error page when the hub address is invalid`. Conséquence connue et assumée : « Retour à l'accueil » peut ouvrir le dashboard sans socket (décisions #51 à #54, voir `DEBTS.md`) |
 
 ### Refresh automatique du token
 
@@ -245,6 +246,6 @@ Si l'application est ouverte dans deux onglets, le serveur ferme la première co
 
 ---
 
-**Dernière mise à jour** : 2026-11-23
-**Statut** : Implémentée — 40 tests, couverture ≥ 97 %
+**Dernière mise à jour** : 2026-11-24
+**Statut** : Implémentée, sauf CA-17 à CA-19 (bloqués) et CA-35 (spécifié, code à faire) — 40 tests, couverture ≥ 97 %
 **Sprint** : 0

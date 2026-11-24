@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-24 (`docs(websocket): specify what the top bar shows before the session is authenticated`).
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-24 (`docs(dashboard): align the dashboard criteria with the routes the hub exposes`).
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -138,6 +138,14 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 - **L'orange (jusqu'à `auth_success`) et le `—` (jusqu'au premier sync) ne coïncident pas** 🟡 : entre les deux, l'indicateur est vert et la métrique affiche `—` (CA-24, CA-31, CA-32 de `US-ANG-002`, décisions #61, #62, #64). Court quand le hub répond à `request_game_state` ; durable tant que le hub réel envoie `connected_buzzers` en objets, que le service rejette en entier (voir la dette sur le format des objets, décision #41) : vert avec `—` sans fin. Voulu, à relire au smoke test du dashboard.
 - **Le CDC citait un `buildStream()` inexistant** 🟡 : `US-ANG-002` (signals de `WebSocketService`) disait « Mis à jour dans `buildStream()` » ; la méthode n'existe pas dans `websocket.service.ts` (le service est un `connect()` à callbacks, sans RxJS `retryWhen`). Corrigé dans `US-ANG-002` (comportement observable à la place du nom). Reste : `US-ANG-001`, section « Backoff exponentiel WebSocket » (extrait `Dans WebSocketService.buildStream()` avec `retryWhen`), et `ARCHITECTURE-TECHNIQUE-ANGULAR.md` (« `webSocket` + `retryWhen` ») décrivent encore un flux RxJS que le code n'a pas ; non touchés ici (hors périmètre), à indiquer comme indicatifs lors d'une session dédiée.
 - **Le nom et la forme de « liste des buzzers connue » ne sont pas spécifiés** 🟡 : choix non observable laissé à l'implémentation du dashboard (décision #64) ; `connectedBuzzers()` vaut `[]` dans les cas « inconnue » et « vide », il faudra une information de plus (signal, `null` ou autre) dans `GameStateService` ou le dashboard.
+
+## Mesurées pendant `docs(dashboard): align the dashboard criteria with the routes the hub exposes`
+
+- **CA-1, CA-13 à CA-16 de `US-ANG-002` bloqués : `GET /api/v1/games` absent du hub** 🟠 : le dashboard n'appelle pas la route, le widget « Dernières parties » est vide sans message et « Parties jouées » affiche `—` (décisions #67, #68). Réouverture : quand `games` (US-010 du hub) existe ; rouvrir aussi la part « Parties jouées » de CA-3 à CA-5 et la part « et de la liste » du CA-4. Même route que `US-ANG-001` CA-17 à CA-19 (déjà bloqués) : à rouvrir ensemble. Non observé sur un vrai hub.
+- **CA-2 (`forkJoin`) et la part « Quiz » de CA-3 à CA-5 de `US-ANG-002` bloqués : `GET /api/v1/quizzes` absent du hub** 🟠 : le compteur de questions vient d'un appel seul de `GET /api/v1/questions?limit=1`, « Quiz » affiche `—` sans appel (décisions #67, #69). Réouverture : quand `quizzes` (US-008 du hub) existe ; rétablir le `forkJoin` avec `catchError(() => of(null))` par observable.
+- **CA-25 de `US-ANG-002` bloqué : `GET /api/v1/health` absent du hub** 🟠 : aucun appel, aucune version affichée (décision #70). Réouverture : quand `/api/v1/health` (US-020 du hub) existe. Le hub n'expose que `/health` (hors CDC, sans version) : cet écart est un constat pour `quiz-live-server` (handoff), pas une dette ici.
+- **Le `—` de « Quiz » et de « Parties jouées » ne distingue pas « route absente » d'une erreur** 🟡 : voulu (décision #67), à relire au smoke test du dashboard ; disparaît avec la réouverture des CA bloqués.
+- **Le nom et la forme de l'appel du total de questions ne sont pas spécifiés** 🟡 : l'exemple de `DashboardComponent` écrit `questionService.getAll({ limit: 1 })` et lit `total` ; `QuestionService` (`US-ANG-003`) n'a pas de compteur dédié comme `QuizService.getCount()`. Choix d'implémentation non observable, à trancher à la session du dashboard.
 
 ## Levées
 

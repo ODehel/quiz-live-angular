@@ -41,9 +41,9 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 
 | # | Critère | Résultat attendu |
 |---|---|---|
-| CA-10 | La métrique "Buzzers connectés" reflète `GameStateService.connectedBuzzers().length` | Mise à jour instantanée sur tout changement du signal — aucun polling : liste initiale par `request_game_state`, puis `buzzer_connected` / `buzzer_disconnected` (US-ANG-001 CA-27 à CA-29). Exception : en état « Déconnecté », la métrique affiche `—` (CA-27) |
+| CA-10 | La métrique "Buzzers connectés" reflète `GameStateService.connectedBuzzers().length` | Mise à jour instantanée sur tout changement du signal — aucun polling : liste initiale par `request_game_state`, puis `buzzer_connected` / `buzzer_disconnected` (US-ANG-001 CA-27 à CA-29). Exceptions : en état « Déconnecté », la métrique affiche `—` (CA-27) ; tant que la liste n'a jamais été reçue, elle affiche `—` aussi (CA-31) |
 | CA-11 | Le sous-titre de la métrique liste les usernames des buzzers connectés, séparés par une virgule, tronqués à 3 noms si plus de 3 | Au-delà : `alice, bob, charlie +2` |
-| CA-12 | La liste des buzzers connectés dans la carte dédiée se met à jour en temps réel | Même source : `GameStateService.connectedBuzzers()` (usernames, US-ANG-001 CA-30). Pendant une coupure de la socket, la dernière liste reste affichée et « Reconnexion… » (CA-24) signale qu'elle peut être périmée (US-ANG-001 CA-33). En état « Déconnecté », la carte est vide (CA-27) |
+| CA-12 | La liste des buzzers connectés dans la carte dédiée se met à jour en temps réel | Même source : `GameStateService.connectedBuzzers()` (usernames, US-ANG-001 CA-30). Pendant une coupure de la socket, la dernière liste reste affichée et « Reconnexion… » (CA-24) signale qu'elle peut être périmée (US-ANG-001 CA-33). En état « Déconnecté », la carte est vide (CA-27), comme tant que la liste n'a jamais été reçue (CA-31) |
 
 ### Liste des dernières parties
 
@@ -74,14 +74,18 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 
 | # | Critère | Résultat attendu |
 |---|---|---|
-| CA-23 | La topbar affiche l'adresse du serveur et un indicateur vert "Connecté" si le WebSocket est établi | État lu depuis `WebSocketService.isConnected()` (signal) |
-| CA-24 | L'indicateur passe à orange "Reconnexion…" si le WebSocket est en cours de reconnexion | État lu depuis `WebSocketService.isReconnecting()` (signal) |
+| CA-23 | La topbar affiche l'adresse du serveur et un indicateur vert "Connecté" quand la session est authentifiée : la socket est ouverte et `auth_success` a été reçu | État lu depuis `WebSocketService.isConnected()` (signal), vrai à `auth_success`, faux dès que la socket se ferme. Une socket ouverte dont `auth_success` n'est pas encore reçu n'est pas « Connecté » (CA-24). Le renouvellement de token d'une session déjà authentifiée ne change pas le vert (CA-34) |
+| CA-24 | L'indicateur est l'orange "Reconnexion…" dès que l'ouverture de la socket est appelée et tant que `auth_success` n'est pas reçu, quelle qu'en soit la raison : premier démarrage, démarrage avec hub éteint (boucle de reprise, US-ANG-001 CA-9), reprise après coupure. Il l'est aussi pendant l'attente du backoff entre deux tentatives, la reprise étant alors en cours | État lu depuis `WebSocketService.isReconnecting()` (signal) : vrai de l'appel d'ouverture de la socket jusqu'à `auth_success`, d'une tentative à la suivante (reprise indéfinie, US-ANG-001 CA-9) ; jamais vrai en même temps que `isConnected()`. Trois états et pas de quatrième : vert = authentifié (CA-23), rouge « Déconnecté » = cause permanente (CA-26), orange = tout le reste. Au tout premier démarrage, le libellé « Reconnexion… » est un peu imprécis (rien n'a été perdu) : assumé (décision #61) |
 | CA-25 | `GET /api/v1/health` est appelé une fois au chargement du composant, sans auth | Affichage discret de la version du serveur dans le footer de la topbar si disponible |
 | CA-26 | Quand aucune socket n'est ouverte et qu'aucune reprise n'est en cours, c'est-à-dire quand l'ouverture de la socket a levé une exception (US-ANG-001 CA-35), au démarrage comme dans la reprise du CA-9, la topbar affiche l'adresse du serveur et un indicateur rouge « Déconnecté » | Troisième état, distinct du vert « Connecté » (CA-23) et de l'orange « Reconnexion… » (CA-24), qui ne changent pas. État lu depuis `WebSocketService.isDisconnected()` (signal), vrai à partir de l'exception et jusqu'au rechargement de l'application : aucune reprise ne le fait retomber |
 | CA-27 | En état « Déconnecté », la métrique « Buzzers connectés » affiche `—` (précédent du CA-5), la carte de la liste des buzzers (CA-12) est vide et le sous-titre de la métrique (CA-11) ne liste aucun nom | Vaut dans tous les cas « Déconnecté », y compris après une reprise du CA-9 qui a levé l'exception : aucune dernière liste n'est conservée à l'affichage. Le dashboard n'affiche pas `GameStateService.connectedBuzzers()` dans cet état ; la donnée tenue par le service n'est pas modifiée (US-ANG-001 CA-33 reste valable pour la simple coupure avec reprise en cours, CA-12). Les métriques et la liste issues du REST (CA-1 à CA-5, CA-13) ne dépendent pas de l'état de la socket |
 | CA-28 | En état « Déconnecté », la bannière de partie active est absente | Dérogation au CA-6 : la bannière est absente même si `GameStateService.isPiloting()` est `true`, le dashboard ignorant un état périmé. Aucun élément résiduel dans le DOM (CA-7) |
 | CA-29 | En état « Déconnecté », le dashboard lit CA-18, CA-21 et CA-22 comme si aucune partie n'était connue, quelle que soit la valeur de `GameStateService.isPiloting()` ou de `state()` | Dérogation au CA-18 : « Nouvelle partie » reste visible (CA-17), n'affiche pas le toast « Une partie est déjà en cours » et navigue vers `/games/new` (CA-19). Dérogation au CA-21 : les liens du groupe Contenu restent actifs. `noActiveGameGuard` (CA-22) est lu de même : aucune redirection vers `/pilot/play`. Un éventuel conflit avec une partie réellement active est arbitré par le hub (réponse 409 `ACTIVE_GAME_EXISTS`, US-010 CA-7 du hub) |
 | CA-30 | L'indicateur « Déconnecté » est un libellé seul | Sans action, sans infobulle et sans bouton « Réessayer » : cohérent avec US-ANG-001 CA-35, la cause étant permanente et aucune reprise n'étant tentée |
+| CA-31 | Au premier démarrage, tant qu'aucun `game_state_sync` portant `connected_buzzers` n'a été accepté (CA-32), la liste des buzzers est inconnue : la métrique « Buzzers connectés » affiche `—`, la carte de la liste (CA-12) est vide, le sous-titre de la métrique (CA-11) ne liste aucun nom et la bannière est absente | Aligné sur CA-27 et CA-28 : un `0` serait faux tant que la liste est inconnue (précédent du CA-5). Vaut quelle que soit la couleur de l'indicateur, orange (CA-24) ou vert entre `auth_success` et le premier sync. Vaut seulement avant la première liste connue : ensuite CA-12 (dernière liste conservée pendant une coupure) s'applique. Les métriques et la liste issues du REST ne dépendent pas de cet état (CA-5, CA-27) |
+| CA-32 | Ce qui lève l'état du CA-31 : tout `game_state_sync` accepté qui porte `connected_buzzers`, complet ou partiel au sens d'US-ANG-001 CA-31, même si la liste est vide | Liste vide : la métrique affiche alors `0`, correct car la liste est connue. Ne le lèvent pas : un sync sans `connected_buzzers`, un sync rejeté (US-ANG-001 CA-20, décisions #41 à #43, qui ne change rien) ni un `buzzer_connected` ou `buzzer_disconnected` seul. La bannière, elle, dépend toujours d'un sync complet (CA-6, CA-9). Une fois la liste connue, l'état du CA-31 ne retombe jamais (CA-12 s'applique), sauf « Déconnecté » (CA-27), qui prime |
+| CA-33 | Si `auth_success` n'arrive jamais (hub éteint avec reprise indéfinie, ou hub qui accepte la socket sans répondre), l'indicateur reste orange « Reconnexion… » sans limite de durée, et le `—` et la carte vide du CA-31 restent | Cohérent avec US-ANG-001 CA-9 (reprise indéfinie). Aucun délai maximal n'est spécifié : ni passage au rouge, ni page d'erreur. Le hub muet après l'ouverture de la socket n'a pas de garde-fou : dette (`DEBTS.md`), décision #63 |
+| CA-34 | Pendant le renouvellement de token d'une session authentifiée (`auth_refresh` envoyé, `auth_success` à venir, US-ANG-001 CA-13, CA-14 et CA-32), l'indicateur reste vert « Connecté » | La socket est ouverte et déjà authentifiée : `isReconnecting()` ne dépend que des ouvertures de socket, jamais de `auth_refresh`, et `isConnected()` reste vrai. Un échec du refresh qui ferme la socket (US-ANG-001 CA-15) passe par la reprise, donc par l'orange (CA-24) |
 
 ---
 
@@ -170,12 +174,21 @@ getCount(): Observable<number>;
 // Ajoutés pour l'indicateur de connexion dans la topbar
 readonly isConnected    = signal(false);
 readonly isReconnecting = signal(false);
-// Mis à jour dans buildStream() : true à auth_success, false sur erreur/fermeture
+// Comportement observable (CA-23, CA-24, CA-34), sans présumer de l'endroit où il est codé :
+// - isConnected : vrai à auth_success, faux dès que la socket se ferme ;
+// - isReconnecting : vrai de l'appel d'ouverture de la socket (le tout premier compris)
+//   jusqu'à auth_success, y compris pendant l'attente du backoff entre deux tentatives ;
+//   jamais modifié par auth_refresh ;
+// - jamais vrais en même temps.
 
 // État « Déconnecté » (CA-26) : vrai quand l'ouverture de la socket a levé une exception
 // (US-ANG-001 CA-35), jamais remis à faux sans rechargement de l'application
 readonly isDisconnected = signal(false);
 ```
+
+### Liste des buzzers « inconnue » ou « vide »
+
+Le dashboard distingue une liste inconnue (aucun `game_state_sync` portant `connected_buzzers` n'a été accepté, CA-31) d'une liste connue et vide (`0`, CA-32). `GameStateService.connectedBuzzers()` vaut `[]` dans les deux cas : l'information « connue ou non » ne s'y lit pas. Sa forme (signal, valeur `null`, autre) n'est pas observable et n'est pas spécifiée : choix d'implémentation, à trancher à la session du dashboard.
 
 ### Appels REST au chargement
 
@@ -231,7 +244,11 @@ readonly isDisconnected = signal(false);
 
 ### Buzzers connectés — source unique de vérité
 
-Le compteur de buzzers ne doit **jamais** être lu depuis la réponse REST `GET /api/v1/games`. Il est exclusivement alimenté par `GameStateService.connectedBuzzers()`, lui-même alimenté par le `game_state_sync` qui répond à `request_game_state` (liste initiale), puis par les événements `buzzer_connected` et `buzzer_disconnected` (US-ANG-001 CA-27 à CA-33). Cette distinction est critique : la réponse REST représente l'état persisté, pas l'état temps réel des connexions. Une seule exception : en état « Déconnecté » (CA-26), le dashboard n'affiche plus cette source (CA-27).
+Le compteur de buzzers ne doit **jamais** être lu depuis la réponse REST `GET /api/v1/games`. Il est exclusivement alimenté par `GameStateService.connectedBuzzers()`, lui-même alimenté par le `game_state_sync` qui répond à `request_game_state` (liste initiale), puis par les événements `buzzer_connected` et `buzzer_disconnected` (US-ANG-001 CA-27 à CA-33). Cette distinction est critique : la réponse REST représente l'état persisté, pas l'état temps réel des connexions. Deux exceptions d'affichage : en état « Déconnecté » (CA-26), le dashboard n'affiche plus cette source (CA-27) ; au premier démarrage, tant qu'aucun `game_state_sync` portant `connected_buzzers` n'a été accepté, il ne l'affiche pas non plus (CA-31, CA-32).
+
+### Indicateur de connexion : trois états, deux fenêtres qui ne coïncident pas
+
+L'indicateur suit le signal `WebSocketService.isConnected()` (vert, authentifié), `isReconnecting()` (orange, de l'appel d'ouverture de la socket jusqu'à `auth_success`, backoff compris) ou `isDisconnected()` (rouge, cause permanente, CA-26) : il n'y a pas de quatrième état (CA-24). Deux fenêtres sont voisines mais distinctes : l'orange dure jusqu'à `auth_success`, le `—` des buzzers jusqu'au premier `game_state_sync` portant `connected_buzzers` (CA-31, CA-32). Entre les deux, l'indicateur est vert et la métrique affiche encore `—` ; Angular envoie `request_game_state` à chaque `auth_success` (US-ANG-001 CA-32), la fenêtre est donc courte quand le hub répond. Elle ne l'est pas quand le hub réel envoie `connected_buzzers` en objets : le sync est rejeté (US-ANG-001 CA-30, décision #41) et le `—` reste jusqu'à la correction du hub (`DEBTS.md`). Un `4004` mène à `/error`, pas au dashboard : il ne produit aucun état de l'indicateur.
 
 ### Bannière et `game_state_sync`
 

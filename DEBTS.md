@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-24 (`docs(websocket): specify what the dashboard shows when no socket is open`).
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-24 (`docs(websocket): specify what the top bar shows before the session is authenticated`).
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -131,6 +131,13 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 ## Mesurées pendant `fix(websocket): show the error page when the hub address is invalid`
 
 - **L'exception de `new WebSocket(...)` est avalée sans trace** 🟡 : `connect()` l'attrape (`catch` sans variable) et n'en garde rien ; la page d'erreur ne distingue pas une adresse invalide d'un hub éteint (décision #52) et la cause n'apparaît nulle part, même pas en console. À reprendre si un diagnostic devient utile.
+
+## Mesurées pendant `docs(websocket): specify what the top bar shows before the session is authenticated`
+
+- **Un hub qui accepte la socket sans jamais répondre laisse l'indicateur orange sans fin** 🟠 : si l'ouverture réussit mais qu'`auth_success` n'arrive jamais, aucune fermeture ne déclenche de reprise et aucun délai maximal n'existe (CA-33 de `US-ANG-002`, décision #63) : orange « Reconnexion… », `—` et carte vide, sans issue ni explication. Voulu (reprise indéfinie, US-ANG-001 CA-9). Réouverture : si l'on veut un délai maximal, session dédiée touchant US-ANG-001 CA-9 et CA-35. Non observé sur un vrai hub (aucun hub ici).
+- **L'orange (jusqu'à `auth_success`) et le `—` (jusqu'au premier sync) ne coïncident pas** 🟡 : entre les deux, l'indicateur est vert et la métrique affiche `—` (CA-24, CA-31, CA-32 de `US-ANG-002`, décisions #61, #62, #64). Court quand le hub répond à `request_game_state` ; durable tant que le hub réel envoie `connected_buzzers` en objets, que le service rejette en entier (voir la dette sur le format des objets, décision #41) : vert avec `—` sans fin. Voulu, à relire au smoke test du dashboard.
+- **Le CDC citait un `buildStream()` inexistant** 🟡 : `US-ANG-002` (signals de `WebSocketService`) disait « Mis à jour dans `buildStream()` » ; la méthode n'existe pas dans `websocket.service.ts` (le service est un `connect()` à callbacks, sans RxJS `retryWhen`). Corrigé dans `US-ANG-002` (comportement observable à la place du nom). Reste : `US-ANG-001`, section « Backoff exponentiel WebSocket » (extrait `Dans WebSocketService.buildStream()` avec `retryWhen`), et `ARCHITECTURE-TECHNIQUE-ANGULAR.md` (« `webSocket` + `retryWhen` ») décrivent encore un flux RxJS que le code n'a pas ; non touchés ici (hors périmètre), à indiquer comme indicatifs lors d'une session dédiée.
+- **Le nom et la forme de « liste des buzzers connue » ne sont pas spécifiés** 🟡 : choix non observable laissé à l'implémentation du dashboard (décision #64) ; `connectedBuzzers()` vaut `[]` dans les cas « inconnue » et « vide », il faudra une information de plus (signal, `null` ou autre) dans `GameStateService` ou le dashboard.
 
 ## Levées
 

@@ -327,6 +327,6 @@ En fin de partie directe, `buildResults()` reconstruit le résultat depuis les `
 
 ---
 
-**Dernière mise à jour** : 2026-03-28
-**Statut** : Implémentée — Sprints 6 et 7 terminés
+**Dernière mise à jour** : 2026-11-24
+**Statut** : Spécifiée, non implémentée (vérifié dans `src/app` le 2026-11-24, `aef383d`) : ni `PlayComponent`, `McqControlComponent`, `SpeedControlComponent`, `PlayerListComponent`, `RankingComponent`, `SoundPanelComponent`, `GameResultsComponent` ni `activeGameGuard`, aucune route `/pilot/*`, aucun chrono (`startTimer` et `stopTimer` : zéro occurrence ; `Timer` de `src/app/core/timer/` ne fait que `schedule()` pour les toasts), aucun message de pilotage émis (seul `request_game_state` part, `websocket.service.ts`), aucun traitement de `buzz_locked`. Existe sans écran, dans `GameStateService` (`src/app/core/game-state/game-state.service.ts`) : la restauration de `state()` par un `game_state_sync` complet, qui porte la part « état restauré après reconnexion » de CA-48 ; `dispatch()` y est privé, et `status()`, `canCorrect()`, `dismissRanking()` n'existent pas.
 **Sprint** : 6 (MCQ + classement + résultats), 7 (SPEED)

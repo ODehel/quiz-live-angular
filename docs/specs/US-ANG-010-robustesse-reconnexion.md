@@ -323,6 +323,6 @@ L'état `IN_ERROR` est terminal dans la machine à états du serveur. Angular ne
 
 ---
 
-**Dernière mise à jour** : 2026-03-28
-**Statut** : Implémentée (Sprint 8)
+**Dernière mise à jour** : 2026-11-24
+**Statut** : Partiellement implémentée, socle `core/` sans aucun écran (vérifié dans `src/app` le 2026-11-24, `aef383d`). Existe : `WebSocketService` (`src/app/core/websocket/websocket.service.ts`) reprend la connexion avec un backoff plafonné à 30 s remis à 1 s à `auth_success` (CA-1, CA-2, `4001` mis à part), appelle `AuthService.refresh()` avant la reprise sur `4002` (CA-7), mène à la page `session-replaced` sans reprise sur `4004` (CA-5), et sur `token_expiring_soon` rafraîchit puis envoie `auth_refresh` sur la connexion existante, 3 essais à 5 s d'écart puis fermeture (CA-9, CA-10, CA-12) ; `authGuard` (`src/app/core/authentication/auth.guard.ts`, CA-30) ; `GameStateService` (`src/app/core/game-state/game-state.service.ts`) restaure l'état d'un `game_state_sync` complet, ne remplace que les buzzers pour un sync partiel et garde l'état de partie sans sync (CA-14, CA-20, et la part « signal mis à jour » de CA-15 à CA-19). Absent : `isReconnecting()` et `isConnected()` (CA-3, CA-4), `computeRemaining` (CA-21 à CA-23), la navigation et la bannière `IN_ERROR` (CA-15, CA-18, CA-19, CA-24 à CA-26), `activeGameGuard`, `noActiveGameGuard` et `isPiloting()` (CA-27 à CA-29 ; `ToastService` existe, aucun appelant). Écarts entre le texte et le code sur `4001` (CA-6) et sur l'échec du refresh après `4002` (CA-8) : voir `DEBTS.md`.
 **Sprint** : 8

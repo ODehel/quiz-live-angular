@@ -324,6 +324,75 @@ describe('appConfig WebSocket wiring', () => {
     });
   });
 
+  describe('when opening the socket throws', () => {
+    afterEach(() => vi.useRealTimers());
+
+    class ThrowingSocket {
+      static attempts = 0;
+      constructor() {
+        ThrowingSocket.attempts++;
+        throw new TypeError('invalid url');
+      }
+    }
+    // Ouvre une première socket saine (fermée par le hub avec `1006`), puis la reprise lève.
+    class FailsOnResumeSocket extends ClosingFakeSocket {
+      constructor(url: string) {
+        if (FakeSocket.instances.length > 0) {
+          ThrowingSocket.attempts++;
+          throw new TypeError('invalid url');
+        }
+        super(url);
+      }
+    }
+    const startWith = async (constructor: unknown) => {
+      ThrowingSocket.attempts = 0;
+      TestBed.overrideProvider(WEB_SOCKET_CONSTRUCTOR, { useValue: constructor });
+      startApplication();
+      httpMock().expectOne('/api/v1/token')
+        .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+      await initStatus().donePromise;
+    };
+
+    it('starts the application anyway, on the error page', async () => {
+      await startWith(ThrowingSocket);
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(TestBed.inject(Router).url).toBe('/error');
+    });
+
+    it('reports a lost connection when the opening at startup throws', async () => {
+      await startWith(ThrowingSocket);
+
+      expect(TestBed.inject(ErrorService).currentError()).toEqual({ variant: 'connection-lost' });
+    });
+
+    it('does not try to open the socket again after the opening at startup threw', async () => {
+      vi.useFakeTimers();
+      await startWith(ThrowingSocket);
+      await vi.advanceTimersByTimeAsync(120_000);
+
+      expect(ThrowingSocket.attempts).toBe(1);
+    });
+
+    it('reports a lost connection when the reconnection throws', async () => {
+      vi.useFakeTimers();
+      await startWith(FailsOnResumeSocket);
+      FakeSocket.instances[0].simulateClose(1006);
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(TestBed.inject(ErrorService).currentError()).toEqual({ variant: 'connection-lost' });
+    });
+
+    it('does not try to open the socket again after the reconnection threw', async () => {
+      vi.useFakeTimers();
+      await startWith(FailsOnResumeSocket);
+      FakeSocket.instances[0].simulateClose(1006);
+      await vi.advanceTimersByTimeAsync(120_000);
+
+      expect(ThrowingSocket.attempts).toBe(1);
+    });
+  });
+
   describe('when the socket closes while buzzers are connected', () => {
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());

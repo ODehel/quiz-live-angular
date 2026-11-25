@@ -446,4 +446,46 @@ describe('GameStateService', () => {
 
         expect(service.buzzersKnown()).toBe(true);
     });
+    it('should expose no status before any game is known', () => {
+        expect(service.status()).toBeNull();
+    });
+    it('should expose the status carried by the game_state_sync', () => {
+        incoming.next(fullSyncJson({ status: 'QUESTION_OPEN' }));
+
+        expect(service.status()).toBe('QUESTION_OPEN');
+    });
+    it.each([
+        ['OPEN', true],
+        ['QUESTION_TITLE', true],
+        ['QUESTION_OPEN', true],
+        ['QUESTION_BUZZED', true],
+        ['QUESTION_CLOSED', true],
+        ['PENDING', false],
+        ['COMPLETED', false],
+        ['IN_ERROR', false],
+    ])('should tell whether a game with the status %s is active: %s', (status, expected) => {
+        incoming.next(fullSyncJson({ status }));
+
+        expect(service.isActive()).toBe(expected);
+    });
+    it('should not be active before any game is known', () => {
+        expect(service.isActive()).toBe(false);
+    });
+    it.each([
+        ['PENDING', true],
+        ['OPEN', true],
+        ['QUESTION_TITLE', true],
+        ['QUESTION_OPEN', true],
+        ['QUESTION_BUZZED', true],
+        ['QUESTION_CLOSED', true],
+        ['COMPLETED', false],
+        ['IN_ERROR', false],
+    ])('should tell whether a game with the status %s is being piloted: %s', (status, expected) => {
+        incoming.next(fullSyncJson({ status }));
+
+        expect(service.isPiloting()).toBe(expected);
+    });
+    it('should not be piloting before any game is known', () => {
+        expect(service.isPiloting()).toBe(false);
+    });
 });

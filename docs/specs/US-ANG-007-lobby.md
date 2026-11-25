@@ -24,7 +24,7 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 
 | # | Critère | Résultat attendu |
 |---|---|---|
-| CA-1 | `/pilot/lobby` est accessible uniquement si `GameStateService.isPiloting()` est `true` | `activeGameGuard` redirige vers `/dashboard` si aucune partie active |
+| CA-1 | `/pilot/lobby` est accessible uniquement si `GameStateService.isPiloting()` est `true` | `activeGameGuard`, posé sur la route `pilot/lobby` (décision #88), redirige vers `/dashboard` si `isPiloting()` est `false` (aucune partie, `COMPLETED` ou `IN_ERROR`, décision #86) |
 | CA-2 | Si le statut de la partie est `OPEN` ou un état `QUESTION_*` à l'arrivée sur `/pilot/lobby`, redirection immédiate vers `/pilot/play` | La partie a déjà démarré — le lobby n'est plus pertinent |
 | CA-3 | Si le statut est `PENDING`, le lobby s'affiche normalement | Cas nominal |
 

@@ -202,7 +202,20 @@ interface GameState {
 // Signals exposés (lecture seule)
 readonly state            = this._state.asReadonly();
 readonly status           = computed(() => this._state().status);
-readonly isActive         = computed(() => { ... });
+// isActive : vrai pour OPEN et les quatre QUESTION_* ; faux pour PENDING, COMPLETED, IN_ERROR et null (décision #86)
+readonly isActive         = computed(() => {
+  switch (this.status()) {
+    case 'OPEN':
+    case 'QUESTION_TITLE':
+    case 'QUESTION_OPEN':
+    case 'QUESTION_BUZZED':
+    case 'QUESTION_CLOSED':
+      return true;
+    default: // PENDING, COMPLETED, IN_ERROR, null
+      return false;
+  }
+});
+// isPiloting : vrai pour PENDING, OPEN et QUESTION_* ; faux pour null, COMPLETED et IN_ERROR (décisions #86 à #88)
 readonly isPiloting       = computed(() => this.isActive() || this.status() === 'PENDING');
 readonly canCorrect       = computed(() => {
   const s = this._state();
@@ -258,12 +271,14 @@ export const routes: Routes = [
   },
   {
     path: 'pilot',
-    canActivate: [authGuard, activeGameGuard],
+    canActivate: [authGuard],
     loadComponent: () => import('./pilot/pilot-shell.component'),
     children: [
       { path: '',        redirectTo: 'lobby', pathMatch: 'full' },
-      { path: 'lobby',   loadComponent: () => import('./pilot/lobby/lobby.component') },
-      { path: 'play',    loadComponent: () => import('./pilot/play/play.component') },
+      // activeGameGuard sur lobby et play seulement : en COMPLETED, isPiloting() est faux et
+      // la navigation automatique vers /pilot/results ne doit pas être interceptée (décision #88)
+      { path: 'lobby',   canActivate: [activeGameGuard], loadComponent: () => import('./pilot/lobby/lobby.component') },
+      { path: 'play',    canActivate: [activeGameGuard], loadComponent: () => import('./pilot/play/play.component') },
       { path: 'results', loadComponent: () => import('./games/game-results.component') },
     ]
   },
@@ -285,7 +300,7 @@ export const authGuard: CanActivateFn = () => {
     : inject(Router).createUrlTree(['/error']);
 };
 
-// active-game.guard.ts — Partie active requise
+// active-game.guard.ts — Partie active requise (posé sur pilot/lobby et pilot/play seulement, décision #88)
 export const activeGameGuard: CanActivateFn = () => {
   const gs = inject(GameStateService);
   return gs.isPiloting()
@@ -294,13 +309,25 @@ export const activeGameGuard: CanActivateFn = () => {
 };
 
 // no-active-game.guard.ts — Pas de partie active (backoffice)
+// Destination : /pilot/lobby si status() vaut PENDING, sinon /pilot/play (décision #89)
 export const noActiveGameGuard: CanActivateFn = () => {
   const gs = inject(GameStateService);
   if (!gs.isPiloting()) return true;
-  inject(Router).navigate(['/pilot/play']);
+  inject(Router).navigate([gs.status() === 'PENDING' ? '/pilot/lobby' : '/pilot/play']);
   return false;
 };
 ```
+
+> **Quels statuts comptent comme pilotage (décisions #86 à #89).** `isPiloting()` est vrai pour `PENDING`, `OPEN`
+> et les quatre `QUESTION_*` ; il est faux pour `null` (aucune partie connue), `COMPLETED` et `IN_ERROR`.
+> `isActive()` est vrai pour `OPEN` et les quatre `QUESTION_*` seulement. Alignement sur le hub : une partie active
+> est `PENDING` ou `OPEN` (US-010 CA-7 du hub), et le filtre d'`US-ANG-001` CA-17 exclut `COMPLETED` et `IN_ERROR`.
+> Deux conséquences, acceptées. (1) `IN_ERROR` : les guards ne sont évalués qu'à la navigation et le banner
+> `IN_ERROR` (US-ANG-008 CA-7, US-ANG-010 CA-24 à CA-26) ne navigue pas : il reste affiché sur `/pilot/play` ; en
+> revanche une navigation fraîche vers `/pilot/lobby` ou `/pilot/play` en `IN_ERROR` est renvoyée vers `/dashboard`
+> par `activeGameGuard` (US-ANG-010 CA-27). (2) `COMPLETED` : `activeGameGuard` n'est posé que sur `lobby` et `play`,
+> `pilot/results` n'a que `authGuard`, pour que la navigation automatique vers `/pilot/results` (US-ANG-008 CA-6 et
+> CA-22, US-ANG-010 CA-18) ne soit pas interceptée.
 
 ---
 

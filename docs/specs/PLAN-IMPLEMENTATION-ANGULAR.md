@@ -34,6 +34,8 @@ environment.ts
     │                                         PlayerListComponent    QuizFormComponent
     │                                         RankingComponent       SoundListComponent
     │                                         SoundPanelComponent
+    │                         (activeGameGuard : routes pilot/lobby et pilot/play seulement ;
+    │                          pilot/results n'a que authGuard, décision #88)
     │
     ├── GameService (REST) ─────────────── GameListComponent
     │                                      GameCreateComponent
@@ -254,7 +256,7 @@ Sprint 8 │████████            │ Reconnexion + robustesse
 
 **Le chrono SPEED après reconnexion** est le cas le plus délicat. À la réception de `game_state_sync` avec `status: QUESTION_OPEN` et `started_at` + `time_limit`, Angular doit calculer `remaining = time_limit - (Date.now() - new Date(started_at).getTime()) / 1000`. Ce calcul doit être encapsulé dans une fonction pure testable indépendamment du composant.
 
-**Le guard `noActiveGameGuard`** doit lire `GameStateService.isPiloting()` qui est un `computed`. Au moment où le guard s'exécute lors de l'initialisation, le signal peut ne pas encore être à jour si `APP_INITIALIZER` n'est pas encore terminé — c'est pourquoi `APP_INITIALIZER` doit être **bloquant** (`async`) et terminer avant que le Router ne commence à résoudre les routes.
+**Le guard `noActiveGameGuard`** (comme `activeGameGuard`) doit lire `GameStateService.isPiloting()` qui est un `computed` (vrai pour `PENDING`, `OPEN` et `QUESTION_*` seulement, décisions #86 à #88 ; destination du guard : décision #89). Au moment où le guard s'exécute lors de l'initialisation, le signal peut ne pas encore être à jour si `APP_INITIALIZER` n'est pas encore terminé — c'est pourquoi `APP_INITIALIZER` doit être **bloquant** (`async`) et terminer avant que le Router ne commence à résoudre les routes.
 
 **`QuizFormComponent` et le drag-and-drop** : l'ordre du tableau `selectedQuestionIds` est la source de vérité unique. Ne jamais dériver l'ordre depuis le DOM — toujours depuis le signal.
 

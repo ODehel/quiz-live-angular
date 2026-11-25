@@ -78,7 +78,18 @@ private readonly _token = signal<string | null>(null);
 
 // Signals publics en lecture seule — pas de préfixe
 readonly status   = computed(() => this._state().status);
-readonly isActive = computed(() => { ... });
+readonly isActive = computed(() => {
+  switch (this.status()) {
+    case 'OPEN':
+    case 'QUESTION_TITLE':
+    case 'QUESTION_OPEN':
+    case 'QUESTION_BUZZED':
+    case 'QUESTION_CLOSED':
+      return true;   // PENDING, COMPLETED, IN_ERROR et null : faux (décision #86)
+    default:
+      return false;
+  }
+});
 readonly isReady  = signal(false);  // writable public : cas rares, justifiés
 
 // Jamais de signal writable public non maîtrisé

@@ -1,4 +1,7 @@
-<h1 data-testid="dashboard">Tableau de bord</h1>
+<div class="dash-header" data-testid="dashboard-header">
+    <h1 data-testid="dashboard">Tableau de bord</h1>
+    <app-button data-testid="new-game-button" (click)="onNewGameClick()">Nouvelle partie</app-button>
+</div>
 @if (showBanner()) {
     <section class="active-game-banner" data-testid="active-game-banner">
         <div class="active-game-label" data-testid="active-game-status">{{bannerStatus()}}</div>

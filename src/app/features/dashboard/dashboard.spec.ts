@@ -2,14 +2,23 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component } from '@angular/core';
+import { provideRouter, Router } from '@angular/router';
 import { Subject } from 'rxjs';
+import { Mocked } from 'vitest';
+import { Timer, TIMER } from '../../core/timer/timer';
+import { ToastService } from '../../core/toast/toast.service';
 import { GameStateService } from '../../core/game-state/game-state.service';
 import { fullSync } from '../../core/game-state/game-state.test-helpers';
 import { WebSocketService } from '../../core/websocket/websocket.service';
 import { QuestionService } from '../questions/question.service';
 import { Dashboard } from './dashboard';
 
+@Component({ template: '' })
+class NewGamePage {}
+
 describe('Dashboard', () => {
+  let timer: Mocked<Timer>;
   let incoming: Subject<string>;
   let disconnected: ReturnType<typeof signal<boolean>>;
   let questionCount: Subject<number>;
@@ -21,8 +30,11 @@ describe('Dashboard', () => {
     disconnected = signal(false);
     questionCount = new Subject<number>();
     questionCountCalls = 0;
+    timer = { schedule: vi.fn() };
     TestBed.configureTestingModule({
       providers: [
+        provideRouter([{ path: 'games/new', component: NewGamePage }]),
+        { provide: TIMER, useValue: timer },
         { provide: GameStateService, useFactory: () => new GameStateService(hub) },
         { provide: WebSocketService, useValue: { isDisconnected: disconnected.asReadonly() } },
         { provide: QuestionService, useValue: { count: () => { questionCountCalls++; return questionCount; } } },
@@ -612,6 +624,163 @@ describe('Dashboard', () => {
         await fixture.whenStable();
 
         expect(bannerOf(fixture)).toBeNull();
+      });
+    });
+  });
+
+  describe('the new game button', () => {
+    const buttonOf = (fixture: ComponentFixture<Dashboard>) =>
+      element(fixture).querySelector('[data-testid="new-game-button"]');
+
+    it('is in the header of the page, next to the title, and reads "Nouvelle partie"', async () => {
+      const fixture = render();
+
+      await fixture.whenStable();
+
+      const header = element(fixture).querySelector('[data-testid="dashboard-header"]');
+      expect(header?.querySelector('[data-testid="dashboard"]')?.textContent).toBe('Tableau de bord');
+      expect(header?.querySelector('[data-testid="new-game-button"]')?.textContent?.trim()).toBe('Nouvelle partie');
+    });
+
+    it.each(['PENDING', 'OPEN', 'QUESTION_OPEN', 'COMPLETED', 'IN_ERROR'])('is always there, even when the game is %s', async status => {
+      const fixture = render();
+      await fixture.whenStable();
+      expect(buttonOf(fixture)).not.toBeNull();
+
+      incoming.next(JSON.stringify(fullSync({ status })));
+      await fixture.whenStable();
+
+      expect(buttonOf(fixture)?.textContent?.trim()).toBe('Nouvelle partie');
+    });
+
+    const clickNewGame = async (fixture: ComponentFixture<Dashboard>) => {
+      (element(fixture).querySelector('[data-testid="new-game-button"] button') as HTMLButtonElement).click();
+      await fixture.whenStable();
+    };
+    const syncGame = (fixture: ComponentFixture<Dashboard>, status: string) => {
+      incoming.next(JSON.stringify(fullSync({ status })));
+      return fixture.whenStable();
+    };
+
+    it('leads to /games/new when no game is known', async () => {
+      const fixture = render();
+      await fixture.whenStable();
+
+      await clickNewGame(fixture);
+
+      expect(TestBed.inject(Router).url).toBe('/games/new');
+    });
+
+    it('warns with a toast "Une partie est déjà en cours" when a game is being piloted', async () => {
+      const fixture = render();
+      await syncGame(fixture, 'OPEN');
+
+      await clickNewGame(fixture);
+
+      const notifications = TestBed.inject(ToastService).notifications();
+      expect(notifications.map(({ message, type }) => ({ message, type }))).toEqual([
+        { message: 'Une partie est déjà en cours', type: 'warning' },
+      ]);
+    });
+
+    it('does not navigate when a game is being piloted', async () => {
+      const fixture = render();
+      await syncGame(fixture, 'OPEN');
+
+      await clickNewGame(fixture);
+
+      expect(TestBed.inject(Router).url).toBe('/');
+    });
+
+    it('shows no toast when no game is being piloted', async () => {
+      const fixture = render();
+      await fixture.whenStable();
+
+      await clickNewGame(fixture);
+
+      expect(TestBed.inject(ToastService).notifications()).toEqual([]);
+    });
+
+    it.each(['PENDING', 'OPEN', 'QUESTION_TITLE', 'QUESTION_OPEN', 'QUESTION_BUZZED', 'QUESTION_CLOSED'])(
+      'warns and does not navigate when the game is %s', async status => {
+        const fixture = render();
+        await syncGame(fixture, status);
+
+        await clickNewGame(fixture);
+
+        expect(TestBed.inject(ToastService).notifications().map(n => n.message)).toEqual(['Une partie est déjà en cours']);
+        expect(TestBed.inject(Router).url).toBe('/');
+      });
+
+    it.each(['COMPLETED', 'IN_ERROR'])('leads to /games/new without a toast when the game is %s', async status => {
+      const fixture = render();
+      await syncGame(fixture, status);
+
+      await clickNewGame(fixture);
+
+      expect(TestBed.inject(ToastService).notifications()).toEqual([]);
+      expect(TestBed.inject(Router).url).toBe('/games/new');
+    });
+
+    it('makes the toast disappear after 4 seconds', async () => {
+      const fixture = render();
+      await syncGame(fixture, 'OPEN');
+
+      await clickNewGame(fixture);
+
+      expect(timer.schedule).toHaveBeenCalledTimes(1);
+      const [dismiss, delay] = timer.schedule.mock.calls[0];
+      expect(delay).toBe(4000);
+      dismiss();
+      expect(TestBed.inject(ToastService).notifications()).toEqual([]);
+    });
+
+    it('leads to /games/new again once the game completes', async () => {
+      const fixture = render();
+      await syncGame(fixture, 'OPEN');
+      await syncGame(fixture, 'COMPLETED');
+
+      await clickNewGame(fixture);
+
+      expect(TestBed.inject(Router).url).toBe('/games/new');
+    });
+
+    describe('while the application is disconnected', () => {
+      it('is still there, whatever the game', async () => {
+        const fixture = render();
+        await syncGame(fixture, 'OPEN');
+
+        disconnected.set(true);
+        await fixture.whenStable();
+
+        expect(buttonOf(fixture)?.textContent?.trim()).toBe('Nouvelle partie');
+      });
+
+      it.each(['PENDING', 'OPEN', 'QUESTION_CLOSED'])(
+        'leads to /games/new without a toast although the last known game is %s', async status => {
+          const fixture = render();
+          await syncGame(fixture, status);
+          disconnected.set(true);
+          await fixture.whenStable();
+
+          await clickNewGame(fixture);
+
+          expect(TestBed.inject(ToastService).notifications()).toEqual([]);
+          expect(TestBed.inject(Router).url).toBe('/games/new');
+        });
+
+      it('warns again once the application is no longer disconnected', async () => {
+        const fixture = render();
+        await syncGame(fixture, 'OPEN');
+        disconnected.set(true);
+        await fixture.whenStable();
+        disconnected.set(false);
+        await fixture.whenStable();
+
+        await clickNewGame(fixture);
+
+        expect(TestBed.inject(ToastService).notifications().map(n => n.message)).toEqual(['Une partie est déjà en cours']);
+        expect(TestBed.inject(Router).url).toBe('/');
       });
     });
   });

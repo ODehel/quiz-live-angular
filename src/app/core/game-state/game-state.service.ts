@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { messageType } from '../websocket/message-type';
 import { OutboundMessage } from '../websocket/websocket.service';
@@ -48,6 +48,20 @@ export class GameStateService {
         startedAt: null,
         timeLimit: null,
     });
+    readonly status = computed(() => this.state().status);
+    readonly isActive = computed(() => {
+        switch (this.status()) {
+            case 'OPEN':
+            case 'QUESTION_TITLE':
+            case 'QUESTION_OPEN':
+            case 'QUESTION_BUZZED':
+            case 'QUESTION_CLOSED':
+                return true;
+            default:
+                return false;
+        }
+    });
+    readonly isPiloting = computed(() => this.isActive() || this.status() === 'PENDING');
     private readonly buzzers = signal<string[]>([]);
     readonly connectedBuzzers = this.buzzers.asReadonly();
     private readonly known = signal(false);

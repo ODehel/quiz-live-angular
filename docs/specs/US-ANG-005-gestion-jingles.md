@@ -188,6 +188,6 @@ Si un buzzer se déconnecte entre le moment où l'utilisateur ouvre le select et
 
 ---
 
-**Dernière mise à jour** : 2026-11-24
-**Statut** : Spécifiée, non implémentée (vérifié dans `src/app` le 2026-11-24, `aef383d`) : ni `SoundService`, `SoundListComponent` ni `SoundPanelComponent`, aucune route des jingles ; le seul message sortant du WebSocket est `request_game_state` (`OutboundMessage`, `src/app/core/websocket/websocket.service.ts`), donc ni `trigger_system_sound` ni `play_sound` ne sont émis. Existe seulement `ConfirmDialogComponent` (`src/app/core/confirmation/`), que la spec cite et que seul `features/playground` appelle.
+**Dernière mise à jour** : 2026-11-25
+**Statut** : Spécifiée, non implémentée (vérifié dans `src/app` le 2026-11-24, `aef383d`) : ni `SoundService`, `SoundListComponent` ni `SoundPanelComponent`, aucune route des jingles (la route est spécifiée : `/content/sounds`, cible du lien « Jingles » de la sidebar, décisions #101 et #102 ; vérifié le 2026-11-25, `5582308`, toujours absente de `app.routes.ts`) ; le seul message sortant du WebSocket est `request_game_state` (`OutboundMessage`, `src/app/core/websocket/websocket.service.ts`), donc ni `trigger_system_sound` ni `play_sound` ne sont émis. Existe seulement `ConfirmDialogComponent` (`src/app/core/confirmation/`), que la spec cite et que seul `features/playground` appelle.
 **Sprint** : 4

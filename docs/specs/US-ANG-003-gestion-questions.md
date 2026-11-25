@@ -302,5 +302,5 @@ La validation croisée `correct_answer ∈ choices` est effectuée côté Angula
 ---
 
 **Dernière mise à jour** : 2026-11-24
-**Statut** : Spécifiée, non implémentée (vérifié dans `src/app` le 2026-11-24, `aef383d`) : ni `QuestionService`, `QuestionListComponent`, `QuestionFormComponent` ni `PaginatorComponent`, aucune route des questions (`app.routes.ts` ne porte que `dashboard`, `themes`, `playground`, `error`). Existent seulement `ConfirmDialogComponent` et `ConfirmationService` (`src/app/core/confirmation/`), que la spec cite et que seul `features/playground` appelle : une brique réutilisable, pas une partie de l'US.
+**Statut** : Spécifiée, non implémentée (vérifié dans `src/app` le 2026-11-24, `aef383d`) : ni `QuestionService`, `QuestionListComponent`, `QuestionFormComponent` ni `PaginatorComponent`, aucune route des questions (`app.routes.ts` portait que `dashboard`, `themes`, `playground`, `error` ; `themes` est depuis servie sous `/content/themes`). Existent seulement `ConfirmDialogComponent` et `ConfirmationService` (`src/app/core/confirmation/`), que la spec cite et que seul `features/playground` appelle : une brique réutilisable, pas une partie de l'US.
 **Sprint** : 2

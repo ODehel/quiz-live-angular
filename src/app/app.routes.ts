@@ -16,7 +16,8 @@ export const routes: Routes = [
         canActivate: [authGuard],
         children: [
             { path: 'dashboard', component: Dashboard },
-            { path: 'themes', component: ThemeList }
+            // Groupe Contenu (décision #101) : parent `content` sans `noActiveGameGuard`, qui n'existe pas encore (CA-22).
+            { path: 'content', children: [{ path: 'themes', component: ThemeList }] }
         ]
     },
     { path: 'playground', component: Playground },

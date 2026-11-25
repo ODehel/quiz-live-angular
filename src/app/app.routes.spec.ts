@@ -60,20 +60,24 @@ describe('routes', () => {
     expect(TestBed.inject(Router).url).toBe('/error');
   });
 
-  it('renders the themes page on /themes when the session is ready', async () => {
-    const harness = await RouterTestingHarness.create('/themes');
+  it('renders the themes page on /content/themes when the session is ready', async () => {
+    const harness = await RouterTestingHarness.create('/content/themes');
 
     const page = (harness.fixture.nativeElement as HTMLElement)
       .querySelector('[data-testid="themes-title"]');
     expect(page).not.toBeNull();
   });
 
-  it('redirects /themes to the error page when the session is not ready', async () => {
+  it('redirects /content/themes to the error page when the session is not ready', async () => {
     sessionReady = false;
 
-    await RouterTestingHarness.create('/themes');
+    await RouterTestingHarness.create('/content/themes');
 
     expect(TestBed.inject(Router).url).toBe('/error');
+  });
+
+  it('no longer serves the themes page on /themes', async () => {
+    await expect(RouterTestingHarness.create('/themes')).rejects.toThrow();
   });
 
   it('redirects the root to the dashboard when the session is ready', async () => {
@@ -140,8 +144,8 @@ describe('routes', () => {
       expect(topBarIn(harness)).not.toBeNull();
     });
 
-    it('is shown on /themes', async () => {
-      const harness = await RouterTestingHarness.create('/themes');
+    it('is shown on /content/themes', async () => {
+      const harness = await RouterTestingHarness.create('/content/themes');
 
       expect(topBarIn(harness)).not.toBeNull();
     });
@@ -153,10 +157,10 @@ describe('routes', () => {
       expect(bars.length).toBe(1);
     });
 
-    it('stays when navigating from /dashboard to /themes', async () => {
+    it('stays when navigating from /dashboard to /content/themes', async () => {
       const harness = await RouterTestingHarness.create('/dashboard');
 
-      await harness.navigateByUrl('/themes');
+      await harness.navigateByUrl('/content/themes');
 
       expect(topBarIn(harness)).not.toBeNull();
       expect((harness.fixture.nativeElement as HTMLElement).querySelector('[data-testid="themes-title"]'))

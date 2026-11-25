@@ -8,6 +8,13 @@
     var(--bg-base);
 }
 
+.dash-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
 h1 {
   margin: 0;
   font-family: var(--font-display);

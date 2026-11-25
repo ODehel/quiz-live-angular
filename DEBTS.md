@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-25 (`docs(dashboard): specify how the active game banner shows the status and the question index`).
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-25 (`feat(dashboard): show the active game banner with its status`).
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -479,3 +479,10 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 ## Mesurées pendant `docs(dashboard): specify where the active game banner takes the quiz name and the question total`
 
 - **`QuizService` est absent d'Angular alors que la bannière du dashboard (US-ANG-002 CA-6) et le lobby (US-ANG-007 CA-4) lisent `GET /api/v1/quizzes/:id`** 🟠 : décisions #91 et #92, le nom et le total (`question_ids.length`) viennent de cette route, que le hub n'expose pas encore (US-008 CA-24). Aucun `QuizService` dans `src/` (`src/app/features` ne contient que `dashboard`, `playground`, `questions`, `themes`) ; il est prévu par US-ANG-004 (CRUD) et le plan (3.1) (US-ANG-004 : `getById(id): Observable<QuizDetail>`, `QuizDetail` porte déjà `name` et `question_ids`, la forme suffit). À cadrer avant le `feat` de la bannière : la session qui crée `QuizService` (US-ANG-004, plan 3.1), le dashboard ne pouvant pas attendre le CRUD complet pour un seul `getById()`. Constat par `grep` et lecture, le 2026-11-25.
+
+## Mesurées pendant `feat(dashboard): show the active game banner with its status`
+
+- **Libellés de statut de la bannière : mapping local à remplacer par `StatusBadgeComponent`** 🟠 : décision #97, la bannière écrit elle-même « En attente » / « En cours » (`bannerStatusLabel` dans `features/dashboard/dashboard.ts`), copie du tableau de mapping de `StatusBadgeComponent` qui n'existe pas dans `src/`. À remplacer par ce composant quand il existera (tâche 0.15 du plan, composants partagés) ; sinon deux sources de libellés divergeront (le tableau a aussi « Terminée » et « Erreur », absents ici car la bannière n'est jamais affichée pour ces statuts).
+- **Nom du quiz et progression sont des `—` écrits dans le gabarit** 🟡 : CA-6, décisions #93 et #96 : aucun signal ni appel derrière, la route `GET /api/v1/quizzes/:id` étant absente (voir « `QuizService` est absent d'Angular… »). À la réouverture : `QuizService`, signaux nom et total, forme `question_index / total` une fois la base de `question_index` fixée (voir le handoff, « À reporter dans quiz-live-server »). Le test `shows a single dash for the whole progression…` fige le `—` actuel et devra changer avec elle.
+- **Mise en page et couleur de la bannière jamais vues dans un navigateur** 🟡 : jsdom ne calcule pas les styles. Le CA-6 dit « bleue » ; les jetons du design system n'ont pas de bleu d'interface, la bannière prend le cyan `--accent-secondary` (« info », design system) alors que la maquette `docs/quiz-buzzer-dashboard.html` la veut violet et rose. Le reste de la maquette (icône, participants, type de question, secondes restantes, bouton) n'est pas repris : absent du CDC retenu ou bloqué (CA-8, #94). Choix de l'agent, non observable par les specs ; à regarder par Olivier.
+- **Le test « bannière absente tant que la liste des buzzers est inconnue » écrit `state` directement** 🟡 : un `game_state_sync` complet porte toujours `connected_buzzers` (US-ANG-001 CA-20), donc avec le vrai service « partie connue » implique « liste connue » et la part CA-31 de la bannière ne s'isole pas par les messages. Le test passe par `GameStateService.state.update`, ce que permet le signal inscriptible (voir « `GameStateService.state` est un signal inscriptible… ») et que #90 avait écarté pour la spec du service. Si `state` devient en lecture seule, ce test devra passer par une doublure du service.

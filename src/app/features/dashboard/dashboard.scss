@@ -17,13 +17,24 @@ h1 {
   color: var(--text-primary);
 }
 
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+  max-width: 960px;
+}
+
 .metric-card,
 .dash-card {
-  margin-top: 24px;
-  max-width: 420px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
+}
+
+.dash-card {
+  margin-top: 24px;
+  max-width: 420px;
 }
 
 .metric-card {
@@ -47,6 +58,23 @@ h1 {
   letter-spacing: -0.02em;
   line-height: 1;
   color: var(--text-primary);
+}
+
+.metric-loading {
+  width: 24px;
+  height: 24px;
+  margin: 6px 0 12px;
+  box-sizing: border-box;
+  border: 3px solid var(--border-subtle);
+  border-top-color: var(--text-muted);
+  border-radius: 50%;
+  animation: metric-spin 0.8s linear infinite;
+}
+
+@keyframes metric-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .metric-subtitle {

@@ -1,9 +1,27 @@
 <h1 data-testid="dashboard">Tableau de bord</h1>
-<section class="metric-card" data-testid="buzzers-metric">
-    <div class="metric-label">Buzzers connectés</div>
-    <div class="metric-value" data-testid="buzzers-metric-value">{{buzzersCount() ?? '—'}}</div>
-    <div class="metric-subtitle" data-testid="buzzers-metric-subtitle">{{buzzersSubtitle()}}</div>
-</section>
+<div class="metrics">
+    <section class="metric-card" data-testid="buzzers-metric">
+        <div class="metric-label">Buzzers connectés</div>
+        <div class="metric-value" data-testid="buzzers-metric-value">{{buzzersCount() ?? '—'}}</div>
+        <div class="metric-subtitle" data-testid="buzzers-metric-subtitle">{{buzzersSubtitle()}}</div>
+    </section>
+    <section class="metric-card" data-testid="quizzes-metric">
+        <div class="metric-label" data-testid="quizzes-metric-label">Quiz</div>
+        <div class="metric-value" data-testid="quizzes-metric-value">—</div>
+    </section>
+    <section class="metric-card" data-testid="questions-metric">
+        <div class="metric-label" data-testid="questions-metric-label">Questions</div>
+        @if (questionsLoading()) {
+            <div class="metric-loading" role="status" aria-label="Chargement" data-testid="questions-metric-loading"></div>
+        } @else {
+            <div class="metric-value" data-testid="questions-metric-value">{{questionsTotal() ?? '—'}}</div>
+        }
+    </section>
+    <section class="metric-card" data-testid="games-metric">
+        <div class="metric-label" data-testid="games-metric-label">Parties jouées</div>
+        <div class="metric-value" data-testid="games-metric-value">—</div>
+    </section>
+</div>
 <section class="dash-card" data-testid="buzzers-card">
     <h2 class="dash-card-title">Buzzers</h2>
     <ul class="buzzer-list">

@@ -7,6 +7,7 @@ import { ErrorService } from './core/error/error.service';
 import { AuthService } from './core/authentication/auth.service';
 import { stubIconIn } from './shared/ui/icon/icon.test-helpers';
 import { ThemeService } from './features/themes/theme.service';
+import { QuestionService } from './features/questions/question.service';
 import { ThemeList } from './features/themes/theme-list';
 import { GameStateService } from './core/game-state/game-state.service';
 import { WebSocketService } from './core/websocket/websocket.service';
@@ -35,7 +36,8 @@ describe('routes', () => {
           },
         },
         { provide: SERVER_ADDRESS, useValue: 'localhost:3000' },
-        { provide: ThemeService, useValue: { list: () => of({ themes: [], total: 0 }) } }
+        { provide: ThemeService, useValue: { list: () => of({ themes: [], total: 0 }) } },
+        { provide: QuestionService, useValue: { count: () => of(0) } }
       ],
     });
     stubIconIn(ErrorPage);

@@ -1,22 +1,30 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Subject } from 'rxjs';
 import { GameStateService } from '../../core/game-state/game-state.service';
 import { WebSocketService } from '../../core/websocket/websocket.service';
+import { QuestionService } from '../questions/question.service';
 import { Dashboard } from './dashboard';
 
 describe('Dashboard', () => {
   let incoming: Subject<string>;
   let disconnected: ReturnType<typeof signal<boolean>>;
+  let questionCount: Subject<number>;
+  let questionCountCalls: number;
 
   const render = () => {
     incoming = new Subject<string>();
     const hub = { messages$: incoming, send: () => {} };
     disconnected = signal(false);
+    questionCount = new Subject<number>();
+    questionCountCalls = 0;
     TestBed.configureTestingModule({
       providers: [
         { provide: GameStateService, useFactory: () => new GameStateService(hub) },
         { provide: WebSocketService, useValue: { isDisconnected: disconnected.asReadonly() } },
+        { provide: QuestionService, useValue: { count: () => { questionCountCalls++; return questionCount; } } },
       ],
     });
     return TestBed.createComponent(Dashboard);
@@ -252,6 +260,202 @@ describe('Dashboard', () => {
 
       expect(textOf(fixture, 'buzzers-metric-value')).toBe('2');
       expect(rowsOf(fixture)).toEqual(['alice', 'bob']);
+    });
+  });
+
+  describe('the questions metric', () => {
+    const loadingOf = (fixture: ComponentFixture<Dashboard>) =>
+      element(fixture).querySelector('[data-testid="questions-metric-loading"]');
+
+    it('is labelled "Questions"', async () => {
+      const fixture = render();
+
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'questions-metric-label')).toBe('Questions');
+    });
+
+    it('asks the hub for the number of questions once, when the dashboard opens', async () => {
+      const fixture = render();
+
+      await fixture.whenStable();
+
+      expect(questionCountCalls).toBe(1);
+    });
+
+    it('shows the total counted by the hub', async () => {
+      const fixture = render();
+
+      questionCount.next(147);
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'questions-metric-value')).toBe('147');
+    });
+
+    it('shows 0 when the hub counts no question', async () => {
+      const fixture = render();
+
+      questionCount.next(0);
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'questions-metric-value')).toBe('0');
+    });
+
+    it('shows a loading indicator in place of the value while the hub has not answered', async () => {
+      const fixture = render();
+
+      await fixture.whenStable();
+
+      expect(loadingOf(fixture)).not.toBeNull();
+      expect(textOf(fixture, 'questions-metric-value')).toBeUndefined();
+    });
+
+    it('replaces the loading indicator with the total once the hub answers', async () => {
+      const fixture = render();
+      await fixture.whenStable();
+
+      questionCount.next(12);
+      await fixture.whenStable();
+
+      expect(loadingOf(fixture)).toBeNull();
+      expect(textOf(fixture, 'questions-metric-value')).toBe('12');
+    });
+
+    it('stops waiting for the hub when the dashboard is destroyed', async () => {
+      const fixture = render();
+      await fixture.whenStable();
+
+      fixture.destroy();
+
+      expect(questionCount.observed).toBe(false);
+    });
+
+    it('shows a dash in place of the loading indicator when the call fails', async () => {
+      const fixture = render();
+      await fixture.whenStable();
+
+      questionCount.error(new Error('500'));
+      await fixture.whenStable();
+
+      expect(loadingOf(fixture)).toBeNull();
+      expect(textOf(fixture, 'questions-metric-value')).toBe('—');
+    });
+
+    it('does not stop the buzzers from showing when the call fails', async () => {
+      const fixture = render();
+
+      questionCount.error(new Error('500'));
+      sync(['alice', 'bob']);
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'buzzers-metric-value')).toBe('2');
+      expect(rowsOf(fixture)).toEqual(['alice', 'bob']);
+    });
+
+    it('does not wait for the buzzers: the total shows before any game_state_sync', async () => {
+      const fixture = render();
+
+      questionCount.next(5);
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'questions-metric-value')).toBe('5');
+      expect(textOf(fixture, 'buzzers-metric-value')).toBe('—');
+    });
+
+    it('keeps showing the total while the application is disconnected', async () => {
+      const fixture = render();
+      disconnected.set(true);
+
+      questionCount.next(5);
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'questions-metric-value')).toBe('5');
+    });
+
+    it('keeps the loading indicator while the application is disconnected and the hub has not answered', async () => {
+      const fixture = render();
+      disconnected.set(true);
+
+      await fixture.whenStable();
+
+      expect(loadingOf(fixture)).not.toBeNull();
+    });
+  });
+
+  describe('the quiz and played games metrics', () => {
+    const loadingOf = (fixture: ComponentFixture<Dashboard>, metric: string) =>
+      element(fixture).querySelector(`[data-testid="${metric}-metric-loading"]`);
+
+    it('are labelled "Quiz" and "Parties jouées"', async () => {
+      const fixture = render();
+
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'quizzes-metric-label')).toBe('Quiz');
+      expect(textOf(fixture, 'games-metric-label')).toBe('Parties jouées');
+    });
+
+    it('show a dash as soon as the dashboard opens, while the questions are still loading', async () => {
+      const fixture = render();
+
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'quizzes-metric-value')).toBe('—');
+      expect(textOf(fixture, 'games-metric-value')).toBe('—');
+      expect(loadingOf(fixture, 'quizzes')).toBeNull();
+      expect(loadingOf(fixture, 'games')).toBeNull();
+    });
+
+    it('keep their dash once the questions are counted', async () => {
+      const fixture = render();
+
+      questionCount.next(147);
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'quizzes-metric-value')).toBe('—');
+      expect(textOf(fixture, 'games-metric-value')).toBe('—');
+    });
+
+    it('keep their dash when the questions call fails', async () => {
+      const fixture = render();
+
+      questionCount.error(new Error('500'));
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'quizzes-metric-value')).toBe('—');
+      expect(textOf(fixture, 'games-metric-value')).toBe('—');
+    });
+
+    it('keep their dash while the application is disconnected, and before any game_state_sync', async () => {
+      const fixture = render();
+      disconnected.set(true);
+
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'quizzes-metric-value')).toBe('—');
+      expect(textOf(fixture, 'games-metric-value')).toBe('—');
+    });
+  });
+
+  describe('the requests of the dashboard', () => {
+    it('are one GET of the questions, with a limit of 1 and no page, and nothing else', async () => {
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: GameStateService, useValue: { buzzersKnown: signal(false), connectedBuzzers: signal<string[]>([]) } },
+          { provide: WebSocketService, useValue: { isDisconnected: signal(false) } },
+          provideHttpClient(),
+          provideHttpClientTesting(),
+        ],
+      });
+      const httpMock = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(Dashboard);
+
+      await fixture.whenStable();
+      httpMock.expectOne('/api/v1/questions?limit=1').flush({ data: [], page: 1, limit: 1, total: 3, total_pages: 3 });
+      await fixture.whenStable();
+
+      httpMock.verify();
+      expect(textOf(fixture, 'questions-metric-value')).toBe('3');
     });
   });
 });

@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-25 (`docs(dashboard): specify where the active game banner takes the quiz name and the question total`).
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-25 (`docs(dashboard): specify how the active game banner shows the status and the question index`).
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 

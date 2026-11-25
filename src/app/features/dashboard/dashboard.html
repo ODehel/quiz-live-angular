@@ -1,4 +1,12 @@
 <h1 data-testid="dashboard">Tableau de bord</h1>
+@if (showBanner()) {
+    <section class="active-game-banner" data-testid="active-game-banner">
+        <div class="active-game-label" data-testid="active-game-status">{{bannerStatus()}}</div>
+        <!-- Nom et progression : `—` tant que GET /api/v1/quizzes/:id n'existe pas (CA-6, décisions #93 et #96). -->
+        <div class="active-game-title" data-testid="active-game-name">—</div>
+        <div class="active-game-meta" data-testid="active-game-progress">—</div>
+    </section>
+}
 <div class="metrics">
     <section class="metric-card" data-testid="buzzers-metric">
         <div class="metric-label">Buzzers connectés</div>

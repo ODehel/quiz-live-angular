@@ -4,6 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Subject } from 'rxjs';
 import { GameStateService } from '../../core/game-state/game-state.service';
+import { fullSync } from '../../core/game-state/game-state.test-helpers';
 import { WebSocketService } from '../../core/websocket/websocket.service';
 import { QuestionService } from '../questions/question.service';
 import { Dashboard } from './dashboard';
@@ -438,10 +439,14 @@ describe('Dashboard', () => {
   });
 
   describe('the requests of the dashboard', () => {
-    it('are one GET of the questions, with a limit of 1 and no page, and nothing else', async () => {
+    it('are one GET of the questions, with a limit of 1 and no page, and nothing else, banner shown included', async () => {
       TestBed.configureTestingModule({
         providers: [
-          { provide: GameStateService, useValue: { buzzersKnown: signal(false), connectedBuzzers: signal<string[]>([]) } },
+          {
+            provide: GameStateService,
+            // Une partie est pilotée et la liste des buzzers est connue : la bannière est affichée, elle ne doit appeler aucune route.
+            useValue: { buzzersKnown: signal(true), connectedBuzzers: signal<string[]>([]), isPiloting: signal(true), status: signal('OPEN') },
+          },
           { provide: WebSocketService, useValue: { isDisconnected: signal(false) } },
           provideHttpClient(),
           provideHttpClientTesting(),
@@ -456,6 +461,158 @@ describe('Dashboard', () => {
 
       httpMock.verify();
       expect(textOf(fixture, 'questions-metric-value')).toBe('3');
+    });
+  });
+
+  describe('the active game banner', () => {
+    const bannerOf = (fixture: ComponentFixture<Dashboard>) =>
+      element(fixture).querySelector('[data-testid="active-game-banner"]');
+    const syncGame = (changes: Record<string, unknown> = {}) => incoming.next(JSON.stringify(fullSync(changes)));
+
+    it('is absent before any game_state_sync', async () => {
+      const fixture = render();
+
+      await fixture.whenStable();
+
+      expect(bannerOf(fixture)).toBeNull();
+    });
+
+    it('shows the status of the game being piloted', async () => {
+      const fixture = render();
+
+      syncGame({ status: 'OPEN' });
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'active-game-status')).toBe('En cours');
+    });
+
+    it.each([
+      ['PENDING', 'En attente'],
+      ['OPEN', 'En cours'],
+      ['QUESTION_TITLE', 'En cours'],
+      ['QUESTION_OPEN', 'En cours'],
+      ['QUESTION_BUZZED', 'En cours'],
+      ['QUESTION_CLOSED', 'En cours'],
+    ])('shows %s as "%s", never the raw status', async (status, label) => {
+      const fixture = render();
+
+      syncGame({ status });
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'active-game-status')).toBe(label);
+    });
+
+    it.each(['COMPLETED', 'IN_ERROR'])('is absent when the game is %s', async status => {
+      const fixture = render();
+
+      syncGame({ status });
+      await fixture.whenStable();
+
+      expect(bannerOf(fixture)).toBeNull();
+    });
+
+    it('shows a dash in place of the quiz name, since the hub has no route to read it', async () => {
+      const fixture = render();
+
+      syncGame({ quiz_id: 'quiz-1' });
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'active-game-name')).toBe('—');
+    });
+
+    it('shows a single dash for the whole progression, never the question index alone', async () => {
+      const fixture = render();
+
+      syncGame({ question_index: 3 });
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'active-game-progress')).toBe('—');
+    });
+
+    it('leaves no residual element in the DOM when absent', async () => {
+      const fixture = render();
+
+      syncGame({ status: 'COMPLETED' });
+      await fixture.whenStable();
+
+      expect(element(fixture).querySelector('[data-testid^="active-game"], .active-game-banner')).toBeNull();
+    });
+
+    it('offers no button to resume the piloting while the pilot routes do not exist', async () => {
+      const fixture = render();
+
+      syncGame({ status: 'OPEN' });
+      await fixture.whenStable();
+
+      expect(element(fixture).querySelector('[data-testid="active-game-banner"] button, [data-testid="active-game-banner"] a')).toBeNull();
+    });
+
+    it('appears when a game starts and follows its status in real time', async () => {
+      const fixture = render();
+      syncGame({ status: 'PENDING' });
+      await fixture.whenStable();
+      expect(textOf(fixture, 'active-game-status')).toBe('En attente');
+
+      syncGame({ status: 'OPEN' });
+      await fixture.whenStable();
+      expect(textOf(fixture, 'active-game-status')).toBe('En cours');
+    });
+
+    it('disappears when the game completes', async () => {
+      const fixture = render();
+      syncGame({ status: 'OPEN' });
+      await fixture.whenStable();
+      expect(bannerOf(fixture)).not.toBeNull();
+
+      syncGame({ status: 'COMPLETED' });
+      await fixture.whenStable();
+
+      expect(bannerOf(fixture)).toBeNull();
+    });
+
+    it('is not touched by a game_state_sync without game fields', async () => {
+      const fixture = render();
+      syncGame({ status: 'OPEN' });
+      await fixture.whenStable();
+
+      sync(['alice']);
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'active-game-status')).toBe('En cours');
+    });
+
+    describe('while the application is disconnected', () => {
+      it('is absent although a game is being piloted', async () => {
+        const fixture = render();
+        syncGame({ status: 'OPEN' });
+        disconnected.set(true);
+        await fixture.whenStable();
+
+        expect(bannerOf(fixture)).toBeNull();
+      });
+
+      it('is back when the application is not disconnected anymore', async () => {
+        const fixture = render();
+        syncGame({ status: 'OPEN' });
+        disconnected.set(true);
+        await fixture.whenStable();
+
+        disconnected.set(false);
+        await fixture.whenStable();
+
+        expect(bannerOf(fixture)).not.toBeNull();
+      });
+    });
+
+    describe('while the list of buzzers has never been received', () => {
+      it('is absent although a game is being piloted', async () => {
+        const fixture = render();
+        // Un `game_state_sync` complet porte toujours `connected_buzzers` : seule une écriture directe de `state` isole ce cas.
+        TestBed.inject(GameStateService).state.update(state => ({ ...state, status: 'OPEN' }));
+        await fixture.whenStable();
+
+        expect(bannerOf(fixture)).toBeNull();
+      });
     });
   });
 });

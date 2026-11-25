@@ -196,7 +196,7 @@ Après une suppression réussie (`204`), la liste est mise à jour localement vi
 
 ### `noActiveGameGuard` — accès conditionnel
 
-`ThemeListComponent` est sur la route `/content/themes`, protégée par `noActiveGameGuard`. Si une partie est active, l'accès est bloqué et l'utilisateur est redirigé vers `/pilot/play`. La sidebar désactive visuellement le lien "Thèmes" dans ce cas (conforme à US-ANG-002 CA-21).
+`ThemeListComponent` est sur la route `/content/themes`, protégée par `noActiveGameGuard`. Si une partie est active, l'accès est bloqué et l'utilisateur est redirigé vers `/pilot/lobby` si la partie est `PENDING`, sinon vers `/pilot/play` (US-ANG-002 CA-22, décision #89). La sidebar désactive visuellement le lien "Thèmes" dans ce cas (conforme à US-ANG-002 CA-21).
 
 ---
 

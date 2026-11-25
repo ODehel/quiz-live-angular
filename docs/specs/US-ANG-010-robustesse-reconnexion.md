@@ -104,8 +104,8 @@ Voir [VISION.md](https://github.com/ODehel/quiz-live-server/blob/main/docs/share
 
 | # | Critère | Résultat attendu |
 |---|---|---|
-| CA-27 | `activeGameGuard` redirige vers `/dashboard` si `GameStateService.isPiloting()` est `false` à la navigation | Le guard est évalué à chaque navigation vers `/pilot/*` |
-| CA-28 | `noActiveGameGuard` redirige vers `/pilot/play` si `GameStateService.isPiloting()` est `true` à la navigation vers `/content/*` | Empêche l'accès au backoffice pendant une partie active |
+| CA-27 | `activeGameGuard` redirige vers `/dashboard` si `GameStateService.isPiloting()` est `false` à la navigation vers `/pilot/lobby` ou `/pilot/play` | Le guard est évalué à chaque navigation vers ces deux routes, pas vers `/pilot/results` (qui n'a que `authGuard`, pour ne pas intercepter la navigation automatique en `COMPLETED`, décision #88). `isPiloting()` est faux pour `null`, `COMPLETED` et `IN_ERROR` (décision #86). En `IN_ERROR`, le banner (CA-24 à CA-26) ne navigue pas et reste affiché sur `/pilot/play` ; une navigation fraîche vers `/pilot/lobby` ou `/pilot/play` est renvoyée vers `/dashboard` (décision #87) |
+| CA-28 | `noActiveGameGuard` redirige vers `/pilot/lobby` si `GameStateService.status()` vaut `PENDING`, sinon vers `/pilot/play`, si `GameStateService.isPiloting()` est `true` à la navigation vers `/content/*` | Empêche l'accès au backoffice pendant une partie active. Même règle de destination que le bouton de la bannière (US-ANG-002 CA-8, décision #89) |
 | CA-29 | Si `noActiveGameGuard` redirige, un toast informatif "Vous ne pouvez pas accéder au contenu pendant une partie" est affiché | L'utilisateur comprend pourquoi la navigation a été bloquée |
 | CA-30 | `authGuard` redirige vers `/error` si `AuthService.isReady()` est `false` | Garde défensive — ne devrait pas arriver après un démarrage réussi |
 

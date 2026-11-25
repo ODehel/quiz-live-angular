@@ -7,8 +7,10 @@ import { appConfig } from './app.config';
 import { ErrorService } from './core/error/error.service';
 import { ErrorPage } from './shared/ui/error-page/error-page';
 import { ThemeList } from './features/themes/theme-list';
-import { WEB_SOCKET_CONSTRUCTOR } from './core/websocket/websocket.providers';
 import { InertSocket } from './core/websocket/websocket.test-helpers';
+import { SERVER_ADDRESS, WEB_SOCKET_CONSTRUCTOR } from './core/websocket/websocket.providers';
+import { serverAddress } from './core/websocket/server-address';
+import { environment } from '../environments/environment';
 
 describe('appConfig', () => {
   let initStatus: ApplicationInitStatus;
@@ -198,5 +200,12 @@ describe('appConfig', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/');
+  });
+
+  it('provides the server address as the host and port of the configured wsUrl', () => {
+    const address = TestBed.inject(SERVER_ADDRESS);
+
+    expect(address).toBe(serverAddress(environment.wsUrl));
+    expect(address).not.toBe(environment.wsUrl);
   });
 });

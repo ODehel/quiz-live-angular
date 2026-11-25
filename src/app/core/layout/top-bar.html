@@ -1,0 +1,7 @@
+<header class="top-bar" data-testid="top-bar">
+    <div class="connection-status" data-testid="connection-status" [attr.data-state]="state()">
+        <span class="dot"></span>
+        <span data-testid="connection-label">{{label()}}</span>
+        <span class="server" data-testid="server-address">{{address}}</span>
+    </div>
+</header>

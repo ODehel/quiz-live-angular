@@ -6,6 +6,8 @@ import { appConfig } from './app.config';
 import { ErrorService } from './core/error/error.service';
 import { environment } from '../environments/environment';
 import { GameStateService } from './core/game-state/game-state.service';
+import { TopBar } from './core/layout/top-bar';
+import { serverAddress } from './core/websocket/server-address';
 import { WEB_SOCKET_CONSTRUCTOR } from './core/websocket/websocket.providers';
 import { ClosingFakeSocket, FakeSocket } from './core/websocket/websocket.test-helpers';
 import { fullSync as fullSyncMessage } from './core/game-state/game-state.test-helpers';
@@ -518,6 +520,75 @@ describe('appConfig WebSocket wiring', () => {
         expect(kept).toEqual(['quiz_buzzer_01', 'quiz_buzzer_02']);
         expect(gameState.connectedBuzzers()).toEqual(['quiz_buzzer_02', 'quiz_buzzer_03']);
       });
+    });
+  });
+
+  describe('the top bar reading the wired application', () => {
+    guardAgainstUnhandledErrors({ simulatedTime: true });
+
+    const topBar = () => TestBed.createComponent(TopBar);
+    const textOf = (fixture: ReturnType<typeof topBar>, testId: string) =>
+      (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`)?.textContent?.trim();
+
+    it('shows "Reconnexion…" and the hub address while the socket is open and auth_success is not received', async () => {
+      await startAndOpenSocket();
+      const fixture = topBar();
+
+      fixture.detectChanges();
+
+      expect(textOf(fixture, 'connection-label')).toBe('Reconnexion…');
+      expect(textOf(fixture, 'server-address')).toBe(serverAddress(environment.wsUrl));
+    });
+
+    it('shows "Connecté" once auth_success is received', async () => {
+      const socket = await startAndOpenSocket();
+      socket.simulateMessage(JSON.stringify({ type: 'auth_success' }));
+      const fixture = topBar();
+
+      fixture.detectChanges();
+
+      expect(textOf(fixture, 'connection-label')).toBe('Connecté');
+    });
+
+    it('keeps "Connecté" while the token is renewed on the open socket', async () => {
+      await startAndAnnounceExpiry();
+      httpMock().expectOne('/api/v1/token')
+        .flush({ token: 'fresh-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+      await vi.advanceTimersByTimeAsync(0);
+      const fixture = topBar();
+
+      fixture.detectChanges();
+
+      expect(textOf(fixture, 'connection-label')).toBe('Connecté');
+    });
+
+    it('shows "Reconnexion…" again when the socket closes', async () => {
+      const socket = await startAndOpenSocket();
+      socket.simulateMessage(JSON.stringify({ type: 'auth_success' }));
+      socket.simulateClose(1006);
+      const fixture = topBar();
+
+      fixture.detectChanges();
+
+      expect(textOf(fixture, 'connection-label')).toBe('Reconnexion…');
+    });
+
+    it('shows "Déconnecté" when opening the socket throws', async () => {
+      class ThrowingSocket {
+        constructor() {
+          throw new TypeError('invalid url');
+        }
+      }
+      TestBed.overrideProvider(WEB_SOCKET_CONSTRUCTOR, { useValue: ThrowingSocket });
+      startApplication();
+      httpMock().expectOne('/api/v1/token')
+        .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+      await initStatus().donePromise;
+      const fixture = topBar();
+
+      fixture.detectChanges();
+
+      expect(textOf(fixture, 'connection-label')).toBe('Déconnecté');
     });
   });
 });

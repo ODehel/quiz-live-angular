@@ -10,6 +10,7 @@ import { ThemeService } from './features/themes/theme.service';
 import { ThemeList } from './features/themes/theme-list';
 import { GameStateService } from './core/game-state/game-state.service';
 import { WebSocketService } from './core/websocket/websocket.service';
+import { SERVER_ADDRESS } from './core/websocket/websocket.providers';
 import { signal } from '@angular/core';
 import { NEVER, of } from 'rxjs';
 
@@ -25,7 +26,15 @@ describe('routes', () => {
         provideRouter(routes),
         { provide: AuthService, useValue: fakeAuthService },
         { provide: GameStateService, useFactory: () => new GameStateService({ messages$: NEVER, send: () => {} }) },
-        { provide: WebSocketService, useValue: { isDisconnected: signal(false).asReadonly() } },
+        {
+          provide: WebSocketService,
+          useValue: {
+            isConnected: signal(true).asReadonly(),
+            isReconnecting: signal(false).asReadonly(),
+            isDisconnected: signal(false).asReadonly(),
+          },
+        },
+        { provide: SERVER_ADDRESS, useValue: 'localhost:3000' },
         { provide: ThemeService, useValue: { list: () => of({ themes: [], total: 0 }) } }
       ],
     });
@@ -117,5 +126,62 @@ describe('routes', () => {
       .querySelector('[data-testid="error-screen"]');
     expect(TestBed.inject(Router).url).toBe('/error');
     expect(page).not.toBeNull();
+  });
+
+  describe('the top bar', () => {
+    const topBarIn = (harness: RouterTestingHarness) =>
+      (harness.fixture.nativeElement as HTMLElement).querySelector('[data-testid="top-bar"]');
+
+    it('is shown on /dashboard', async () => {
+      const harness = await RouterTestingHarness.create('/dashboard');
+
+      expect(topBarIn(harness)).not.toBeNull();
+    });
+
+    it('is shown on /themes', async () => {
+      const harness = await RouterTestingHarness.create('/themes');
+
+      expect(topBarIn(harness)).not.toBeNull();
+    });
+
+    it('is shown only once on a protected page', async () => {
+      const harness = await RouterTestingHarness.create('/dashboard');
+
+      const bars = (harness.fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="top-bar"]');
+      expect(bars.length).toBe(1);
+    });
+
+    it('stays when navigating from /dashboard to /themes', async () => {
+      const harness = await RouterTestingHarness.create('/dashboard');
+
+      await harness.navigateByUrl('/themes');
+
+      expect(topBarIn(harness)).not.toBeNull();
+      expect((harness.fixture.nativeElement as HTMLElement).querySelector('[data-testid="themes-title"]'))
+        .not.toBeNull();
+    });
+
+    it('is not shown on /error', async () => {
+      TestBed.inject(ErrorService).notFound();
+
+      const harness = await RouterTestingHarness.create('/error');
+
+      expect(topBarIn(harness)).toBeNull();
+    });
+
+    it('is not shown when /dashboard redirects to the error page', async () => {
+      sessionReady = false;
+
+      const harness = await RouterTestingHarness.create('/dashboard');
+
+      expect(topBarIn(harness)).toBeNull();
+    });
+
+    it('is not shown on /playground', async () => {
+      const harness = await RouterTestingHarness.create('/playground');
+
+      expect((harness.fixture.nativeElement as HTMLElement).querySelector('app-playground')).not.toBeNull();
+      expect(topBarIn(harness)).toBeNull();
+    });
   });
 });

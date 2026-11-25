@@ -9,6 +9,8 @@ import { stubIconIn } from './shared/ui/icon/icon.test-helpers';
 import { ThemeService } from './features/themes/theme.service';
 import { ThemeList } from './features/themes/theme-list';
 import { GameStateService } from './core/game-state/game-state.service';
+import { WebSocketService } from './core/websocket/websocket.service';
+import { signal } from '@angular/core';
 import { NEVER, of } from 'rxjs';
 
 describe('routes', () => {
@@ -23,6 +25,7 @@ describe('routes', () => {
         provideRouter(routes),
         { provide: AuthService, useValue: fakeAuthService },
         { provide: GameStateService, useFactory: () => new GameStateService({ messages$: NEVER, send: () => {} }) },
+        { provide: WebSocketService, useValue: { isDisconnected: signal(false).asReadonly() } },
         { provide: ThemeService, useValue: { list: () => of({ themes: [], total: 0 }) } }
       ],
     });

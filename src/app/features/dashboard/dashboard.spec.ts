@@ -1,16 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { GameStateService } from '../../core/game-state/game-state.service';
+import { WebSocketService } from '../../core/websocket/websocket.service';
 import { Dashboard } from './dashboard';
 
 describe('Dashboard', () => {
   let incoming: Subject<string>;
+  let disconnected: ReturnType<typeof signal<boolean>>;
 
   const render = () => {
     incoming = new Subject<string>();
     const hub = { messages$: incoming, send: () => {} };
+    disconnected = signal(false);
     TestBed.configureTestingModule({
-      providers: [{ provide: GameStateService, useFactory: () => new GameStateService(hub) }],
+      providers: [
+        { provide: GameStateService, useFactory: () => new GameStateService(hub) },
+        { provide: WebSocketService, useValue: { isDisconnected: disconnected.asReadonly() } },
+      ],
     });
     return TestBed.createComponent(Dashboard);
   };
@@ -134,14 +141,14 @@ describe('Dashboard', () => {
     expect(rowsOf(fixture)).toEqual([]);
   });
 
-  describe('while the list of buzzers has never been received', () => {
-    const expectUnknown = (fixture: ComponentFixture<Dashboard>) => {
-      expect(textOf(fixture, 'buzzers-metric-value')).toBe('—');
-      expect(textOf(fixture, 'buzzers-metric-subtitle')).toBe('');
-      expect(element(fixture).querySelector('[data-testid="buzzers-card"]')).not.toBeNull();
-      expect(rowsOf(fixture)).toEqual([]);
-    };
+  const expectUnknown = (fixture: ComponentFixture<Dashboard>) => {
+    expect(textOf(fixture, 'buzzers-metric-value')).toBe('—');
+    expect(textOf(fixture, 'buzzers-metric-subtitle')).toBe('');
+    expect(element(fixture).querySelector('[data-testid="buzzers-card"]')).not.toBeNull();
+    expect(rowsOf(fixture)).toEqual([]);
+  };
 
+  describe('while the list of buzzers has never been received', () => {
     it('shows a dash, no name and an empty card before any message', async () => {
       const fixture = render();
 
@@ -201,5 +208,50 @@ describe('Dashboard', () => {
 
     expect(textOf(fixture, 'buzzers-metric-value')).toBe('0');
     expect(rowsOf(fixture)).toEqual([]);
+  });
+
+  describe('while the application is disconnected', () => {
+    it('shows a dash, no name and an empty card instead of the last known list', async () => {
+      const fixture = render();
+      sync(['alice', 'bob']);
+      await fixture.whenStable();
+
+      disconnected.set(true);
+      await fixture.whenStable();
+
+      expectUnknown(fixture);
+    });
+
+    it('keeps hiding the buzzers when the list is known and empty, where it would show 0', async () => {
+      const fixture = render();
+      sync([]);
+      disconnected.set(true);
+      await fixture.whenStable();
+
+      expectUnknown(fixture);
+    });
+
+    it('keeps hiding the buzzers that connect, disconnect or are synced meanwhile', async () => {
+      const fixture = render();
+      sync(['alice']);
+      disconnected.set(true);
+
+      connect('bob');
+      sync(['carol', 'dave']);
+      disconnect('carol');
+      await fixture.whenStable();
+
+      expectUnknown(fixture);
+    });
+
+    it('does not hide the buzzers while the application is not disconnected', async () => {
+      const fixture = render();
+
+      sync(['alice', 'bob']);
+      await fixture.whenStable();
+
+      expect(textOf(fixture, 'buzzers-metric-value')).toBe('2');
+      expect(rowsOf(fixture)).toEqual(['alice', 'bob']);
+    });
   });
 });

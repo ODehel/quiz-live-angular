@@ -1,7 +1,7 @@
 # Dettes : quiz-live-angular
 
 Une entrée = une ligne commençant par `- **` (comptée par `scripts/session-open.ps1`).
-Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-25 (`chore(game-state): expose whether a game is being piloted`).
+Sévérité : 🔴 bloque ou trompe, 🟠 à traiter, sans urgence. Dernière mise à jour : 2026-11-25 (`docs(dashboard): specify where the active game banner takes the quiz name and the question total`).
 
 ## Mesurées pendant `feat(authentication): open the session before the first navigation` (#14)
 
@@ -475,3 +475,7 @@ Hypothèses du récap `RECAP-ANGULAR.md`, importées telles quelles. Rien ici n'
 ## Mesurées pendant `chore(game-state): expose whether a game is being piloted`
 
 - **`GameStateService.state` est un signal inscriptible exposé tel quel, alors que le CDC l'expose en lecture seule** 🟡 : l'architecture écrit `readonly state = this._state.asReadonly()` ; le code a `readonly state = signal<GameState>(...)` (`transitionTo` et `dispatch` l'écrivent par `state.update`, et rien n'empêche un consommateur de faire `state.set`). `status`, `isActive` et `isPiloting` en dérivent : un `state.set` extérieur les changerait aussi. Antérieur à cette session, non touché (hors périmètre : signaux dérivés seuls, YAGNI, aucun consommateur). À traiter en `refactor(game-state)` : `_state` privé + `state = _state.asReadonly()`, en adaptant les specs qui lisent ou écrivent `state`.
+
+## Mesurées pendant `docs(dashboard): specify where the active game banner takes the quiz name and the question total`
+
+- **`QuizService` est absent d'Angular alors que la bannière du dashboard (US-ANG-002 CA-6) et le lobby (US-ANG-007 CA-4) lisent `GET /api/v1/quizzes/:id`** 🟠 : décisions #91 et #92, le nom et le total (`question_ids.length`) viennent de cette route, que le hub n'expose pas encore (US-008 CA-24). Aucun `QuizService` dans `src/` (`src/app/features` ne contient que `dashboard`, `playground`, `questions`, `themes`) ; il est prévu par US-ANG-004 (CRUD) et le plan (3.1) (US-ANG-004 : `getById(id): Observable<QuizDetail>`, `QuizDetail` porte déjà `name` et `question_ids`, la forme suffit). À cadrer avant le `feat` de la bannière : la session qui crée `QuizService` (US-ANG-004, plan 3.1), le dashboard ne pouvant pas attendre le CRUD complet pour un seul `getById()`. Constat par `grep` et lecture, le 2026-11-25.

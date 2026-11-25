@@ -1,3 +1,4 @@
+import { signal } from "@angular/core";
 import { Observable, Subject } from "rxjs";
 import { messageType } from "./message-type";
 
@@ -32,6 +33,12 @@ export class WebSocketService {
   private currentSocket?: SocketLike;
   private readonly _messages$ = new Subject<string>();
   readonly messages$: Observable<string> = this._messages$.asObservable();
+  private readonly _isConnected = signal(false);
+  private readonly _isReconnecting = signal(false);
+  private readonly _isDisconnected = signal(false);
+  readonly isConnected = this._isConnected.asReadonly();
+  readonly isReconnecting = this._isReconnecting.asReadonly();
+  readonly isDisconnected = this._isDisconnected.asReadonly();
 
   constructor(
     private readonly webSocketConstructor: WebSocketCtor,
@@ -41,12 +48,15 @@ export class WebSocketService {
   ) { }
 
   connect(): void {
+    this._isReconnecting.set(true);
     let websocket: SocketLike;
     try {
       websocket = new this.webSocketConstructor(this.wsUrl);
     } catch {
       // Cause permanente (adresse invalide) : page d'erreur, aucune reprise.
       this.currentSocket = undefined;
+      this._isReconnecting.set(false);
+      this._isDisconnected.set(true);
       this.errorNavigator.goToError('connection-lost');
       return;
     }
@@ -54,17 +64,24 @@ export class WebSocketService {
 
     websocket.onmessage = (event) => {
       this._messages$.next(event.data);
-      if (this.isAuthSuccess(event.data)) this.attempt = 0;
+      if (this.isAuthSuccess(event.data)) {
+        this.attempt = 0;
+        this._isConnected.set(true);
+        this._isReconnecting.set(false);
+      }
       if (this.isTokenExpiringSoon(event.data)) {
         this.refreshAndSend(websocket);
       }
     };
     websocket.onclose = async (event) => {
       this.closedSockets.add(websocket);
+      this._isConnected.set(false);
       if (event.code === 4004) {
+        this._isReconnecting.set(false);
         this.errorNavigator.goToError('session-replaced');
         return;
       }
+      this._isReconnecting.set(true);
       if (event.code === 4002) {
         try {
           await this.tokenProvider.refresh();

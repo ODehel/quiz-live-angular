@@ -1,0 +1,54 @@
+:host {
+  display: block;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: var(--topbar-height);
+  padding: 8px 24px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.connection-status[data-state='connected'] .dot {
+  background: var(--semantic-success);
+  box-shadow: 0 0 6px var(--semantic-success);
+}
+
+.connection-status[data-state='reconnecting'] .dot {
+  background: var(--semantic-warning);
+  animation: pulse-soft 1s ease-in-out infinite;
+}
+
+.connection-status[data-state='disconnected'] .dot {
+  background: var(--semantic-danger);
+}
+
+.server {
+  min-width: 0;
+  color: var(--text-muted);
+  // Une valeur brute (wsUrl invalide) peut être longue : elle passe à la ligne, jamais tronquée.
+  overflow-wrap: anywhere;
+}

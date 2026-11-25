@@ -1,6 +1,6 @@
 :host {
   display: block;
-  min-height: 100vh;
+  min-height: calc(100vh - var(--topbar-height));
   padding: 28px;
   background:
     radial-gradient(ellipse 80% 60% at 50% -10%, var(--accent-primary-soft), transparent 60%),

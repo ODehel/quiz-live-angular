@@ -486,4 +486,232 @@ describe("WebSocket service", () => {
             expect(fakeTokenProvider.refresh).not.toHaveBeenCalled();
         });
     });
+
+    describe("connection state", () => {
+        beforeEach(() => vi.useFakeTimers());
+        afterEach(() => vi.useRealTimers());
+        it("should be neither connected, reconnecting nor disconnected before the socket is opened", () => {
+            expect(service.isConnected()).toBe(false);
+            expect(service.isReconnecting()).toBe(false);
+            expect(service.isDisconnected()).toBe(false);
+        });
+        it("should be reconnecting as soon as the socket is opened for the very first time", () => {
+            service.connect();
+
+            expect(service.isReconnecting()).toBe(true);
+        });
+        it("should not be connected when the socket is open but auth_success is not received yet", () => {
+            service.connect();
+            capturedSocket!.simulateOpen();
+
+            expect(service.isConnected()).toBe(false);
+            expect(service.isReconnecting()).toBe(true);
+        });
+        it("should not be connected on a message other than auth_success", () => {
+            service.connect();
+            capturedSocket!.simulateOpen();
+            capturedSocket!.simulateMessage('{"type":"auth_error"}');
+            capturedSocket!.simulateMessage('{"type":"game_state_sync"}');
+            capturedSocket!.simulateMessage('not json');
+
+            expect(service.isConnected()).toBe(false);
+            expect(service.isReconnecting()).toBe(true);
+        });
+        it("should be connected and no longer reconnecting once auth_success is received", () => {
+            service.connect();
+            capturedSocket!.simulateOpen();
+            capturedSocket!.simulateMessage('{"type":"auth_success"}');
+
+            expect(service.isConnected()).toBe(true);
+            expect(service.isReconnecting()).toBe(false);
+            expect(service.isDisconnected()).toBe(false);
+        });
+        it("should no longer be connected, but reconnecting, as soon as the socket closes", () => {
+            service.connect();
+            capturedSocket!.simulateMessage('{"type":"auth_success"}');
+            capturedSocket!.simulateClose(1006);
+
+            expect(service.isConnected()).toBe(false);
+            expect(service.isReconnecting()).toBe(true);
+            expect(service.isDisconnected()).toBe(false);
+        });
+        it("should stay reconnecting during the backoff wait and until auth_success of the next socket", () => {
+            service.connect();
+            capturedSocket!.simulateMessage('{"type":"auth_success"}');
+            capturedSocket!.simulateClose(1006);
+
+            vi.advanceTimersByTime(999);
+            expect(callCount).toBe(1);
+            expect(service.isReconnecting()).toBe(true);
+
+            vi.advanceTimersByTime(1);
+            expect(callCount).toBe(2);
+            capturedSocket!.simulateOpen();
+            expect(service.isReconnecting()).toBe(true);
+            expect(service.isConnected()).toBe(false);
+
+            capturedSocket!.simulateMessage('{"type":"auth_success"}');
+            expect(service.isConnected()).toBe(true);
+            expect(service.isReconnecting()).toBe(false);
+        });
+        it("should stay reconnecting when the connection is lost before any auth_success, however long the retries last", () => {
+            service.connect();
+            for (let i = 0; i < 4; i++) {
+                capturedSocket!.simulateClose(1006);
+                expect(service.isReconnecting()).toBe(true);
+                vi.advanceTimersByTime(Math.pow(2, i) * 1000);
+                expect(service.isReconnecting()).toBe(true);
+            }
+
+            expect(service.isConnected()).toBe(false);
+            expect(service.isDisconnected()).toBe(false);
+        });
+        it("should be none of the three states when the hub closes with 4004", () => {
+            service.connect();
+            capturedSocket!.simulateMessage('{"type":"auth_success"}');
+            capturedSocket!.simulateClose(4004);
+            vi.advanceTimersByTime(120000);
+
+            expect(service.isConnected()).toBe(false);
+            expect(service.isReconnecting()).toBe(false);
+            expect(service.isDisconnected()).toBe(false);
+        });
+        it("should be none of the three states when the hub closes with 4004 before auth_success", () => {
+            service.connect();
+            capturedSocket!.simulateClose(4004);
+
+            expect(service.isConnected()).toBe(false);
+            expect(service.isReconnecting()).toBe(false);
+            expect(service.isDisconnected()).toBe(false);
+        });
+        it("should stay connected and not reconnecting while the token is renewed", async () => {
+            service.connect();
+            capturedSocket!.simulateMessage('{"type":"auth_success"}');
+
+            capturedSocket!.simulateMessage('{"type":"token_expiring_soon"}');
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(JSON.parse(capturedSocket!.sentMessage!).type).toBe('auth_refresh');
+            expect(service.isConnected()).toBe(true);
+            expect(service.isReconnecting()).toBe(false);
+
+            capturedSocket!.simulateMessage('{"type":"auth_success"}');
+
+            expect(service.isConnected()).toBe(true);
+            expect(service.isReconnecting()).toBe(false);
+            expect(service.isDisconnected()).toBe(false);
+        });
+        it("should stay connected while the token renewal is retried, then go through the reconnection when it gives up", async () => {
+            fakeTokenProvider.refresh.mockImplementation(() => Promise.reject(new Error('network down')));
+            service.connect();
+            capturedSocket!.simulateMessage('{"type":"auth_success"}');
+
+            capturedSocket!.simulateMessage('{"type":"token_expiring_soon"}');
+            await vi.advanceTimersByTimeAsync(9999);
+
+            expect(service.isConnected()).toBe(true);
+            expect(service.isReconnecting()).toBe(false);
+
+            await vi.advanceTimersByTimeAsync(1);
+
+            expect(capturedSocket!.closeCalls).toBe(1);
+            expect(service.isConnected()).toBe(false);
+            expect(service.isReconnecting()).toBe(true);
+            expect(service.isDisconnected()).toBe(false);
+        });
+        it("should be reconnecting, not connected, while the token is renewed after a 4002 close", async () => {
+            let resolveRefresh!: () => void;
+            fakeTokenProvider.refresh.mockImplementationOnce(() => new Promise<void>((resolve) => { resolveRefresh = resolve; }));
+            service.connect();
+            capturedSocket!.simulateMessage('{"type":"auth_success"}');
+
+            capturedSocket!.simulateClose(4002);
+
+            expect(service.isConnected()).toBe(false);
+            expect(service.isReconnecting()).toBe(true);
+
+            resolveRefresh();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(service.isReconnecting()).toBe(true);
+        });
+        it("should never be in two states at once along a connection, a loss and a recovery", () => {
+            const exclusive = (): void => {
+                const raised = [service.isConnected(), service.isReconnecting(), service.isDisconnected()].filter(Boolean);
+                expect(raised.length).toBeLessThanOrEqual(1);
+            };
+            exclusive();
+            service.connect();
+            exclusive();
+            capturedSocket!.simulateOpen();
+            exclusive();
+            capturedSocket!.simulateMessage('{"type":"auth_success"}');
+            exclusive();
+            capturedSocket!.simulateClose(1006);
+            exclusive();
+            vi.advanceTimersByTime(1000);
+            exclusive();
+            capturedSocket!.simulateMessage('{"type":"auth_success"}');
+            exclusive();
+            capturedSocket!.simulateClose(4004);
+            exclusive();
+        });
+        it("should expose the three states as read-only signals", () => {
+            for (const state of [service.isConnected, service.isReconnecting, service.isDisconnected]) {
+                expect('set' in state).toBe(false);
+            }
+        });
+        describe("when opening the socket throws", () => {
+            let failNextOpenings: boolean;
+            let failingService: WebSocketService;
+            const sockets: ClosingFakeSocket[] = [];
+            beforeEach(() => {
+                failNextOpenings = true;
+                sockets.length = 0;
+                const ctor = class extends ClosingFakeSocket {
+                    constructor(url: string) {
+                        if (failNextOpenings) throw new TypeError('invalid url');
+                        super(url);
+                        sockets.push(this);
+                    }
+                };
+                failingService = new WebSocketService(ctor, 'not a url', fakeTokenProvider, fakeErrorNavigator);
+            });
+            it("should be disconnected, and neither connected nor reconnecting, when the first opening throws", () => {
+                failingService.connect();
+
+                expect(failingService.isDisconnected()).toBe(true);
+                expect(failingService.isConnected()).toBe(false);
+                expect(failingService.isReconnecting()).toBe(false);
+            });
+            it("should be disconnected, and neither connected nor reconnecting, when the reconnection throws", () => {
+                failNextOpenings = false;
+                failingService.connect();
+                sockets[0].simulateMessage('{"type":"auth_success"}');
+                failNextOpenings = true;
+                sockets[0].simulateClose(1006);
+                expect(failingService.isReconnecting()).toBe(true);
+                expect(failingService.isDisconnected()).toBe(false);
+
+                vi.advanceTimersByTime(1000);
+
+                expect(failingService.isDisconnected()).toBe(true);
+                expect(failingService.isConnected()).toBe(false);
+                expect(failingService.isReconnecting()).toBe(false);
+            });
+            it("should stay disconnected, whatever happens afterwards", () => {
+                failNextOpenings = false;
+                failingService.connect();
+                failNextOpenings = true;
+                sockets[0].simulateClose(1006);
+                vi.advanceTimersByTime(1000);
+
+                vi.advanceTimersByTime(120000);
+
+                expect(failingService.isDisconnected()).toBe(true);
+                expect(failingService.isConnected()).toBe(false);
+                expect(failingService.isReconnecting()).toBe(false);
+            });
+        });
+    });
 });

@@ -241,45 +241,58 @@ requestSync(): void { this.ws.send({ type: 'request_game_state' }); }
 export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   {
-    path: 'dashboard',
-    canActivate: [authGuard],
-    loadComponent: () => import('./dashboard/dashboard.component')
-  },
-  {
-    path: 'content',
-    canActivate: [authGuard, noActiveGameGuard],
-    loadComponent: () => import('./content/content-shell.component'),
-    children: [
-      { path: '',              redirectTo: 'questions', pathMatch: 'full' },
-      { path: 'themes',        loadComponent: () => import('./content/themes/theme-list.component') },
-      { path: 'questions',     loadComponent: () => import('./content/questions/question-list.component') },
-      { path: 'questions/new', loadComponent: () => import('./content/questions/question-form.component') },
-      { path: 'questions/:id', loadComponent: () => import('./content/questions/question-form.component') },
-      { path: 'quizzes',       loadComponent: () => import('./content/quizzes/quiz-list.component') },
-      { path: 'quizzes/new',   loadComponent: () => import('./content/quizzes/quiz-form.component') },
-      { path: 'quizzes/:id',   loadComponent: () => import('./content/quizzes/quiz-form.component') },
-      { path: 'sounds',        loadComponent: () => import('./content/sounds/sound-list.component') },
-    ]
-  },
-  {
-    path: 'games',
+    // Shell (topbar et sidebar) : route parente sans chemin. Elle porte authGuard pour toutes les pages
+    // protégées, qui en sont les enfants : ni dashboard, ni content, ni games, ni pilot ne le répètent
+    // (décisions #81, #104, #105 et #113). Implémenté pour dashboard et content/themes ; le reste est à venir.
+    path: '',
+    component: Shell,
     canActivate: [authGuard],
     children: [
-      { path: '',           loadComponent: () => import('./games/game-list.component') },
-      { path: ':id/results', loadComponent: () => import('./games/game-results.component') },
-    ]
-  },
-  {
-    path: 'pilot',
-    canActivate: [authGuard],
-    loadComponent: () => import('./pilot/pilot-shell.component'),
-    children: [
-      { path: '',        redirectTo: 'lobby', pathMatch: 'full' },
-      // activeGameGuard sur lobby et play seulement : en COMPLETED, isPiloting() est faux et
-      // la navigation automatique vers /pilot/results ne doit pas être interceptée (décision #88)
-      { path: 'lobby',   canActivate: [activeGameGuard], loadComponent: () => import('./pilot/lobby/lobby.component') },
-      { path: 'play',    canActivate: [activeGameGuard], loadComponent: () => import('./pilot/play/play.component') },
-      { path: 'results', loadComponent: () => import('./games/game-results.component') },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./dashboard/dashboard.component')
+      },
+      {
+        path: 'content',
+        // Décidé, non implémenté (décisions #117 et #118) : noActiveGameGuard évalué par canActivateChild, donc à
+        // chaque navigation vers un enfant de content, y compris d'une page de contenu à une autre pendant une partie
+        // (US-ANG-002 CA-22). Aujourd'hui le code pose `canActivate: [noActiveGameGuard]` sur content (décision #113) :
+        // évalué à l'entrée dans content seulement, sans effet tant que themes est le seul enfant ; passage à
+        // canActivateChild avec le deuxième enfant (US-ANG-003).
+        canActivateChild: [noActiveGameGuard],
+        // Pas de content-shell.component aujourd'hui : route sans composant (décision #105).
+        loadComponent: () => import('./content/content-shell.component'),
+        children: [
+          { path: '',              redirectTo: 'questions', pathMatch: 'full' },
+          { path: 'themes',        loadComponent: () => import('./content/themes/theme-list.component') },
+          { path: 'questions',     loadComponent: () => import('./content/questions/question-list.component') },
+          { path: 'questions/new', loadComponent: () => import('./content/questions/question-form.component') },
+          { path: 'questions/:id', loadComponent: () => import('./content/questions/question-form.component') },
+          { path: 'quizzes',       loadComponent: () => import('./content/quizzes/quiz-list.component') },
+          { path: 'quizzes/new',   loadComponent: () => import('./content/quizzes/quiz-form.component') },
+          { path: 'quizzes/:id',   loadComponent: () => import('./content/quizzes/quiz-form.component') },
+          { path: 'sounds',        loadComponent: () => import('./content/sounds/sound-list.component') },
+        ]
+      },
+      {
+        path: 'games',
+        children: [
+          { path: '',           loadComponent: () => import('./games/game-list.component') },
+          { path: ':id/results', loadComponent: () => import('./games/game-results.component') },
+        ]
+      },
+      {
+        path: 'pilot',
+        loadComponent: () => import('./pilot/pilot-shell.component'),
+        children: [
+          { path: '',        redirectTo: 'lobby', pathMatch: 'full' },
+          // activeGameGuard sur lobby et play seulement : en COMPLETED, isPiloting() est faux et
+          // la navigation automatique vers /pilot/results ne doit pas être interceptée (décision #88)
+          { path: 'lobby',   canActivate: [activeGameGuard], loadComponent: () => import('./pilot/lobby/lobby.component') },
+          { path: 'play',    canActivate: [activeGameGuard], loadComponent: () => import('./pilot/play/play.component') },
+          { path: 'results', loadComponent: () => import('./games/game-results.component') },
+        ]
+      },
     ]
   },
   { path: 'error', loadComponent: () => import('./error/error.component') },
@@ -308,15 +321,25 @@ export const activeGameGuard: CanActivateFn = () => {
     : inject(Router).createUrlTree(['/dashboard']);
 };
 
-// no-active-game.guard.ts — Pas de partie active (backoffice)
-// Destination : /pilot/lobby si status() vaut PENDING, sinon /pilot/play (décision #89)
+// no-active-game.guard.ts (core/game-state/) — Pas de partie active (backoffice)
+// Destination : /pilot/lobby si status() vaut PENDING, sinon /pilot/play (décision #89).
+// Rend un UrlTree et non `navigate()` puis `false` : le Router remplace la navigation courante (décision #112).
+// Passe (true) si isPiloting() est faux (null, COMPLETED, IN_ERROR), et en état « Déconnecté » quelle que soit
+// la valeur de isPiloting() : aucune partie n'est connue (US-ANG-002 CA-29). L'état « Déconnecté » est testé
+// avant toute lecture du statut.
 export const noActiveGameGuard: CanActivateFn = () => {
   const gs = inject(GameStateService);
-  if (!gs.isPiloting()) return true;
-  inject(Router).navigate([gs.status() === 'PENDING' ? '/pilot/lobby' : '/pilot/play']);
-  return false;
+  if (!gs.isPiloting() || inject(WebSocketService).isDisconnected()) return true;
+  return inject(Router).parseUrl(gs.status() === 'PENDING' ? '/pilot/lobby' : '/pilot/play');
 };
 ```
+
+> **Où `noActiveGameGuard` est posé (décisions #113, #115, #117 et #118).** Réel : `canActivate` sur le parent
+> `content`, évalué à l'entrée dans `content` seulement. Décidé, non implémenté : `canActivateChild` sur `content`,
+> pour que le guard vaille aussi d'une page de contenu à une autre pendant une partie (US-ANG-002 CA-22, décision
+> #117) ; le modèle est un choix d'implémentation non observable (décision #118), à faire avec le deuxième enfant de
+> `content` (US-ANG-003, `DEBTS.md`). Le guard ne s'évalue qu'à la navigation : une page de contenu déjà ouverte
+> quand une partie démarre reste inchangée, sans redirection (décision #115).
 
 > **Quels statuts comptent comme pilotage (décisions #86 à #89).** `isPiloting()` est vrai pour `PENDING`, `OPEN`
 > et les quatre `QUESTION_*` ; il est faux pour `null` (aucune partie connue), `COMPLETED` et `IN_ERROR`.
@@ -413,4 +436,4 @@ Les sous-composants **ne lisent que des signals computed** et **n'injectent pas 
 
 ---
 
-**Dernière mise à jour** : 2026-11-22
+**Dernière mise à jour** : 2026-11-26

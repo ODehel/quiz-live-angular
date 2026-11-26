@@ -178,6 +178,77 @@ describe('Sidebar', () => {
     });
   });
 
+  describe('highlights the link of the current route while a game is in progress', () => {
+    const isHighlighted = (fixture: ComponentFixture<Sidebar>, testId: string) =>
+      link(fixture, testId)?.classList.contains('active') === true &&
+      link(fixture, testId)?.getAttribute('aria-current') === 'page';
+
+    it('keeps the disabled "Thèmes" highlighted on /content/themes', async () => {
+      const fixture = render();
+      piloting.set(true);
+      await TestBed.inject(Router).navigateByUrl('/content/themes');
+
+      await fixture.whenStable();
+
+      const themes = link(fixture, 'nav-themes');
+      expect(isHighlighted(fixture, 'nav-themes')).toBe(true);
+      expect(themes?.classList.contains('locked')).toBe(true);
+      expect(themes?.getAttribute('aria-disabled')).toBe('true');
+      expect(themes?.hasAttribute('href')).toBe(false);
+      expect(tooltipOf(fixture, 'nav-themes')).toBe('Indisponible pendant une partie');
+    });
+
+    it('does not highlight the disabled "Thèmes" on another route, and still highlights "Tableau de bord"', async () => {
+      const fixture = render();
+      piloting.set(true);
+      await TestBed.inject(Router).navigateByUrl('/dashboard');
+
+      await fixture.whenStable();
+
+      expect(link(fixture, 'nav-themes')?.classList.contains('active')).toBe(false);
+      expect(link(fixture, 'nav-themes')?.hasAttribute('aria-current')).toBe(false);
+      expect(isHighlighted(fixture, 'nav-dashboard')).toBe(true);
+    });
+
+    it('highlights "Thèmes" as soon as a game starts while /content/themes is open', async () => {
+      const fixture = render();
+      await TestBed.inject(Router).navigateByUrl('/content/themes');
+      await fixture.whenStable();
+
+      piloting.set(true);
+      await fixture.whenStable();
+
+      expect(isHighlighted(fixture, 'nav-themes')).toBe(true);
+      expect(link(fixture, 'nav-themes')?.classList.contains('locked')).toBe(true);
+    });
+
+    it('keeps "Thèmes" highlighted when the game ends while /content/themes is open', async () => {
+      const fixture = render();
+      piloting.set(true);
+      await TestBed.inject(Router).navigateByUrl('/content/themes');
+      await fixture.whenStable();
+
+      piloting.set(false);
+      await fixture.whenStable();
+
+      expect(isHighlighted(fixture, 'nav-themes')).toBe(true);
+      expect(link(fixture, 'nav-themes')?.classList.contains('locked')).toBe(false);
+    });
+
+    it('highlights an enabled "Thèmes" on /content/themes while disconnected, even if a game is in progress', async () => {
+      const fixture = render();
+      piloting.set(true);
+      disconnected.set(true);
+      await TestBed.inject(Router).navigateByUrl('/content/themes');
+
+      await fixture.whenStable();
+
+      expect(isHighlighted(fixture, 'nav-themes')).toBe(true);
+      expect(link(fixture, 'nav-themes')?.classList.contains('locked')).toBe(false);
+      expect(link(fixture, 'nav-themes')?.getAttribute('href')).toBe('/content/themes');
+    });
+  });
+
   describe('while no game is in progress', () => {
     it('keeps "Thèmes" enabled, clickable by href, without tooltip', async () => {
       const fixture = render();

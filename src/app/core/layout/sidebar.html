@@ -1,6 +1,6 @@
 <nav data-testid="sidebar">
     <a data-testid="nav-dashboard" routerLink="/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page">Tableau de bord</a>
     <span class="nav-item" [attr.title]="contentLocked() ? lockedTooltip : null">
-        <a data-testid="nav-themes" [routerLink]="contentLocked() ? null : '/content/themes'" routerLinkActive="active" ariaCurrentWhenActive="page" [class.locked]="contentLocked()" [attr.aria-disabled]="contentLocked() ? 'true' : null">Thèmes</a>
+        <a data-testid="nav-themes" [routerLink]="contentLocked() ? null : '/content/themes'" [class.active]="themesActive()" [attr.aria-current]="themesActive() ? 'page' : null" [class.locked]="contentLocked()" [attr.aria-disabled]="contentLocked() ? 'true' : null">Thèmes</a>
     </span>
 </nav>

@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { GameStateService } from '../game-state/game-state.service';
+import { WebSocketService } from '../websocket/websocket.service';
 
 @Component({
     selector: 'app-sidebar',
@@ -8,4 +10,10 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     imports: [RouterLink, RouterLinkActive],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class Sidebar { }
+export class Sidebar {
+    private readonly gameState = inject(GameStateService);
+    private readonly webSocket = inject(WebSocketService);
+    protected readonly lockedTooltip = 'Indisponible pendant une partie';
+    // Liens du groupe Contenu : coupés pendant une partie, sauf en état « Déconnecté » (aucune partie connue).
+    protected readonly contentLocked = computed(() => this.gameState.isPiloting() && !this.webSocket.isDisconnected());
+}

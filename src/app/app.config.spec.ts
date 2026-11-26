@@ -7,6 +7,7 @@ import { appConfig } from './app.config';
 import { ErrorService } from './core/error/error.service';
 import { ErrorPage } from './shared/ui/error-page/error-page';
 import { ThemeList } from './features/themes/theme-list';
+import { QuestionList } from './features/questions/question-list';
 import { InertSocket } from './core/websocket/websocket.test-helpers';
 import { SERVER_ADDRESS, WEB_SOCKET_CONSTRUCTOR } from './core/websocket/websocket.providers';
 import { serverAddress } from './core/websocket/server-address';
@@ -171,6 +172,36 @@ describe('appConfig', () => {
 
     const card = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="theme-card"]');
     expect(card?.querySelector('svg')).not.toBeNull();
+  });
+
+  it('draws the type, duration and media icons on the question cards', async () => {
+    startApplication();
+    httpMock.expectOne('/api/v1/token')
+      .flush({ token: 'fake-jwt', expiresIn: 3600, tokenType: 'Bearer' });
+    await initStatus.donePromise;
+
+    const fixture = TestBed.createComponent(QuestionList);
+    const question = { theme_id: 'theme-1', level: 3, time_limit: 30, points: 200, image_path: '/uploads/a.jpg', audio_path: '/uploads/a.mp3' };
+    httpMock.expectOne('/api/v1/questions?page=1&limit=20').flush({
+      data: [
+        { ...question, id: 'question-1', title: 'Première', type: 'MCQ' },
+        { ...question, id: 'question-2', title: 'Seconde', type: 'SPEED' },
+      ],
+      page: 1,
+      limit: 20,
+      total: 2,
+      total_pages: 1,
+    });
+    httpMock.expectOne('/api/v1/themes?page=1&limit=100').flush({ data: [], page: 1, limit: 100, total: 0, total_pages: 0 });
+    await fixture.whenStable();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const iconsOf = (testId: string) => Array.from(root.querySelectorAll(`[data-testid="${testId}"]`))
+      .map(element => element.querySelector('svg') instanceof SVGElement);
+    expect(iconsOf('question-type')).toEqual([true, true]);
+    expect(iconsOf('question-duration')).toEqual([true, true]);
+    expect(iconsOf('question-image')).toEqual([true, true]);
+    expect(iconsOf('question-audio')).toEqual([true, true]);
   });
 
   it('draws the plus icon on the new theme button and the cross in its dialog', async () => {

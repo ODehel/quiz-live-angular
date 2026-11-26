@@ -1,0 +1,43 @@
+<header class="page-header">
+    <h1 class="page-title" data-testid="questions-title">Questions</h1>
+    @if (total() !== undefined) {
+        <span class="page-count" data-testid="question-total">{{total()}} au total</span>
+    }
+</header>
+<div class="cards-grid">
+    @for (question of cards(); track question.id) {
+        <article class="q-card" [class.speed]="question.type === 'SPEED'" data-testid="question-card">
+            <div class="q-card-header">
+                <div class="q-card-tags">
+                    <span class="tag" [class.tag-mcq]="question.type === 'MCQ'" [class.tag-speed]="question.type === 'SPEED'" data-testid="question-type">
+                        <app-icon [name]="question.type === 'MCQ' ? 'list' : 'zap'" [size]="10" />{{question.type}}
+                    </span>
+                    @if (question.themeName !== undefined) {
+                        <span class="tag tag-theme" data-testid="question-theme">{{question.themeName}}</span>
+                    }
+                </div>
+                <span class="q-card-points" data-testid="question-points">+{{question.points}}</span>
+            </div>
+            <h2 class="q-card-title" data-testid="question-title">{{question.title}}</h2>
+            <div class="q-card-level">
+                <div class="level-dots">
+                    @for (filled of question.levelDots; track $index) {
+                        <span class="level-dot" [class.filled]="filled" data-testid="level-dot"></span>
+                    }
+                </div>
+                <span class="level-label" data-testid="question-level">Niveau {{question.level}}</span>
+            </div>
+            <div class="q-card-footer">
+                <div class="q-card-meta">
+                    <span class="q-card-meta-item" data-testid="question-duration"><app-icon name="clock" [size]="13" />{{question.timeLimit}}s</span>
+                    @if (question.imagePath !== null) {
+                        <span class="q-card-meta-item has-media" data-testid="question-image"><app-icon name="image" [size]="13" /></span>
+                    }
+                    @if (question.audioPath !== null) {
+                        <span class="q-card-meta-item has-media" data-testid="question-audio"><app-icon name="music" [size]="13" /></span>
+                    }
+                </div>
+            </div>
+        </article>
+    }
+</div>

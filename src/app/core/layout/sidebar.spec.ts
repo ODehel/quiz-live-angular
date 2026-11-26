@@ -22,6 +22,7 @@ describe('Sidebar', () => {
         provideRouter([
           { path: 'dashboard', component: BlankPage },
           { path: 'content/themes', component: BlankPage },
+          { path: 'content/questions', component: BlankPage },
         ]),
       ],
     });
@@ -58,8 +59,103 @@ describe('Sidebar', () => {
     });
   });
 
+  describe('the "Questions" link', () => {
+    it('shows "Questions" after "Thèmes", which leads to /content/questions', async () => {
+      const fixture = render();
+
+      await fixture.whenStable();
+
+      const questions = link(fixture, 'nav-questions');
+      expect(questions?.textContent?.trim()).toBe('Questions');
+      expect(questions?.getAttribute('href')).toBe('/content/questions');
+      expect(link(fixture, 'nav-themes')?.parentElement?.nextElementSibling).toBe(questions?.parentElement);
+    });
+
+    it('is highlighted on /content/questions, and neither "Thèmes" nor "Tableau de bord" is', async () => {
+      const fixture = render();
+      await TestBed.inject(Router).navigateByUrl('/content/questions');
+
+      await fixture.whenStable();
+
+      expect(link(fixture, 'nav-questions')?.classList.contains('active')).toBe(true);
+      expect(link(fixture, 'nav-questions')?.getAttribute('aria-current')).toBe('page');
+      for (const other of ['nav-themes', 'nav-dashboard']) {
+        expect(link(fixture, other)?.classList.contains('active')).toBe(false);
+        expect(link(fixture, other)?.hasAttribute('aria-current')).toBe(false);
+      }
+    });
+
+    it('is not highlighted on /content/themes', async () => {
+      const fixture = render();
+      await TestBed.inject(Router).navigateByUrl('/content/themes');
+
+      await fixture.whenStable();
+
+      expect(link(fixture, 'nav-questions')?.classList.contains('active')).toBe(false);
+      expect(link(fixture, 'nav-questions')?.hasAttribute('aria-current')).toBe(false);
+    });
+
+    it('is disabled like "Thèmes" while a game is in progress, with the same tooltip', async () => {
+      const fixture = render();
+      piloting.set(true);
+
+      await fixture.whenStable();
+
+      const questions = link(fixture, 'nav-questions') as HTMLElement;
+      const style = getComputedStyle(questions);
+      expect(style.opacity).toBe('0.4');
+      expect(style.pointerEvents).toBe('none');
+      expect(questions.hasAttribute('href')).toBe(false);
+      expect(questions.getAttribute('aria-disabled')).toBe('true');
+      expect(tooltipOf(fixture, 'nav-questions')).toBe('Indisponible pendant une partie');
+    });
+
+    it('stays highlighted while disabled on /content/questions, and "Thèmes" does not take over', async () => {
+      const fixture = render();
+      piloting.set(true);
+      await TestBed.inject(Router).navigateByUrl('/content/questions');
+
+      await fixture.whenStable();
+
+      const questions = link(fixture, 'nav-questions');
+      expect(questions?.classList.contains('active')).toBe(true);
+      expect(questions?.getAttribute('aria-current')).toBe('page');
+      expect(questions?.classList.contains('locked')).toBe(true);
+      expect(link(fixture, 'nav-themes')?.classList.contains('active')).toBe(false);
+    });
+
+    it('is enabled again as soon as no game is in progress', async () => {
+      const fixture = render();
+      piloting.set(true);
+      await fixture.whenStable();
+
+      piloting.set(false);
+      await fixture.whenStable();
+
+      const questions = link(fixture, 'nav-questions');
+      expect(questions?.classList.contains('locked')).toBe(false);
+      expect(questions?.getAttribute('href')).toBe('/content/questions');
+      expect(questions?.hasAttribute('aria-disabled')).toBe(false);
+      expect(tooltipOf(fixture, 'nav-questions')).toBeUndefined();
+    });
+
+    it('stays enabled while disconnected, even if a game is in progress', async () => {
+      const fixture = render();
+      piloting.set(true);
+      disconnected.set(true);
+
+      await fixture.whenStable();
+
+      const questions = link(fixture, 'nav-questions');
+      expect(questions?.classList.contains('locked')).toBe(false);
+      expect(questions?.getAttribute('href')).toBe('/content/questions');
+      expect(questions?.hasAttribute('aria-disabled')).toBe(false);
+      expect(tooltipOf(fixture, 'nav-questions')).toBeUndefined();
+    });
+  });
+
   describe('links whose route does not exist yet', () => {
-    it('leaves Questions, Quiz, Jingles and Toutes les parties out of the DOM, with nothing left behind', async () => {
+    it('leaves Quiz, Jingles and Toutes les parties out of the DOM, with nothing left behind', async () => {
       const fixture = render();
 
       await fixture.whenStable();
@@ -68,11 +164,12 @@ describe('Sidebar', () => {
       expect(Array.from(nav?.children ?? []).map((child) => child.textContent?.trim())).toEqual([
         'Tableau de bord',
         'Thèmes',
+        'Questions',
       ]);
-      for (const label of ['Questions', 'Quiz', 'Jingles', 'Toutes les parties']) {
+      for (const label of ['Quiz', 'Jingles', 'Toutes les parties']) {
         expect(nav?.textContent).not.toContain(label);
       }
-      expect(element(fixture).querySelectorAll('a').length).toBe(2);
+      expect(element(fixture).querySelectorAll('a').length).toBe(3);
     });
   });
 

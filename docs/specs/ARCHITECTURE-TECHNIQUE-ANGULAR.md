@@ -254,11 +254,9 @@ export const routes: Routes = [
       },
       {
         path: 'content',
-        // Décidé, non implémenté (décisions #117 et #118) : noActiveGameGuard évalué par canActivateChild, donc à
-        // chaque navigation vers un enfant de content, y compris d'une page de contenu à une autre pendant une partie
-        // (US-ANG-002 CA-22). Aujourd'hui le code pose `canActivate: [noActiveGameGuard]` sur content (décision #113) :
-        // évalué à l'entrée dans content seulement, sans effet tant que themes est le seul enfant ; passage à
-        // canActivateChild avec le deuxième enfant (US-ANG-003).
+        // Implémenté le 2026-11-26 (décisions #117, #118 et #123) : noActiveGameGuard évalué par canActivateChild,
+        // donc à chaque navigation vers un enfant de content, y compris d'une page de contenu à une autre pendant
+        // une partie (US-ANG-002 CA-22). Posé avec le deuxième enfant de content (questions, US-ANG-003).
         canActivateChild: [noActiveGameGuard],
         // Pas de content-shell.component aujourd'hui : route sans composant (décision #105).
         loadComponent: () => import('./content/content-shell.component'),
@@ -334,11 +332,10 @@ export const noActiveGameGuard: CanActivateFn = () => {
 };
 ```
 
-> **Où `noActiveGameGuard` est posé (décisions #113, #115, #117 et #118).** Réel : `canActivate` sur le parent
-> `content`, évalué à l'entrée dans `content` seulement. Décidé, non implémenté : `canActivateChild` sur `content`,
-> pour que le guard vaille aussi d'une page de contenu à une autre pendant une partie (US-ANG-002 CA-22, décision
-> #117) ; le modèle est un choix d'implémentation non observable (décision #118), à faire avec le deuxième enfant de
-> `content` (US-ANG-003, `DEBTS.md`). Le guard ne s'évalue qu'à la navigation : une page de contenu déjà ouverte
+> **Où `noActiveGameGuard` est posé (décisions #113, #115, #117, #118 et #123).** `canActivateChild` sur le parent
+> `content` (implémenté le 2026-11-26 avec le deuxième enfant, `questions`) : le guard vaut aussi d'une page de
+> contenu à une autre pendant une partie (US-ANG-002 CA-22, décision #117) ; le modèle est un choix d'implémentation
+> non observable (décisions #118 et #123). Le guard ne s'évalue qu'à la navigation : une page de contenu déjà ouverte
 > quand une partie démarre reste inchangée, sans redirection (décision #115).
 
 > **Quels statuts comptent comme pilotage (décisions #86 à #89).** `isPiloting()` est vrai pour `PENDING`, `OPEN`

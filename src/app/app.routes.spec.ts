@@ -9,6 +9,7 @@ import { stubIconIn } from './shared/ui/icon/icon.test-helpers';
 import { ThemeService } from './features/themes/theme.service';
 import { QuestionService } from './features/questions/question.service';
 import { ThemeList } from './features/themes/theme-list';
+import { QuestionList } from './features/questions/question-list';
 import { GameStateService } from './core/game-state/game-state.service';
 import { WebSocketService } from './core/websocket/websocket.service';
 import { SERVER_ADDRESS } from './core/websocket/websocket.providers';
@@ -42,11 +43,12 @@ describe('routes', () => {
         },
         { provide: SERVER_ADDRESS, useValue: 'localhost:3000' },
         { provide: ThemeService, useValue: { list: () => of({ themes: [], total: 0 }) } },
-        { provide: QuestionService, useValue: { count: () => of(0) } }
+        { provide: QuestionService, useValue: { count: () => of(0), list: () => of({ questions: [], total: 0 }) } }
       ],
     });
     stubIconIn(ErrorPage);
     stubIconIn(ThemeList);
+    stubIconIn(QuestionList);
   });
 
   it('renders the dashboard on /dashboard when the session is ready', async () => {
@@ -77,6 +79,22 @@ describe('routes', () => {
     sessionReady = false;
 
     await RouterTestingHarness.create('/content/themes');
+
+    expect(TestBed.inject(Router).url).toBe('/error');
+  });
+
+  it('renders the questions page on /content/questions when the session is ready', async () => {
+    const harness = await RouterTestingHarness.create('/content/questions');
+
+    const page = (harness.fixture.nativeElement as HTMLElement)
+      .querySelector('[data-testid="questions-title"]');
+    expect(page).not.toBeNull();
+  });
+
+  it('redirects /content/questions to the error page when the session is not ready', async () => {
+    sessionReady = false;
+
+    await RouterTestingHarness.create('/content/questions');
 
     expect(TestBed.inject(Router).url).toBe('/error');
   });
@@ -172,6 +190,12 @@ describe('routes', () => {
         .not.toBeNull();
     });
 
+    it('is shown on /content/questions', async () => {
+      const harness = await RouterTestingHarness.create('/content/questions');
+
+      expect(topBarIn(harness)).not.toBeNull();
+    });
+
     it('is not shown on /error', async () => {
       TestBed.inject(ErrorService).notFound();
 
@@ -228,6 +252,15 @@ describe('routes', () => {
       expect(sidebarIn(harness)).not.toBeNull();
       expect(root.querySelector('[data-testid="nav-themes"]')?.getAttribute('aria-current')).toBe('page');
       expect(root.querySelector('[data-testid="nav-dashboard"]')?.hasAttribute('aria-current')).toBe(false);
+    });
+
+    it('is shown on /content/questions, with "Questions" highlighted', async () => {
+      const harness = await RouterTestingHarness.create('/content/questions');
+
+      const root = harness.fixture.nativeElement as HTMLElement;
+      expect(sidebarIn(harness)).not.toBeNull();
+      expect(root.querySelector('[data-testid="nav-questions"]')?.getAttribute('aria-current')).toBe('page');
+      expect(root.querySelector('[data-testid="nav-themes"]')?.hasAttribute('aria-current')).toBe(false);
     });
 
     it('is not shown on /error', async () => {
@@ -288,6 +321,77 @@ describe('routes', () => {
       await RouterTestingHarness.create('/content/themes');
 
       expect(failedNavigations).toEqual(['/pilot/play']);
+    });
+
+    it('sends /content/questions to the lobby when the game is pending', async () => {
+      gameIsAt('PENDING');
+
+      await RouterTestingHarness.create('/content/questions');
+
+      expect(failedNavigations).toEqual(['/pilot/lobby']);
+    });
+
+    it('sends /content/questions to the play page when the game is open', async () => {
+      gameIsAt('OPEN');
+
+      await RouterTestingHarness.create('/content/questions');
+
+      expect(failedNavigations).toEqual(['/pilot/play']);
+    });
+
+    it.each([
+      ['/content/themes', '/content/questions'],
+      ['/content/questions', '/content/themes'],
+    ])('sends the navigation from %s to %s to the game in progress, once the game has started', async (from, to) => {
+      const harness = await RouterTestingHarness.create(from);
+      gameIsAt('PENDING');
+
+      await harness.navigateByUrl(to);
+
+      expect(failedNavigations).toEqual(['/pilot/lobby']);
+      expect(TestBed.inject(Router).url).toBe(from);
+    });
+
+    it('lets the navigation from /content/themes to /content/questions through when no game is in progress', async () => {
+      const harness = await RouterTestingHarness.create('/content/themes');
+
+      await harness.navigateByUrl('/content/questions');
+
+      expect(failedNavigations).toEqual([]);
+      expect(TestBed.inject(Router).url).toBe('/content/questions');
+    });
+
+    it('lets the navigation from /content/themes to /content/questions through when the application is disconnected', async () => {
+      const harness = await RouterTestingHarness.create('/content/themes');
+      gameIsAt('OPEN');
+      disconnected.set(true);
+
+      await harness.navigateByUrl('/content/questions');
+
+      expect(failedNavigations).toEqual([]);
+      expect(TestBed.inject(Router).url).toBe('/content/questions');
+    });
+
+    it('lets the navigation from /content/themes to /content/questions through when the game is completed', async () => {
+      const harness = await RouterTestingHarness.create('/content/themes');
+      gameIsAt('COMPLETED');
+
+      await harness.navigateByUrl('/content/questions');
+
+      expect(failedNavigations).toEqual([]);
+      expect(TestBed.inject(Router).url).toBe('/content/questions');
+    });
+
+    it('keeps the open content page when a game starts, until the user navigates', async () => {
+      const harness = await RouterTestingHarness.create('/content/questions');
+
+      gameIsAt('OPEN');
+      await harness.fixture.whenStable();
+
+      expect(failedNavigations).toEqual([]);
+      expect(TestBed.inject(Router).url).toBe('/content/questions');
+      expect((harness.fixture.nativeElement as HTMLElement).querySelector('[data-testid="questions-title"]'))
+        .not.toBeNull();
     });
 
     it('serves /content/themes when the application is disconnected, whatever the game', async () => {

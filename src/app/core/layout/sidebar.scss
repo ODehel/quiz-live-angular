@@ -1,0 +1,48 @@
+:host {
+  display: block;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 8px;
+}
+
+a {
+  position: relative;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+a:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+a.active {
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+}
+
+a.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 18px;
+  background: var(--accent-primary);
+  border-radius: 0 2px 2px 0;
+  transform: translateY(-50%);
+}

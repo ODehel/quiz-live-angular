@@ -1,15 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { Router, provideRouter } from '@angular/router';
+import { GameStateService } from '../game-state/game-state.service';
+import { WebSocketService } from '../websocket/websocket.service';
 import { Sidebar } from './sidebar';
 
 @Component({ template: '' })
 class BlankPage {}
 
 describe('Sidebar', () => {
+  let piloting: ReturnType<typeof signal<boolean>>;
+  let disconnected: ReturnType<typeof signal<boolean>>;
+
   const render = () => {
+    piloting = signal(false);
+    disconnected = signal(false);
     TestBed.configureTestingModule({
       providers: [
+        { provide: GameStateService, useValue: { isPiloting: piloting.asReadonly() } },
+        { provide: WebSocketService, useValue: { isDisconnected: disconnected.asReadonly() } },
         provideRouter([
           { path: 'dashboard', component: BlankPage },
           { path: 'content/themes', component: BlankPage },
@@ -22,6 +31,10 @@ describe('Sidebar', () => {
   const element = (fixture: ComponentFixture<Sidebar>) => fixture.nativeElement as HTMLElement;
   const link = (fixture: ComponentFixture<Sidebar>, testId: string) =>
     element(fixture).querySelector<HTMLAnchorElement>(`[data-testid="${testId}"]`);
+
+  // Le tooltip est porté par l'élément englobant : pointer-events: none supprime celui du lien.
+  const tooltipOf = (fixture: ComponentFixture<Sidebar>, testId: string) =>
+    link(fixture, testId)?.parentElement?.getAttribute('title') ?? undefined;
 
   describe('links to the available pages', () => {
     it('shows "Tableau de bord", which leads to /dashboard', async () => {
@@ -101,6 +114,98 @@ describe('Sidebar', () => {
 
       expect(isActive(fixture, 'nav-themes')).toBe(true);
       expect(link(fixture, 'nav-dashboard')?.classList.contains('active')).toBe(false);
+    });
+  });
+
+  describe('while a game is in progress', () => {
+    const isDisabled = (fixture: ComponentFixture<Sidebar>, testId: string) => {
+      const style = getComputedStyle(link(fixture, testId) as HTMLElement);
+      return style.opacity === '0.4' && style.pointerEvents === 'none';
+    };
+
+    it('disables the "Thèmes" link visually and makes it unclickable', async () => {
+      const fixture = render();
+      piloting.set(true);
+
+      await fixture.whenStable();
+
+      expect(isDisabled(fixture, 'nav-themes')).toBe(true);
+    });
+
+    it('explains why with the tooltip "Indisponible pendant une partie"', async () => {
+      const fixture = render();
+      piloting.set(true);
+
+      await fixture.whenStable();
+
+      expect(tooltipOf(fixture, 'nav-themes')).toBe('Indisponible pendant une partie');
+    });
+
+    it('takes "Thèmes" out of reach of the keyboard too', async () => {
+      const fixture = render();
+      piloting.set(true);
+
+      await fixture.whenStable();
+
+      const themes = link(fixture, 'nav-themes');
+      expect(themes?.hasAttribute('href')).toBe(false);
+      expect(themes?.getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('leaves "Tableau de bord" enabled, without tooltip', async () => {
+      const fixture = render();
+      piloting.set(true);
+
+      await fixture.whenStable();
+
+      expect(isDisabled(fixture, 'nav-dashboard')).toBe(false);
+      expect(link(fixture, 'nav-dashboard')?.getAttribute('href')).toBe('/dashboard');
+      expect(tooltipOf(fixture, 'nav-dashboard')).toBeUndefined();
+    });
+
+    it('enables "Thèmes" again as soon as no game is in progress', async () => {
+      const fixture = render();
+      piloting.set(true);
+      await fixture.whenStable();
+
+      piloting.set(false);
+      await fixture.whenStable();
+
+      expect(isDisabled(fixture, 'nav-themes')).toBe(false);
+      expect(link(fixture, 'nav-themes')?.getAttribute('href')).toBe('/content/themes');
+      expect(link(fixture, 'nav-themes')?.hasAttribute('aria-disabled')).toBe(false);
+      expect(tooltipOf(fixture, 'nav-themes')).toBeUndefined();
+    });
+  });
+
+  describe('while no game is in progress', () => {
+    it('keeps "Thèmes" enabled, clickable by href, without tooltip', async () => {
+      const fixture = render();
+
+      await fixture.whenStable();
+
+      const style = getComputedStyle(link(fixture, 'nav-themes') as HTMLElement);
+      expect(style.opacity).not.toBe('0.4');
+      expect(style.pointerEvents).not.toBe('none');
+      expect(link(fixture, 'nav-themes')?.getAttribute('href')).toBe('/content/themes');
+      expect(tooltipOf(fixture, 'nav-themes')).toBeUndefined();
+    });
+  });
+
+  describe('while disconnected', () => {
+    it('keeps "Thèmes" enabled even if a game is in progress', async () => {
+      const fixture = render();
+      piloting.set(true);
+      disconnected.set(true);
+
+      await fixture.whenStable();
+
+      const style = getComputedStyle(link(fixture, 'nav-themes') as HTMLElement);
+      expect(style.opacity).not.toBe('0.4');
+      expect(style.pointerEvents).not.toBe('none');
+      expect(link(fixture, 'nav-themes')?.getAttribute('href')).toBe('/content/themes');
+      expect(link(fixture, 'nav-themes')?.hasAttribute('aria-disabled')).toBe(false);
+      expect(tooltipOf(fixture, 'nav-themes')).toBeUndefined();
     });
   });
 });

@@ -46,3 +46,12 @@ a.active::before {
   border-radius: 0 2px 2px 0;
   transform: translateY(-50%);
 }
+
+a.locked {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.nav-item {
+  display: block;
+}

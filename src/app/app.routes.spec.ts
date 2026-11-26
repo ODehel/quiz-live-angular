@@ -190,4 +190,62 @@ describe('routes', () => {
       expect(topBarIn(harness)).toBeNull();
     });
   });
+
+  describe('the sidebar', () => {
+    const sidebarIn = (harness: RouterTestingHarness) =>
+      (harness.fixture.nativeElement as HTMLElement).querySelector('[data-testid="sidebar"]');
+
+    it('is shown on /dashboard', async () => {
+      const harness = await RouterTestingHarness.create('/dashboard');
+
+      expect(sidebarIn(harness)).not.toBeNull();
+    });
+
+    it('is shown on /content/themes', async () => {
+      const harness = await RouterTestingHarness.create('/content/themes');
+
+      expect(sidebarIn(harness)).not.toBeNull();
+    });
+
+    it('is shown only once on a protected page', async () => {
+      const harness = await RouterTestingHarness.create('/dashboard');
+
+      const sidebars = (harness.fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="sidebar"]');
+      expect(sidebars.length).toBe(1);
+    });
+
+    it('stays, with the highlight following the route, when navigating from /dashboard to /content/themes', async () => {
+      const harness = await RouterTestingHarness.create('/dashboard');
+
+      await harness.navigateByUrl('/content/themes');
+
+      const root = harness.fixture.nativeElement as HTMLElement;
+      expect(sidebarIn(harness)).not.toBeNull();
+      expect(root.querySelector('[data-testid="nav-themes"]')?.getAttribute('aria-current')).toBe('page');
+      expect(root.querySelector('[data-testid="nav-dashboard"]')?.hasAttribute('aria-current')).toBe(false);
+    });
+
+    it('is not shown on /error', async () => {
+      TestBed.inject(ErrorService).notFound();
+
+      const harness = await RouterTestingHarness.create('/error');
+
+      expect(sidebarIn(harness)).toBeNull();
+    });
+
+    it('is not shown when /dashboard redirects to the error page', async () => {
+      sessionReady = false;
+
+      const harness = await RouterTestingHarness.create('/dashboard');
+
+      expect(sidebarIn(harness)).toBeNull();
+    });
+
+    it('is not shown on /playground', async () => {
+      const harness = await RouterTestingHarness.create('/playground');
+
+      expect((harness.fixture.nativeElement as HTMLElement).querySelector('app-playground')).not.toBeNull();
+      expect(sidebarIn(harness)).toBeNull();
+    });
+  });
 });
